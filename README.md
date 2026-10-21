@@ -5,8 +5,9 @@ The Gathering, Yu-Gi-Oh!, board games, and social deduction games.
 
 Built for **AI-DEV 2026 Workshop 3**, from
 [jovanp-najveci/ai-frontend-starter](https://github.com/jovanp-najveci/ai-frontend-starter).
-This task establishes frontend contracts, mock APIs, query hooks, design tokens, and simple
-routes. Finished pages and forms come later.
+The frontend includes domain mock APIs, a discovery homepage, event search/cards, and
+demo login with session-aware navigation and event participation. Creation/editing forms
+remain placeholders.
 
 ## Setup
 
@@ -40,7 +41,7 @@ frontend/
   CLAUDE.md                  Frontend architecture and rules
   DESIGN.md                  Visual identity and token meanings
   src/app/                   Providers, router, route composition
-  src/features/users/        Public profile types, read mocks, query hooks
+  src/features/users/        Public profiles, demo session API/hooks, login and route guard
   src/features/games/        Game catalog types, read mocks, query hooks
   src/features/events/       Types, mock CRUD/attendance, hooks, minimal data views
   src/components/ui/         Starter shadcn primitives
@@ -57,13 +58,17 @@ TanStack Query hooks; feature APIs own data access. Each feature stores its own 
 Shared reference IDs validate relationships without cross-feature imports.
 
 Mock writes take an explicit `{ userId }` actor and simulate permissions; this is **not
-real authentication**. Data lives in memory and refresh resets all changes. No backend,
-database, persistence, payments, messaging, maps, or waitlists are implemented.
+real authentication**. Event data lives in memory and refresh resets changes. Choose a demo
+profile at `/login`; its ID stays in sessionStorage for this tab until logout/close (memory
+fallback if storage is blocked). No password is needed. No backend,
+database, durable event storage, payments, messaging, maps, or waitlists are implemented.
 See `docs/entities.md` for exact contracts and error behavior.
 
 Routes: `/`, `/events`, `/events/:eventId`, `/events/new`, `/events/:eventId/edit`, `/login`,
-and a not-found fallback. List/detail minimally exercise mock reads and their states;
-create/edit/login are placeholders. UI branding is always **RollCall**.
+and a not-found fallback. The homepage includes search, categories, and upcoming events.
+Search/category links filter the event list through URL parameters. Event detail supports
+join/leave for the selected demo user; anonymous protected actions redirect to login and back.
+Create/edit are protected placeholders. UI branding is always **RollCall**.
 
 ## Team workflow: Codex and Claude Code
 

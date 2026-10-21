@@ -1,18 +1,17 @@
-import { Link } from 'react-router'
-
-import { Button } from '@/components/ui/button'
+import { DiscoveryHero } from '@/features/events/components/discovery-hero'
+import { FeaturedEvents } from '@/features/events/components/featured-events'
+import { HowItWorks } from '@/features/events/components/how-it-works'
+import { useGames } from '@/features/games/api/use-games'
+import { GameCategories } from '@/features/games/components/game-categories'
 
 export function Home() {
+  const games = useGames()
   return (
-    <section className="py-16">
-      <h1 className="text-3xl font-bold tracking-tight">Find your next table</h1>
-      <p className="mt-4 max-w-xl text-muted-foreground">
-        Discover, organize, and join tabletop gaming events with RollCall. Explore D&D, trading card games,
-        board games, and social deduction meetups.
-      </p>
-      <Button asChild className="mt-8">
-        <Link to="/events">Explore events</Link>
-      </Button>
-    </section>
+    <>
+      <DiscoveryHero />
+      <GameCategories />
+      <FeaturedEvents games={games.data} />
+      <HowItWorks />
+    </>
   )
 }

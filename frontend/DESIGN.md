@@ -13,8 +13,11 @@ accents for a slightly gaming-inspired identity, without copying Meetup's brand.
 No reference screenshots are checked in yet; optional references belong in `docs/ref/`
 relative to this file.
 
-Foundation routes use simple headings, text, and links. Rich cards, photography, filters,
-and complete forms are later page work.
+The discovery homepage now uses a two-column hero, search panel, four category tiles,
+three upcoming event cards, and a simple how-it-works section. Use typography and a
+code-native tabletop illustration with lucide icons; external photography is not required.
+The login page pairs a short introduction with clearly selectable demo-player profiles.
+Creation/editing forms remain placeholders.
 
 ## Token contract
 
@@ -43,7 +46,9 @@ Dark is the default. There is no theme switch or separate light palette yet.
 
 ## Layout and interaction
 
-- Mobile first: one column on phones; future cards can expand to two/three columns.
+- Mobile first: one column on phones; category tiles expand to two/four columns and event
+  cards to two/three columns. The hero becomes two columns on large screens. Mobile navigation
+  keeps the brand and account on the first row and page links on a second row.
 - Main content `max-w-6xl`, comfortable padding, wrapping navigation, and readable line lengths.
 - Starter spacing scale: 1, 2, 3, 4, 6, 8, 12, 16. Larger gaps between sections.
 - One primary heading per page; body text 14–16 px, lines around 70 characters.
@@ -55,7 +60,8 @@ Dark is the default. There is no theme switch or separate light palette yet.
 
 ## Don't
 
-- No large promotional hero, unnecessary gradients, neon glow, or ornamental animation.
+- Keep the discovery hero focused on finding events; no unnecessary gradients, neon glow,
+  ornamental animation, or invented activity counts. Hover/focus and pending indicators have a purpose.
 - No heavy gaming fonts, emoji icons, or everything inside shadowed cards.
 - No raw color/font/radius values in components; add and document tokens first.
-- No polished discovery pages, forms, or authentication UI during foundation work.
+- No creation/editing forms or advanced administrative UI in the homepage/session task.

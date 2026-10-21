@@ -124,8 +124,8 @@ removes its embedded attendance.
 
 Reads are public. Mock writes require `MockActor = { userId: number | null }` as the last
 argument. Missing/null/unknown user is 401. Any known mock user can create. Only the organizer
-can update/remove; a different known user receives 403. There is no global default user, login
-state, or route protection yet. A future backend must derive the actor from a verified session,
+can update/remove; a different known user receives 403. There is no global default user.
+The demo session supplies the selected user ID to attendance through route props. A future backend must derive the actor from a verified session,
 never trust a client-supplied user ID. Mock actor objects are not HTTP request bodies.
 
 Any known non-organizer may join/leave only a scheduled event that has not started. Canceled
@@ -173,6 +173,45 @@ Hooks: `useEvents`, `useEvent`, `useCreateEvent`, `useUpdateEvent`, `useRemoveEv
 All event mutation successes invalidate the `['events']` prefix (lists and details); removal
 also removes the deleted detail cache. Detail hooks disable invalid IDs; views explain invalid
 IDs rather than remaining in a pending state.
+
+## Frontend demo session
+
+The users domain owns `api/session-api.ts`, `api/use-session.ts`, login UI, and the
+`RequireSession` guard. Public profile records are still read-only. Session selection is
+a browser-only operation, not a user entity write or a real authentication endpoint.
+
+| Operation | Contract |
+| --- | --- |
+| `sessionApi.get()` | `Promise<User \| null>`; restore a known profile or return anonymous |
+| `sessionApi.login(userId)` | `Promise<User>`; validate through `usersApi.get`, then select the profile |
+| `sessionApi.logout()` | `Promise<null>`; clear the selection |
+
+`useSession` caches the current public User or null at `['session']`; `useLogin`/`useLogout`
+cancel pending session reads and update that cache on success. Session reads do not automatically
+retry failures. No credentials, private email, session tokens, or user roles are added.
+Login failures preserve the previous selection. The selected positive integer ID is stored at
+sessionStorage key `rollcall.demo-user-id`, so it survives refresh within the tab. Invalid or
+unknown stored IDs are cleared. Storage failures fall back to in-memory state until reload.
+Only the selected ID is persisted; profiles continue to come from the existing mock API.
+
+Anonymous users can browse everything. Create/edit placeholders require a demo session;
+event join/leave derives the actor from the current user. Anonymous join redirects to
+`/login?returnTo=<encoded internal path>`, then returns to the event without automatically
+joining. Only the organizer sees the edit link; guarded placeholder routes currently check
+session presence, not organizer ownership. Any future write must still use existing API rules.
+
+`returnTo` rejects external URLs, protocol-relative paths, backslashes, control characters,
+and login self-redirects (including encoded equivalents). Invalid targets fall back to `/events`.
+Logout clears navigation/current-user state and protected routes redirect to login. Event
+records remain in memory; session persistence does not persist attendance changes on reload.
+This mechanism simulates identity only and offers no security. Future real session endpoints
+and credential contracts must be designed with the backend; these demo operations make no HTTP calls.
+
+For UI composition, event discovery accepts structural game summaries (ID/name/category)
+from app routes, and attendance accepts a current-user ID and session loading/error flags.
+These are component props, not duplicated entities or cross-feature imports. `/events` accepts
+`category` in its URL and filters events using games supplied by the route; the event REST
+contract itself still has no category field or category parameter.
 
 ## Fixture coverage and future implementation
 

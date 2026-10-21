@@ -27,9 +27,10 @@ You may talk to me in any language.
 ## RollCall scope and shared workflow
 - Read @SPEC.md for scope, @frontend/DESIGN.md for visuals, and @docs/entities.md for contracts.
 - @AGENTS.md is Codex's entry point and references these same starter rules.
-- Workshop 3 is frontend only: no backend, database, persistence, or real authentication.
-- Domains are `users`, `games`, and `events`. Users/games are read-only catalogs; events
-  support CRUD and join/leave. Writes receive an explicit mock actor, not a real session.
+- Workshop 3 is frontend only: no backend, database, durable event storage, or real authentication.
+- Domains are `users`, `games`, and `events`. User profiles/games are read-only catalogs; events
+  support CRUD and join/leave. Writes receive an explicit mock actor; the users domain now
+  owns a frontend-only demo session that supplies this actor through route composition.
 - Keep foundation routes simple until finished pages are requested. Preserve `.claude/`.
 - Share a concrete plan before edits. Explicit task authorization takes precedence over
   generic template interviews, approval steps, and visual variants.

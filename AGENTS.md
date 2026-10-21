@@ -17,9 +17,11 @@ Keep foundation routes simple until finished pages are requested.
 ## Working agreements
 
 - All code, docs, comments, commit messages, and UI copy are in English.
-- Keep the starter stack and feature boundaries. No backend, database, persistence, or real auth
-  in Workshop 3. Features never import each other, including types; routes compose them.
-- Users/games are read-only catalogs. Events own CRUD and attendance. Use numeric reference IDs.
+- Keep the starter stack and feature boundaries. No backend, database, durable event storage,
+  or real auth in Workshop 3. Features never import each other, including types; routes compose them.
+- User profiles/games are read-only catalogs. Users also own the demo session; its selected
+  profile ID may persist in sessionStorage for the current tab. Events own CRUD and attendance.
+  Use numeric reference IDs and pass session identity through route composition.
 - Keep mock records inside each feature's `api/`; shared request/error/reference helpers may
   live in `src/lib`. Components use query hooks, not API modules directly.
 - Update `docs/entities.md` alongside entity/API changes, and `SPEC.md` alongside scope changes.
