@@ -7,6 +7,7 @@
     "typecheck": "pnpm --filter frontend typecheck",
     "lint": "pnpm --filter frontend lint",
     "build": "pnpm --filter frontend build",
+    "test:mock": "pnpm --filter frontend test:mock",
     "format": "pnpm --filter frontend format"
   }
 }

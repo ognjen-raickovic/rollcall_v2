@@ -1,69 +1,92 @@
-# AI-DEV 2026 · Workshop 3 · Monorepo starter
+﻿# RollCall
 
-A monorepo keeps every part of the app in one repository: `frontend/` today, `backend/` next workshop,
-and shared docs in `docs/`. One clone, one install, one pull request for a change that touches both sides,
-and the agent sees the whole app at once.
+RollCall helps people discover, organize, and join tabletop gaming events: D&D, Magic:
+The Gathering, Yu-Gi-Oh!, board games, and social deduction games.
 
-React 19 + TypeScript + Vite + Tailwind CSS v4 + shadcn/ui, set up for working with Claude Code.
+Built for **AI-DEV 2026 Workshop 3**, from
+[jovanp-najveci/ai-frontend-starter](https://github.com/jovanp-najveci/ai-frontend-starter).
+This task establishes frontend contracts, mock APIs, query hooks, design tokens, and simple
+routes. Finished pages and forms come later.
 
-## Getting started
+## Setup
 
-For your team: click **Use this template** on GitHub to create your own repository, then clone it.
-
-The course uses [pnpm](https://pnpm.io). Install it once, then run the project from the repo root:
+Use Node.js 22.12+ (or a newer supported LTS) and the pnpm version pinned in `package.json`.
+Run everything from the repository root:
 
 ```bash
-npm install -g pnpm   # once per machine
+npm install -g pnpm@12.14.0       # once, if needed
 pnpm install
-pnpm dev              # http://localhost:5173
-pnpm lint             # oxlint + boundary check between features
+pnpm dev                        # http://localhost:5173
+pnpm typecheck
+pnpm lint                       # oxlint + feature boundary checker
+pnpm build                      # frontend/dist
+pnpm test:mock                  # mock API integration checks, no backend needed
+pnpm format                     # Prettier on frontend/src
+pnpm --filter frontend preview  # preview the production build
 ```
 
-Open the repo root in VS Code and start the Claude Code extension.
+On PowerShell with disabled script execution, use `pnpm.cmd` instead of `pnpm`.
+No environment variables, backend, database, or API keys are required.
 
-## Layout
+## Architecture and scope
 
+React 19 + TypeScript + Vite + Tailwind CSS v4 + shadcn/ui + React Router + TanStack Query.
+
+```text
+AGENTS.md                    Codex entry point referencing shared rules
+CLAUDE.md                    Claude Code monorepo instructions
+SPEC.md                      Shared product scope and acceptance criteria
+frontend/
+  CLAUDE.md                  Frontend architecture and rules
+  DESIGN.md                  Visual identity and token meanings
+  src/app/                   Providers, router, route composition
+  src/features/users/        Public profile types, read mocks, query hooks
+  src/features/games/        Game catalog types, read mocks, query hooks
+  src/features/events/       Types, mock CRUD/attendance, hooks, minimal data views
+  src/components/ui/         Starter shadcn primitives
+  src/components/layout/     Navigation and app layout
+  src/lib/                   Mock helpers, reference IDs, utilities
+backend/                     Reserved for the next workshop
+docs/entities.md             Fields, relationships, permissions, future REST contracts
+.claude/                     Preserved rules, commands, design skill, reviewer, format hook
 ```
-frontend/         React app (this workshop)
-  src/app/        router.tsx, providers.tsx and routes/ (one file per route)
-  src/features/   one folder per feature: api/, components/, types.ts (example: listings)
-  src/components/ ui/ (shadcn) and layout/
-  src/lib/        utils.ts and mock-db.ts
-backend/          API, database and auth (next workshop)
-docs/entities.md  entities and the API contract between frontend and backend
-```
 
-Features do not import each other; a route combines them. `pnpm lint` checks these boundaries
-(`frontend/scripts/check-boundaries.mjs`) and reports the exact file and import that breaks them.
+Features never import each other, including types. Routes compose them, and shared code
+never imports features or app code. `pnpm lint` enforces these boundaries. Components use
+TanStack Query hooks; feature APIs own data access. Each feature stores its own mock records.
+Shared reference IDs validate relationships without cross-feature imports.
 
-## Language
+Mock writes take an explicit `{ userId }` actor and simulate permissions; this is **not
+real authentication**. Data lives in memory and refresh resets all changes. No backend,
+database, persistence, payments, messaging, maps, or waitlists are implemented.
+See `docs/entities.md` for exact contracts and error behavior.
 
-All code, identifiers, comments, commit messages, docs and UI copy are in English.
-Talking to Claude in any language is fine.
+Routes: `/`, `/events`, `/events/:eventId`, `/events/new`, `/events/:eventId/edit`, `/login`,
+and a not-found fallback. List/detail minimally exercise mock reads and their states;
+create/edit/login are placeholders. UI branding is always **RollCall**.
 
-## First steps with Claude
+## Team workflow: Codex and Claude Code
 
-1. "Interview me about our app's design, one question at a time, then fill in frontend/DESIGN.md and update the tokens in frontend/src/index.css."
-2. Fill in the first sentence of CLAUDE.md with your app's topic.
-3. `/new-feature <name>: <description>` for each feature of your app, then delete the `frontend/src/features/listings` example.
-4. `/new-page` for each screen: home, list, detail, form, sign-in.
-5. `/check` and the `ui-reviewer` agent before every commit.
+All code, identifiers, comments, commit messages, docs, and UI copy are in English.
+You can talk to either assistant in any language.
 
-## What is in the .claude folder
+1. Read `SPEC.md`, `docs/entities.md`, and the relevant instructions. Codex starts at
+   `AGENTS.md`; Claude Code at `CLAUDE.md` and `frontend/CLAUDE.md`. Both follow the
+   existing `.claude/rules/` and `frontend/DESIGN.md`.
+2. Agree on task ownership and show a plan before edits. Use a separate feature branch per
+   task/person (for example `feat/event-filters` or `feat/event-form`), based on current `main`.
+   Coordinate shared contract, router, token, and lockfile changes before parallel work.
+3. Keep PRs focused. Update entity contracts with types/APIs and the spec with scope changes.
+   Preserve teammates' changes and `.claude/`. Never commit secrets or environment files.
+4. Run `pnpm typecheck`, `pnpm lint`, and `pnpm build`. For UI, inspect at 375 px and 1440 px,
+   compare with DESIGN.md, and check console errors. Report unavailable checks.
+5. Obtain explicit approval before committing or pushing. Open a GitHub PR explaining the
+   problem, resulting behavior, validation, and limitations. Have the teammate review;
+   merge only with approval, then update local `main` before starting the next branch.
 
-| File | Purpose |
-| --- | --- |
-| `CLAUDE.md` | Monorepo overview, language rule, root commands |
-| `frontend/CLAUDE.md` | Stack, feature-first structure, rules, "done when" |
-| `frontend/DESIGN.md` | Visual identity the agent reads before UI changes |
-| `.claude/rules/` | Rules that load only for matching files (data, components, styling, features) |
-| `.claude/commands/` | `/new-page`, `/new-feature`, `/check` |
-| `.claude/skills/design-system/` | Design rules that load when working on UI |
-| `.claude/agents/ui-reviewer.md` | Subagent that reviews UI and changes nothing |
-| `.claude/settings.json` | Permissions, Explanatory output style and a hook that formats every edited file |
-| `.mcp.json` | Playwright (browser), shadcn (component catalog) and Context7 (current library docs) |
-
-The MCP servers in `.mcp.json` start with `npx`, because `npx` ships with Node and works no matter which
-package manager you use.
-
-Recommended: `/plugin install frontend-design@claude-plugins-official`
+Claude Code retains `/new-feature`, `/new-page`, `/check`, the `design-system` skill,
+`ui-reviewer`, and formatting hook. Generic feature templates now use events as their
+reference; users/games intentionally expose only reads. Codex performs equivalent checks
+with available tools; Claude hooks do not automatically run for Codex edits.
+`.mcp.json` retains Playwright, shadcn, and Context7; these depend on each developer's tool
+configuration, not the running app. MCP servers use `npx` as in the starter.
