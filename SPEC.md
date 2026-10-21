@@ -13,15 +13,16 @@ Frontend only, preserving React 19, TypeScript, Vite, Tailwind CSS v4, shadcn/ui
 and TanStack Query. Mock data lives in memory and resets on reload. No backend, database,
 real authentication, payments, messaging, notifications, maps, or waitlists.
 
-This task establishes contracts, tokens, and simple routes. Finished discovery pages, event
-forms, and login flows belong to later tasks. `docs/entities.md` owns the detailed field,
+The foundation established contracts, tokens, and simple routes. The current task adds a
+finished discovery homepage and frontend-only demo login/session. Event creation/editing forms
+and advanced administration remain outside scope. `docs/entities.md` owns the detailed field,
 validation, access, and future HTTP contracts; local types/APIs implement them.
 
 ## Feature ownership
 
 | Domain | Responsibility |
 | --- | --- |
-| users | Read-only public player/organizer profiles; no credentials or private email |
+| users | Public profiles and demo session selection; no credentials or private email |
 | games | Read-only game catalog and categories |
 | events | Discovery, details, creation, editing, removal, joining, and leaving |
 
@@ -32,7 +33,8 @@ features. Shared mock reference IDs validate relationships without cross-feature
 
 APIs return Promises of entities, arrays, or void and reject with common typed errors.
 TanStack Query wraps reads; mutations invalidate event list/detail caches. Explicit mock
-actors simulate permissions and provide no authentication or security.
+actors simulate permissions and provide no authentication or security. Current-user state is
+cached with TanStack Query and the selected demo user ID is stored in sessionStorage for this tab.
 
 ## Intended journeys
 
@@ -40,29 +42,35 @@ actors simulate permissions and provide no authentication or security.
 - Inspect: read schedule, venue, organizer, game, experience level, price, and capacity.
 - Organize: create valid events, then edit/remove only events you organize.
 - Participate: join upcoming scheduled events with space; leave before they start.
-- Sign in: reserved for later; the foundation collects no credentials.
+- Sign in: choose one of eight demo profiles, return to the intended page, and log out via
+  navigation. No credentials are collected. Reload restores the selection in the current tab;
+  blocked storage falls back to memory. This does not provide real authentication.
 
 ## Routes
 
-| Path | Foundation behavior |
+| Path | Current behavior |
 | --- | --- |
-| `/` | Product introduction and link to events |
-| `/events` | Minimal list/search with loading, empty, and error states |
-| `/events/:eventId` | Minimal detail with invalid-ID, not-found, loading, and error states |
-| `/events/new` | Create placeholder, no submitted form |
-| `/events/:eventId/edit` | Edit placeholder, no submitted form |
-| `/login` | Login placeholder |
+| `/` | Hero, search, category navigation, featured upcoming events, how it works |
+| `/events` | Cards and URL-based search, city, game/category, and open-seat filtering |
+| `/events/:eventId` | Detail and session-aware join/leave, including all data states |
+| `/events/new` | Protected create placeholder, no submitted form |
+| `/events/:eventId/edit` | Protected edit placeholder, no submitted form |
+| `/login` | Demo profile selection with loading, empty, error, and pending states |
 | `*` | Not-found fallback |
 
-All routes share responsive RollCall navigation. There are no route guards yet; reaching
-create/edit does not grant API write permission.
+All routes share responsive RollCall navigation and current login state. Anonymous visits to
+create/edit redirect to login, as does joining an event. Login accepts only safe internal
+`returnTo` paths and returns there; users explicitly retry joining after login. Logout updates
+all session consumers and a protected page redirects to login. Route guards simulate a signed-in
+session only; API organizer/capacity/access rules remain authoritative within the mock.
 
 ## Design
 
 Take inspiration from Meetup's discovery hierarchy: useful filters, scannable events, clear
 dates/locations, and a prominent primary action. Use charcoal/navy surfaces, restrained purple
 accents, and clean typography. `frontend/DESIGN.md` owns guidance and `frontend/src/index.css`
-owns tokens. Establish readable layouts without polished cards or a large hero.
+owns tokens. The homepage uses a confident hero, code-native tabletop illustration, category
+tiles, and responsive event cards. Existing palette/font/radius tokens are unchanged.
 
 ## Acceptance and collaboration
 

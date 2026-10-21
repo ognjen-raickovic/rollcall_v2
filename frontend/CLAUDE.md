@@ -37,11 +37,16 @@ Dependency direction: shared code -> features -> app, never the other way around
 - The page was opened with Playwright MCP and screenshots at 375 px and 1440 px match DESIGN.md
 - No errors in the browser console
 
-## RollCall foundation
-- Read `../SPEC.md` for scope. Routes are placeholders or minimal data views, not finished pages.
-- Users/games expose read APIs only. Events expose CRUD and join/leave, applying the scoped
+## RollCall scope
+- Read `../SPEC.md` for scope. The homepage and demo login are implemented; create/edit
+  routes remain placeholders. Do not add event forms or advanced administration in this task.
+- User profiles/games expose read APIs only. Events expose CRUD and join/leave, applying the scoped
   CRUD guidance in `.claude/rules/data.md`. Use events as the feature implementation reference.
 - Relationships use numeric IDs. Shared request/error/reference helpers live in `src/lib/mock-db.ts`;
   entity records stay in their feature's `api/` folder. Features never import each other's types.
 - Writes take a mock actor and enforce `../docs/entities.md`; reads are public.
+- The users domain owns `session-api.ts`, session query/mutation hooks, login UI, and the
+  route guard. Session selection is tab-scoped; no real credentials, tokens, or auth service.
+- Compose session-aware navigation and event participation in app routes. Shared layout gets
+  an account slot; events get a user ID through props. Never import users into events or shared code.
 - If Playwright MCP is unavailable, use local Playwright if available and report skipped checks.

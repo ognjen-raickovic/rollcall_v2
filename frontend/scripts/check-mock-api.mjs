@@ -14,6 +14,8 @@ test('RollCall mock contracts and event lifecycle', async (t) => {
     const { usersApi } = await server.ssrLoadModule('/src/features/users/api/users-api.ts')
     const { gamesApi } = await server.ssrLoadModule('/src/features/games/api/games-api.ts')
     const { eventsApi } = await server.ssrLoadModule('/src/features/events/api/events-api.ts')
+    const { sessionApi } = await server.ssrLoadModule('/src/features/users/api/session-api.ts')
+    const { safeReturnTo, loginPath } = await server.ssrLoadModule('/src/lib/auth-navigation.ts')
     const { mockReferences } = await server.ssrLoadModule('/src/lib/mock-db.ts')
     const host = { userId: 1 }
     const player = { userId: 2 }
@@ -137,6 +139,66 @@ test('RollCall mock contracts and event lifecycle', async (t) => {
       const left = await eventsApi.leave(event.id, attendee)
       assert.deepEqual(await eventsApi.leave(event.id, attendee), left)
       await assert.rejects(eventsApi.leave(event.id, host), errorCode('CONFLICT'))
+    })
+
+    await t.test('demo session, invalid profiles, storage fallback, and safe return paths', async () => {
+      const originalStorage = Object.getOwnPropertyDescriptor(globalThis, 'sessionStorage')
+      const storage = new Map()
+      Object.defineProperty(globalThis, 'sessionStorage', {
+        configurable: true,
+        value: {
+          getItem: (key) => storage.get(key) ?? null,
+          setItem: (key, value) => storage.set(key, value),
+          removeItem: (key) => storage.delete(key),
+        },
+      })
+      try {
+        assert.equal(await sessionApi.get(), null)
+        const user = await sessionApi.login(2)
+        assert.equal(user.id, 2)
+        assert.equal(storage.get('rollcall.demo-user-id'), '2')
+        user.displayName = 'Changed outside the API'
+        assert.notEqual((await sessionApi.get()).displayName, user.displayName)
+        await assert.rejects(sessionApi.login(999), errorCode('NOT_FOUND'))
+        assert.equal((await sessionApi.get()).id, 2)
+        storage.set('rollcall.demo-user-id', 'not-a-user')
+        assert.equal(await sessionApi.get(), null)
+        assert.equal(storage.has('rollcall.demo-user-id'), false)
+        await sessionApi.login(3)
+        assert.equal(await sessionApi.logout(), null)
+        assert.equal(await sessionApi.get(), null)
+        assert.equal(storage.has('rollcall.demo-user-id'), false)
+        Object.defineProperty(globalThis, 'sessionStorage', {
+          configurable: true,
+          get: () => {
+            throw new Error('Storage blocked')
+          },
+        })
+        assert.equal((await sessionApi.login(4)).id, 4)
+        assert.equal((await sessionApi.get()).id, 4)
+        await sessionApi.logout()
+        assert.equal(await sessionApi.get(), null)
+      } finally {
+        if (originalStorage) Object.defineProperty(globalThis, 'sessionStorage', originalStorage)
+        else delete globalThis.sessionStorage
+      }
+      assert.equal(safeReturnTo('/events/1?view=details#seats'), '/events/1?view=details#seats')
+      assert.equal(loginPath('/events/new'), '/login?returnTo=%2Fevents%2Fnew')
+      for (const value of [
+        null,
+        'https://example.com',
+        '//example.com',
+        '/\\example.com',
+        '/%2f%2fexample.com',
+        '/login',
+        '/LOGIN/',
+        '/%6cogin',
+        '/login?returnTo=/events',
+        '/%00bad',
+        '/%zz',
+      ]) {
+        assert.equal(safeReturnTo(value), '/events', `Reject return target ${value}`)
+      }
     })
 
     await t.test('canceled/started attendance rules and removal', async () => {

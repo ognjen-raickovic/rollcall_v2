@@ -1,13 +1,17 @@
-import { Link } from 'react-router'
-
 import { Button } from '@/components/ui/button'
 import { ApiError } from '@/lib/mock-db'
 
 import { useEvent } from '../api/use-events'
+import { EventAttendance } from './event-attendance'
 
-type EventDetailsProps = { eventId: string | undefined }
+type EventDetailsProps = {
+  eventId: string | undefined
+  currentUserId: number | null
+  sessionPending: boolean
+  sessionError: boolean
+}
 
-export function EventDetails({ eventId }: EventDetailsProps) {
+export function EventDetails({ eventId, currentUserId, sessionPending, sessionError }: EventDetailsProps) {
   const id = Number(eventId)
   const validId = /^\d+$/.test(eventId ?? '') && Number.isSafeInteger(id) && id > 0
   const { data: event, isPending, error, refetch } = useEvent(validId ? id : 0)
@@ -77,12 +81,14 @@ export function EventDetails({ eventId }: EventDetailsProps) {
         </div>
       </dl>
       <p className="text-sm text-muted-foreground">
-        Organizer #{event.organizerId} · Game #{event.gameId}. Profile, game, and participation controls will
-        follow in later page work.
+        Organizer #{event.organizerId} · Game #{event.gameId}.
       </p>
-      <Button asChild variant="outline">
-        <Link to={`/events/${event.id}/edit`}>Edit event placeholder</Link>
-      </Button>
+      <EventAttendance
+        event={event}
+        currentUserId={currentUserId}
+        sessionPending={sessionPending}
+        sessionError={sessionError}
+      />
     </section>
   )
 }
