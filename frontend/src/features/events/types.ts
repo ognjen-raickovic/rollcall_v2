@@ -1,5 +1,6 @@
 export type EventStatus = 'scheduled' | 'cancelled'
 export type ExperienceLevel = 'all-levels' | 'beginner' | 'experienced'
+export type EventVisibility = 'public' | 'unlisted'
 
 export type Event = {
   id: number
@@ -17,6 +18,9 @@ export type Event = {
   experienceLevel: ExperienceLevel
   price: number
   imageUrl: string | null
+  tags: string[]
+  minimumAge: number
+  visibility: EventVisibility
   status: EventStatus
   createdAt: string
   updatedAt: string
@@ -36,4 +40,6 @@ export type EventFilters = {
   startsBefore?: string
   availableOnly?: boolean
   status?: EventStatus
+  visibility?: EventVisibility
+  upcomingOnly?: boolean
 }

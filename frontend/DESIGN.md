@@ -19,6 +19,19 @@ code-native tabletop illustration with lucide icons; external photography is not
 The login page pairs a short introduction with clearly selectable demo-player profiles.
 Creation/editing forms remain placeholders.
 
+Event discovery uses a labeled search/filter panel followed by a soonest-first card grid.
+Controls cover event title, city, game, and open seats, with a persistent reset link. Cards
+show local tabletop illustrations, a date badge, game/time, city/venue, price, and seat counts.
+Full tables have an explicit Full label. The four original SVG illustrations in `public/images/`
+share the approved palette; no remote photography is required.
+
+Event details use a full-width image, a readable information column, and an attendance/host
+sidebar that appears before the long information column on phones, keeping the join action
+close to the event heading. Keep the cover compact rather than letting it dominate the page.
+Show the exact address, schedule,
+age guidance, visibility, tags, and host/game names. Use live status feedback after joining or
+leaving and actionable error panels. Avoid exposing raw entity IDs in the interface.
+
 ## Token contract
 
 Colors, fonts, and radii live in `src/index.css`; components use semantic Tailwind classes.

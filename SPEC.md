@@ -13,8 +13,9 @@ Frontend only, preserving React 19, TypeScript, Vite, Tailwind CSS v4, shadcn/ui
 and TanStack Query. Mock data lives in memory and resets on reload. No backend, database,
 real authentication, payments, messaging, notifications, maps, or waitlists.
 
-The foundation established contracts, tokens, and simple routes. The current task adds a
-finished discovery homepage and frontend-only demo login/session. Event creation/editing forms
+The foundation, discovery homepage, and frontend-only demo login/session are implemented.
+The current task completes event discovery and participation with Montenegro mock events,
+filters, illustrated cards, complete details, and mutation feedback. Event creation/editing forms
 and advanced administration remain outside scope. `docs/entities.md` owns the detailed field,
 validation, access, and future HTTP contracts; local types/APIs implement them.
 
@@ -38,8 +39,10 @@ cached with TanStack Query and the selected demo user ID is stored in sessionSto
 
 ## Intended journeys
 
-- Discover: filter by search, city, game, category, date range, and open seats.
-- Inspect: read schedule, venue, organizer, game, experience level, price, and capacity.
+- Discover: upcoming scheduled public events, title search, city/game/open-seat filters,
+  category links from the homepage, reset controls, and loading/empty/error states.
+- Inspect: host and game names, full schedule/address, tags, minimum age, visibility,
+  experience level, price, participant count, and remaining seats or a clear Full status.
 - Organize: create valid events, then edit/remove only events you organize.
 - Participate: join upcoming scheduled events with space; leave before they start.
 - Sign in: choose one of eight demo profiles, return to the intended page, and log out via
@@ -51,8 +54,8 @@ cached with TanStack Query and the selected demo user ID is stored in sessionSto
 | Path | Current behavior |
 | --- | --- |
 | `/` | Hero, search, category navigation, featured upcoming events, how it works |
-| `/events` | Cards and URL-based search, city, game/category, and open-seat filtering |
-| `/events/:eventId` | Detail and session-aware join/leave, including all data states |
+| `/events` | Upcoming public Montenegro events; card grid, title/city/game/availability controls, category URLs, reset |
+| `/events/:eventId` | Complete details, host/game queries, session-aware join/leave, success/error feedback and missing-event recovery |
 | `/events/new` | Protected create placeholder, no submitted form |
 | `/events/:eventId/edit` | Protected edit placeholder, no submitted form |
 | `/login` | Demo profile selection with loading, empty, error, and pending states |
@@ -63,6 +66,17 @@ create/edit redirect to login, as does joining an event. Login accepts only safe
 `returnTo` paths and returns there; users explicitly retry joining after login. Logout updates
 all session consumers and a protected page redirects to login. Route guards simulate a signed-in
 session only; API organizer/capacity/access rules remain authoritative within the mock.
+
+Events may be public or unlisted. Unlisted events are accessible by direct link but absent
+from discovery; no invitation or private-event administration is implemented. Minimum age is
+displayed as event guidance, without collecting birth dates or adding age verification.
+Join/leave updates the detail cache immediately and refreshes affected lists. Hosts occupy
+a separate seat, full-table participants can still leave, and duplicate joins never add a
+second seat. Discovery defaults are applied by API filters, not by reading fixtures in UI code.
+
+The ten mock events cover Podgorica, Niksic, Budva, Kotor, Bar, Cetinje, Herceg Novi, and Tivat.
+Venues are fictional. Core dates roll forward on reload to keep the demo usable; past,
+canceled, unlisted, empty, full, and final-seat cases are retained for validation.
 
 ## Design
 
