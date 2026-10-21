@@ -104,7 +104,10 @@ Code: `frontend/src/features/events/`.
 | attendeeIds | number[] | Assigned empty; unique existing users, excluding organizer; managed by join/leave |
 | experienceLevel | ExperienceLevel | Required: `all-levels`, `beginner`, `experienced` |
 | price | number | Required, EUR, 0–10000, maximum two decimal places; 0 means free |
-| imageUrl | string or null | Required key; null for no image, otherwise HTTP(S) URL up to 2000 characters |
+| imageUrl | string or null | Required key; null, HTTP(S) URL up to 2000 characters, or local `/images/<kebab-name>.(svg,webp,png,jpg)` path |
+| tags | string[] | Required; 0–6 unique tags (case-insensitive), each 2–30 trimmed characters |
+| minimumAge | number | Required integer 0–99; 0 means all ages; informational event guidance |
+| visibility | EventVisibility | Required: `public` or `unlisted`; unlisted events stay out of discovery |
 | status | EventStatus | Assigned `scheduled` on create; update may set `scheduled` or `cancelled` |
 | createdAt | ISO timestamp string | Assigned on create, immutable |
 | updatedAt | ISO timestamp string | Assigned on create and successful state changes |
@@ -135,6 +138,12 @@ returns the unchanged event, even if full; repeat leave by a non-attendee return
 These no-ops do not change updatedAt. Open-event and organizer rules still apply to repeats.
 A user can only join/leave as themselves; there is no endpoint to change another attendee.
 
+Public discovery shows only upcoming scheduled public events. Unlisted events are accessible
+by direct link and can be joined under the same attendance rules; this is not an invitation
+system or a privacy guarantee. The mock API can explicitly filter unlisted records for contract
+checks, but the app does not expose this as discovery. Minimum age is guidance only: demo
+profiles do not have a date of birth, and there is no age verification in this workshop.
+
 Write checks occur in this order: actor, resource ID/existence, authorization, input validation,
 then state constraints. Join/leave check event availability before membership/capacity.
 
@@ -154,23 +163,32 @@ then state constraints. Join/leave check event availability before membership/ca
 
 | Filter | Validation and behavior |
 | --- | --- |
-| search | 0–100 characters; case-insensitive substring across title, description, venue |
+| search | 0–100 characters; case-insensitive substring of event title only |
 | city | 0–80 characters; case-insensitive exact match; empty means all |
 | gameId | Positive safe integer; exact match; unknown ID returns an empty list |
 | startsAfter | ISO timestamp with timezone; inclusive lower bound on event start |
 | startsBefore | ISO timestamp with timezone; inclusive upper bound; cannot precede startsAfter |
 | availableOnly | Boolean; true restricts to scheduled future events with open player seats |
 | status | `scheduled` or `cancelled` |
+| visibility | `public` (default) or `unlisted` |
+| upcomingOnly | Boolean; true restricts to scheduled events whose start is strictly in the future at request time |
 
 Unknown filters fail with 400. Results sort by start instant ascending, then ID. No filters
-returns all events, including canceled/past events. Future HTTP booleans/numbers are parsed
+returns all public events, including canceled/past events. `/events` and homepage discovery
+always use `upcomingOnly: true` and `visibility: 'public'`. City/game/availability filters combine
+with title search using AND; `availableOnly: true` excludes full tables. An empty city/game
+selector means no restriction. Future HTTP booleans/numbers are parsed
 from query strings before validation. Category discovery is a later route-composition concern:
 use the games catalog to choose matching game IDs; category is not a duplicated event field.
 
 Hooks: `useEvents`, `useEvent`, `useCreateEvent`, `useUpdateEvent`, `useRemoveEvent`,
 `useJoinEvent`, `useLeaveEvent`. Mutation variables contain the API input plus `actor` (and
 `id` where needed). Cache keys follow `[domain]`, `[domain, id]`, `[domain, filters]`.
-All event mutation successes invalidate the `['events']` prefix (lists and details); removal
+All event mutation successes invalidate the `['events']` prefix (lists and details). Join/leave
+also set the returned entity into `['events', id]` immediately; their errors invalidate the prefix
+to refresh possibly stale capacity. Pending controls prevent repeated clicks, while the API
+retains idempotent joins/leaves and atomic capacity checks. Visible success messages use a live
+status region; mutation errors use an alert. Removal
 also removes the deleted detail cache. Detail hooks disable invalid IDs; views explain invalid
 IDs rather than remaining in a pending state.
 
@@ -209,17 +227,26 @@ and credential contracts must be designed with the backend; these demo operation
 
 For UI composition, event discovery accepts structural game summaries (ID/name/category)
 from app routes, and attendance accepts a current-user ID and session loading/error flags.
+The detail route supplies host/game render slots composed from the users/games query components;
+these independently handle profile/game loading failures and retries without losing event details.
 These are component props, not duplicated entities or cross-feature imports. `/events` accepts
 `category` in its URL and filters events using games supplied by the route; the event REST
 contract itself still has no category field or category parameter.
 
 ## Fixture coverage and future implementation
 
-Each domain has eight English-language fixtures. Events include empty, full, beginner,
-experienced, free, paid, and canceled examples across Budapest, Szeged, Belgrade, and Novi Sad.
-Locations and events are illustrative, not real scheduled bookings. Dates are fixed in November
-2026; as time passes they intentionally become historical. Create new future events to exercise
-attendance after these dates. IDs in shared references must match users/games fixtures.
+Users and games each have eight English-language fixtures. Events have ten, covering Podgorica,
+Niksic, Budva, Bar, Kotor, Cetinje, Herceg Novi, and Tivat. They include seven upcoming public
+events, one canceled event, one historical event, and one upcoming unlisted event, plus empty,
+full, and final-seat examples. Existing demo profiles can host events in different cities.
+Cities/street names are Montenegro-inspired; venues and bookings are fictional.
+
+Event dates are generated relative to the page-load date in UTC. The core examples remain
+upcoming after reload; one deliberately uses a past offset. Dates remain stable within the
+runtime, and the API evaluates upcoming/available status at request time. Bundled illustrations
+in `frontend/public/images/` cover role-playing, trading cards, board games, and social deduction.
+No remote image service or real HTTP API is used. Local images have alt text and a fallback
+if an image fails. IDs in shared references must match users/games fixtures.
 
 A later backend should preserve these return payloads, error codes, and access semantics,
 with durable storage, authenticated sessions, database foreign keys, unique attendance,

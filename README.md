@@ -5,8 +5,8 @@ The Gathering, Yu-Gi-Oh!, board games, and social deduction games.
 
 Built for **AI-DEV 2026 Workshop 3**, from
 [jovanp-najveci/ai-frontend-starter](https://github.com/jovanp-najveci/ai-frontend-starter).
-The frontend includes domain mock APIs, a discovery homepage, event search/cards, and
-demo login with session-aware navigation and event participation. Creation/editing forms
+The frontend includes domain mock APIs, a discovery homepage, Montenegro event discovery
+and complete details, and demo login with session-aware navigation and participation. Creation/editing forms
 remain placeholders.
 
 ## Setup
@@ -66,9 +66,18 @@ See `docs/entities.md` for exact contracts and error behavior.
 
 Routes: `/`, `/events`, `/events/:eventId`, `/events/new`, `/events/:eventId/edit`, `/login`,
 and a not-found fallback. The homepage includes search, categories, and upcoming events.
-Search/category links filter the event list through URL parameters. Event detail supports
-join/leave for the selected demo user; anonymous protected actions redirect to login and back.
+Search/category links filter the upcoming public event list through URL parameters. Search
+matches event titles; city, game, and open-seat controls combine with it and can be reset.
+Event details show the host, game, address, schedule, tags, minimum age, visibility, and
+capacity. Join/leave updates visible seats and provides success/error feedback; anonymous
+protected actions redirect to login and back. Full, past, and canceled tables cannot be joined.
 Create/edit are protected placeholders. UI branding is always **RollCall**.
+
+Ten fictional Montenegro events cover Podgorica, Niksic, Budva, and other cities. Core dates
+roll forward on reload; special canceled, past, and unlisted examples remain available by
+direct link. Images are local SVG illustrations in `frontend/public/images/`, with no external
+image service. Unlisted is a discovery setting, not private-event security; minimum age is
+displayed as guidance without verification.
 
 ## Team workflow: Codex and Claude Code
 

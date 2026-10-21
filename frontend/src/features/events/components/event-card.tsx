@@ -1,9 +1,8 @@
 import { ArrowUpRight, MapPin, Users } from 'lucide-react'
 import { Link } from 'react-router'
 
-import { GameSymbol } from '@/components/game-symbol'
-
 import type { Event } from '../types'
+import { EventImage } from './event-image'
 
 type EventCardProps = { event: Event; gameName?: string; category?: string }
 
@@ -17,7 +16,7 @@ export function EventCard({ event, gameName, category }: EventCardProps) {
         ? 'Past event'
         : seats > 0
           ? `${seats} ${seats === 1 ? 'seat' : 'seats'} open`
-          : 'Table full'
+          : 'Full · 0 seats open'
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-xl border bg-card transition-colors hover:border-primary/60">
       <Link
@@ -25,17 +24,11 @@ export function EventCard({ event, gameName, category }: EventCardProps) {
         aria-label={`View ${event.title}`}
         className="relative flex h-40 items-center justify-center overflow-hidden bg-secondary focus-visible:outline-2 focus-visible:outline-ring focus-visible:-outline-offset-2"
       >
-        <div
-          aria-hidden="true"
-          className="absolute -top-16 -right-8 size-64 rotate-12 rounded-xl border border-primary/10"
-        />
-        <div
-          aria-hidden="true"
-          className="absolute -bottom-16 -left-8 size-48 -rotate-12 rounded-xl border border-primary/10"
-        />
-        <GameSymbol
+        <EventImage
+          src={event.imageUrl}
+          title={event.title}
           category={category}
-          className="size-20 text-primary/70 transition-transform group-hover:scale-105"
+          className="absolute inset-0"
         />
         <span className="absolute top-4 left-4 rounded-md border bg-card px-3 py-2 text-center">
           <span className="block text-xs font-semibold text-primary uppercase">
@@ -53,6 +46,7 @@ export function EventCard({ event, gameName, category }: EventCardProps) {
         <p className="text-xs font-semibold tracking-wide text-primary uppercase">
           {gameName ?? 'Tabletop gaming'} ·{' '}
           <time dateTime={event.startsAt}>
+            {date.toLocaleDateString('en-GB', { weekday: 'short' })},{' '}
             {date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
           </time>
         </p>
@@ -69,7 +63,7 @@ export function EventCard({ event, gameName, category }: EventCardProps) {
         <div className="mt-auto flex items-center justify-between gap-2 border-t pt-4 text-xs text-muted-foreground">
           <span className="flex items-center gap-2">
             <Users className="size-4" aria-hidden="true" />
-            {event.attendeeIds.length} going
+            {event.attendeeIds.length}/{event.capacity} players
           </span>
           <span className="flex items-center gap-2 text-primary">
             {availability}

@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { ArrowRight, CalendarDays } from 'lucide-react'
 import { Link } from 'react-router'
 
@@ -11,8 +10,7 @@ import { EventCard } from './event-card'
 type FeaturedEventsProps = { games?: { id: number; name: string; category: string }[] }
 
 export function FeaturedEvents({ games }: FeaturedEventsProps) {
-  const [startsAfter] = useState(() => new Date().toISOString())
-  const events = useEvents({ status: 'scheduled', startsAfter })
+  const events = useEvents({ upcomingOnly: true, visibility: 'public' })
   return (
     <section id="upcoming" aria-labelledby="upcoming-title" className="scroll-mt-8 border-t py-12">
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">

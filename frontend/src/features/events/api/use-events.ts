@@ -50,7 +50,11 @@ export function useJoinEvent() {
   const client = useQueryClient()
   return useMutation({
     mutationFn: ({ id, actor }: { id: number; actor: MockActor }) => eventsApi.join(id, actor),
-    onSuccess: () => client.invalidateQueries({ queryKey: ['events'] }),
+    onSuccess: (event) => {
+      client.setQueryData(['events', event.id], event)
+      return client.invalidateQueries({ queryKey: ['events'] })
+    },
+    onError: () => client.invalidateQueries({ queryKey: ['events'] }),
   })
 }
 
@@ -58,6 +62,10 @@ export function useLeaveEvent() {
   const client = useQueryClient()
   return useMutation({
     mutationFn: ({ id, actor }: { id: number; actor: MockActor }) => eventsApi.leave(id, actor),
-    onSuccess: () => client.invalidateQueries({ queryKey: ['events'] }),
+    onSuccess: (event) => {
+      client.setQueryData(['events', event.id], event)
+      return client.invalidateQueries({ queryKey: ['events'] })
+    },
+    onError: () => client.invalidateQueries({ queryKey: ['events'] }),
   })
 }

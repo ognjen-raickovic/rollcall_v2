@@ -34,6 +34,9 @@ test('RollCall mock contracts and event lifecycle', async (t) => {
       experienceLevel: 'beginner',
       price: 0,
       imageUrl: null,
+      tags: ['Beginner friendly'],
+      minimumAge: 16,
+      visibility: 'public',
     }
 
     await t.test('catalog references, filtering, missing records, and isolated responses', async () => {
@@ -79,6 +82,22 @@ test('RollCall mock contracts and event lifecycle', async (t) => {
       await assert.rejects(eventsApi.create({ ...input, capacity: 0 }, host), errorCode('VALIDATION_ERROR'))
       await assert.rejects(eventsApi.create({ ...input, price: 1.234 }, host), errorCode('VALIDATION_ERROR'))
       await assert.rejects(
+        eventsApi.create({ ...input, minimumAge: -1 }, host),
+        errorCode('VALIDATION_ERROR'),
+      )
+      await assert.rejects(
+        eventsApi.create({ ...input, tags: ['Casual', 'casual'] }, host),
+        errorCode('VALIDATION_ERROR'),
+      )
+      await assert.rejects(
+        eventsApi.create({ ...input, visibility: 'private' }, host),
+        errorCode('VALIDATION_ERROR'),
+      )
+      await assert.rejects(
+        eventsApi.create({ ...input, imageUrl: '/images/../secret.svg' }, host),
+        errorCode('VALIDATION_ERROR'),
+      )
+      await assert.rejects(
         eventsApi.list({ startsAfter: input.endsAt, startsBefore: input.startsAt }),
         errorCode('VALIDATION_ERROR'),
       )
@@ -86,6 +105,59 @@ test('RollCall mock contracts and event lifecycle', async (t) => {
     })
 
     const event = await eventsApi.create(input, host)
+    await t.test('Montenegro discovery filters, visibility, and historical exclusions', async () => {
+      const publicEvents = await eventsApi.list({ upcomingOnly: true })
+      assert.ok(publicEvents.length >= 7)
+      assert.ok(
+        publicEvents.every(
+          (item) =>
+            item.visibility === 'public' &&
+            item.status === 'scheduled' &&
+            Date.parse(item.startsAt) > Date.now(),
+        ),
+      )
+      assert.ok(!publicEvents.some((item) => [7, 9, 10].includes(item.id)))
+      for (const city of ['Podgorica', 'Niksic', 'Budva', 'Bar', 'Kotor', 'Cetinje', 'Tivat']) {
+        const matches = await eventsApi.list({ upcomingOnly: true, city: city.toLowerCase() })
+        assert.ok(matches.length > 0, `Upcoming events in ${city}`)
+        assert.ok(matches.every((item) => item.city.toLowerCase() === city.toLowerCase()))
+      }
+      assert.equal(
+        (await eventsApi.list({ search: 'COMMANDER NIGHT', city: 'niksic', gameId: 2, upcomingOnly: true }))
+          .length,
+        1,
+      )
+      assert.equal(
+        (await eventsApi.list({ search: 'COMMANDER NIGHT', availableOnly: true, upcomingOnly: true })).length,
+        0,
+      )
+      assert.equal(
+        (await eventsApi.list({ search: 'observatory', upcomingOnly: true })).length,
+        0,
+        'Search matches title, not description',
+      )
+      assert.equal((await eventsApi.list({ search: 'No matching title', upcomingOnly: true })).length, 0)
+      const hidden = await eventsApi.get(10)
+      assert.equal(hidden.visibility, 'unlisted')
+      assert.ok(!(await eventsApi.list()).some((item) => item.id === hidden.id))
+      assert.ok((await eventsApi.list({ visibility: 'unlisted' })).some((item) => item.id === hidden.id))
+      assert.equal((await eventsApi.get(7)).status, 'cancelled')
+      await assert.rejects(eventsApi.join(7, player), errorCode('CONFLICT'))
+      await assert.rejects(eventsApi.join(9, player), errorCode('CONFLICT'))
+      await assert.rejects(eventsApi.join(2, { userId: 8 }), errorCode('CONFLICT'))
+      const full = await eventsApi.get(2)
+      assert.deepEqual(
+        await eventsApi.join(2, { userId: 3 }),
+        full,
+        'Repeated join stays idempotent even when full',
+      )
+      const images = new Set(publicEvents.filter((item) => item.id !== event.id).map((item) => item.imageUrl))
+      const { stat } = await import('node:fs/promises')
+      for (const image of images) {
+        assert.ok(image?.startsWith('/images/'))
+        assert.ok((await stat(fileURLToPath(new URL(`../public${image}`, import.meta.url)))).isFile())
+      }
+    })
     await t.test('CRUD, organizer access, filtering, and clone isolation', async () => {
       assert.equal(event.organizerId, 1)
       assert.deepEqual(event.attendeeIds, [])

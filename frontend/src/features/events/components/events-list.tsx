@@ -1,13 +1,12 @@
-import { MapPin, Search, X } from 'lucide-react'
-import { Form, Link, useSearchParams } from 'react-router'
+﻿import { useSearchParams } from 'react-router'
+import { CalendarDays } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
 
 import { useEvents } from '../api/use-events'
 import { EventCard } from './event-card'
+import { EventFilters } from './event-filters'
 
 type EventsListProps = {
   games?: { id: number; name: string; category: string }[]
@@ -16,125 +15,118 @@ type EventsListProps = {
   retryGames: () => void
 }
 
-export function EventsList({ games, gamesPending, gamesError, retryGames }: EventsListProps) {
-  const [params] = useSearchParams()
+export function EventsList({ games = [], gamesPending, gamesError, retryGames }: EventsListProps) {
+  const [params, setParams] = useSearchParams()
   const search = params.get('search') ?? ''
   const city = params.get('city') ?? ''
   const category = params.get('category') ?? ''
-  const rawGameId = params.get('gameId')
+  const rawGameId = params.get('gameId') ?? ''
   const gameId = rawGameId ? Number(rawGameId) : undefined
-  const availableOnly = params.get('availableOnly') === 'true'
+  const rawAvailability = params.get('availableOnly') ?? ''
+  const availableOnly = rawAvailability === 'true'
   const invalidGameId =
-    rawGameId !== null && (!/^\d+$/.test(rawGameId) || !Number.isSafeInteger(gameId) || Number(gameId) < 1)
-  const { data, isPending, error, refetch } = useEvents({
+    Boolean(rawGameId) && (!/^\d+$/.test(rawGameId) || !Number.isSafeInteger(gameId) || Number(gameId) < 1)
+  const invalidAvailability = !['', 'true', 'false'].includes(rawAvailability)
+  const invalidCategory =
+    Boolean(category) && !gamesPending && !gamesError && !games.some((game) => game.category === category)
+  const catalog = useEvents({ upcomingOnly: true, visibility: 'public' })
+  const result = useEvents({
     search,
     city,
     gameId: invalidGameId ? undefined : gameId,
     availableOnly,
+    upcomingOnly: true,
+    visibility: 'public',
   })
-  const matchingGameIds = new Set(games?.filter((game) => game.category === category).map((game) => game.id))
-  const events = category ? data?.filter((event) => matchingGameIds.has(event.gameId)) : data
-  const categoryPending = Boolean(category) && gamesPending
-  const categoryError = Boolean(category) && gamesError
-  const hasFilters = Boolean(search || city || category || rawGameId || availableOnly)
+  const matchingGameIds = new Set(games.filter((game) => game.category === category).map((game) => game.id))
+  const events = category ? result.data?.filter((event) => matchingGameIds.has(event.gameId)) : result.data
+  const cities = [...new Set(catalog.data?.map((event) => event.city))].sort((a, b) => a.localeCompare(b))
+  // Match the canonical option value when an incoming URL uses different city capitalization.
+  const selectedCity = cities.find((item) => item.toLowerCase() === city.trim().toLowerCase()) ?? city
+  const pending = result.isPending || catalog.isPending || gamesPending
+  const error = result.error || catalog.error || gamesError
+  const invalid = invalidGameId || invalidAvailability || invalidCategory
+
+  function retry() {
+    if (gamesError) retryGames()
+    void catalog.refetch()
+    void result.refetch()
+  }
 
   return (
     <div className="mt-8 space-y-6">
-      <Form
-        key={params.toString()}
-        method="get"
-        action="/events"
-        role="search"
-        aria-label="Filter events"
-        className="grid gap-4 rounded-xl border bg-card p-4 md:grid-cols-[1fr_1fr_auto] md:items-end md:p-6"
-      >
-        {category && <input type="hidden" name="category" value={category} />}
-        {rawGameId && <input type="hidden" name="gameId" value={rawGameId} />}
-        {availableOnly && <input type="hidden" name="availableOnly" value="true" />}
-        <div className="space-y-2">
-          <Label htmlFor="event-search">
-            <Search className="size-4 text-primary" aria-hidden="true" /> Search events
-          </Label>
-          <Input
-            id="event-search"
-            name="search"
-            defaultValue={search}
-            maxLength={100}
-            placeholder="Search titles, descriptions, or venues"
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="event-city">
-            <MapPin className="size-4 text-primary" aria-hidden="true" /> City
-          </Label>
-          <Input id="event-city" name="city" defaultValue={city} maxLength={80} placeholder="Any city" />
-        </div>
-        <Button type="submit">Find events</Button>
-      </Form>
-      {hasFilters && (
-        <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-          {category && (
-            <span className="rounded-md bg-accent px-3 py-1 text-accent-foreground">
-              {category.replaceAll('-', ' ')}
-            </span>
-          )}
-          {availableOnly && <span>Open seats only</span>}
-          <Link
-            to="/events"
-            className="inline-flex min-h-10 items-center gap-2 text-primary hover:underline focus-visible:outline-2 focus-visible:outline-ring"
-          >
-            <X className="size-4" aria-hidden="true" /> Clear filters
-          </Link>
-        </div>
-      )}
-      {invalidGameId ? (
-        <div role="alert" className="space-y-4">
-          <p>This game filter isn’t valid.</p>
-          <Button asChild variant="outline">
-            <Link to="/events">Reset filters</Link>
+      <EventFilters
+        search={search}
+        city={selectedCity}
+        gameId={rawGameId}
+        category={category}
+        availableOnly={availableOnly}
+        cities={cities}
+        games={games}
+        pending={catalog.isPending || gamesPending}
+        filterKey={params.toString()}
+      />
+      {invalid ? (
+        <div role="alert" className="space-y-4 rounded-xl border bg-card p-8">
+          <p className="font-semibold">One of these filters isn’t valid.</p>
+          <p className="text-sm text-muted-foreground">
+            Reset the filters and choose a city, game, or availability from the list.
+          </p>
+          <Button variant="outline" onClick={() => setParams({})}>
+            Reset filters
           </Button>
         </div>
-      ) : isPending || categoryPending ? (
+      ) : pending ? (
         <div role="status" aria-label="Loading events" className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 3 }, (_, index) => (
+          {Array.from({ length: 6 }, (_, index) => (
             <Skeleton key={index} className="h-96" />
           ))}
         </div>
-      ) : error || categoryError ? (
-        <div role="alert" className="space-y-4">
-          <p>Events could not be loaded.</p>
-          <Button
-            variant="outline"
-            onClick={() => {
-              if (categoryError) retryGames()
-              void refetch()
-            }}
-          >
+      ) : error ? (
+        <div role="alert" className="space-y-4 rounded-xl border bg-card p-8">
+          <p className="font-semibold">We couldn’t load the event collection.</p>
+          <p className="text-sm text-muted-foreground">Please try again. Your filters will stay in place.</p>
+          <Button variant="outline" onClick={retry}>
             Try again
+          </Button>
+          <Button variant="ghost" onClick={() => setParams({})}>
+            Reset filters
           </Button>
         </div>
       ) : !events?.length ? (
         <div role="status" className="space-y-4 rounded-xl border bg-card p-8 text-center">
-          <p className="font-semibold">No events match your search.</p>
+          <CalendarDays className="mx-auto size-8 text-primary" aria-hidden="true" />
+          <p className="font-semibold">No upcoming events match your filters.</p>
           <p className="text-sm text-muted-foreground">
-            Try another game or city, or clear your filters to see every table.
+            Try another city or game, or include full tables. Your next group might be one filter away.
           </p>
-          <Button asChild variant="outline">
-            <Link to="/events">Show all events</Link>
+          <Button variant="outline" onClick={() => setParams({})}>
+            Show all upcoming events
           </Button>
         </div>
       ) : (
-        <ul className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {events.map((event) => (
-            <li key={event.id}>
-              <EventCard
-                event={event}
-                gameName={games?.find((game) => game.id === event.gameId)?.name}
-                category={games?.find((game) => game.id === event.gameId)?.category}
-              />
-            </li>
-          ))}
-        </ul>
+        <>
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <p role="status" className="text-sm text-muted-foreground">
+              <span className="font-semibold text-foreground">{events.length}</span> upcoming{' '}
+              {events.length === 1 ? 'event' : 'events'}
+              {city ? ` in ${selectedCity}` : ' across Montenegro'}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Soonest first · Times shown in your local timezone
+            </p>
+          </div>
+          <ul className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {events.map((event) => {
+              const game = games.find((item) => item.id === event.gameId)
+              return (
+                <li key={event.id}>
+                  <EventCard event={event} gameName={game?.name} category={game?.category} />
+                </li>
+              )
+            })}
+          </ul>
+        </>
       )}
     </div>
   )

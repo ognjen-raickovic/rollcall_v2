@@ -89,7 +89,7 @@ export function DiscoveryHero() {
           <Input
             id="discovery-city"
             name="city"
-            placeholder="City, e.g. Budapest"
+            placeholder="City, e.g. Podgorica"
             maxLength={80}
             className="h-12 bg-background"
           />

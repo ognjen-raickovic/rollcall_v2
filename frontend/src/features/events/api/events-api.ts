@@ -28,9 +28,23 @@ const eventFields = z.strictObject({
   experienceLevel: z.enum(['all-levels', 'beginner', 'experienced']),
   price: z.number().min(0).max(10000).multipleOf(0.01),
   imageUrl: z
-    .url({ protocol: /^https?$/ })
-    .max(2000)
+    .union([
+      z.url({ protocol: /^https?$/ }).max(2000),
+      z
+        .string()
+        .max(2000)
+        .regex(/^\/images\/[a-z0-9-]+\.(svg|webp|png|jpg)$/),
+    ])
     .nullable(),
+  tags: z
+    .array(z.string().trim().min(2).max(30))
+    .max(6)
+    .refine(
+      (tags) => new Set(tags.map((tag) => tag.toLowerCase())).size === tags.length,
+      'Tags must be unique.',
+    ),
+  minimumAge: z.number().int().min(0).max(99),
+  visibility: z.enum(['public', 'unlisted']),
 })
 const updateSchema = eventFields
   .extend({ status: z.enum(['scheduled', 'cancelled']) })
@@ -45,6 +59,8 @@ const filtersSchema = z
     startsBefore: timestamp.optional(),
     availableOnly: z.boolean().optional(),
     status: z.enum(['scheduled', 'cancelled']).optional(),
+    visibility: z.enum(['public', 'unlisted']).optional(),
+    upcomingOnly: z.boolean().optional(),
   })
   .refine(
     (value) =>
@@ -101,10 +117,13 @@ export const eventsApi = {
       return events
         .filter(
           (event) =>
-            `${event.title} ${event.description} ${event.venue}`.toLowerCase().includes(search) &&
+            event.title.toLowerCase().includes(search) &&
+            event.visibility === (input.visibility ?? 'public') &&
             (!input.city || event.city.toLowerCase() === input.city.toLowerCase()) &&
             (input.gameId === undefined || event.gameId === input.gameId) &&
             (!input.status || event.status === input.status) &&
+            (!input.upcomingOnly ||
+              (event.status === 'scheduled' && Date.parse(event.startsAt) > Date.now())) &&
             (!input.startsAfter || Date.parse(event.startsAt) >= Date.parse(input.startsAfter)) &&
             (!input.startsBefore || Date.parse(event.startsAt) <= Date.parse(input.startsBefore)) &&
             (!input.availableOnly ||
