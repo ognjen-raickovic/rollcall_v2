@@ -1,29 +1,61 @@
-# [App name]: design
+﻿# RollCall: design
 
-> The team fills this file in together with Claude. Prompt (any language is fine):
-> "Interview me about our app's design, one question at a time, then fill in DESIGN.md
-> and update the tokens in src/index.css."
+## Product and users
 
-## Product
-[What the app does, in one sentence.]
+Help tabletop players find a table and organizers fill events. Serve new and experienced
+players on phones and desktops. Tone: welcoming, clear, understated. Brand: **RollCall**.
 
-## Users
-[Who uses it, their age, which device they use most.]
+## Visual direction
 
-## Tone
-[Three adjectives, e.g. playful, fast, reliable.]
+Use Meetup's event discovery hierarchy as inspiration: useful filters, scannable dates,
+locations, game labels, and available seats. Use charcoal/navy surfaces and restrained purple
+accents for a slightly gaming-inspired identity, without copying Meetup's brand.
+No reference screenshots are checked in yet; optional references belong in `docs/ref/`
+relative to this file.
 
-## Visuals
-- Colors: [primary, accent, background]. Tokens live in `src/index.css`.
-- Fonts: [headings], [body]. Two fonts at most.
-- Shape: [rounded or sharp, shadows or borders].
-- Images: [what kind, how large].
-- Icons: `lucide-react` only.
+Foundation routes use simple headings, text, and links. Rich cards, photography, filters,
+and complete forms are later page work.
 
-## References
-- `docs/ref/[image].png`: [what you like about it, and what you don't]
+## Token contract
+
+Colors, fonts, and radii live in `src/index.css`; components use semantic Tailwind classes.
+Dark is the default. There is no theme switch or separate light palette yet.
+
+| Token | Value | Purpose |
+| --- | --- | --- |
+| background | `#10141f` | Charcoal/navy canvas |
+| foreground | `#f1f3f9` | Main text |
+| card / popover | `#191f2e` | Raised surfaces |
+| card-foreground / popover-foreground | `#f1f3f9` | Raised-surface text |
+| primary | `#b6a0ff` | Actions, links, brand |
+| primary-foreground | `#171126` | Text on purple actions |
+| secondary / muted | `#252c3d` | Secondary controls and quiet surfaces |
+| secondary-foreground | `#f1f3f9` | Secondary-control text |
+| muted-foreground | `#aab4c9` | Supporting text |
+| accent | `#34294d` | Purple hover surface |
+| accent-foreground | `#e6ddff` | Text on accent |
+| destructive | `#ff9b9b` | Error text and destructive actions |
+| destructive-foreground | `#301018` | Future destructive-control text |
+| border / input | `#59657d` | Borders and field boundaries |
+| ring | `#b6a0ff` | Keyboard focus |
+| font-heading / font-body | system sans-serif | Clean type without remote font requests |
+| radius | `0.75rem` | Base radius; sm/md/lg/xl derive from it |
+
+## Layout and interaction
+
+- Mobile first: one column on phones; future cards can expand to two/three columns.
+- Main content `max-w-6xl`, comfortable padding, wrapping navigation, and readable line lengths.
+- Starter spacing scale: 1, 2, 3, 4, 6, 8, 12, 16. Larger gaps between sections.
+- One primary heading per page; body text 14–16 px, lines around 70 characters.
+- Icons: `lucide-react` only, never emoji. Future images should show actual games/tables,
+  have consistent aspect ratios and useful alt text. No generated assets needed now.
+- Favor borders/spacing over shadows. Use existing shadcn components before adding primitives.
+- Semantic links/buttons, labeled inputs, visible focus, skip link, and text contrast at least 4.5:1.
+- Data views include loading, empty, error, and not-found states. Inspect at 375 px and 1440 px.
 
 ## Don't
-- Gradients without a reason, emoji instead of icons, a "Welcome to…" hero
-- Everything in cards with shadows
-- [your own rules]
+
+- No large promotional hero, unnecessary gradients, neon glow, or ornamental animation.
+- No heavy gaming fonts, emoji icons, or everything inside shadowed cards.
+- No raw color/font/radius values in components; add and document tokens first.
+- No polished discovery pages, forms, or authentication UI during foundation work.

@@ -9,26 +9,28 @@
  */
 :root {
   --radius: 0.75rem;
-  --background: oklch(0.99 0.004 300);
-  --foreground: oklch(0.22 0.03 300);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.22 0.03 300);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.22 0.03 300);
-  --primary: oklch(0.38 0.12 300);
-  --primary-foreground: oklch(0.98 0 0);
-  --secondary: oklch(0.95 0.02 300);
-  --secondary-foreground: oklch(0.3 0.08 300);
-  --muted: oklch(0.96 0.01 300);
-  --muted-foreground: oklch(0.5 0.03 300);
-  --accent: oklch(0.8 0.13 75);
-  --accent-foreground: oklch(0.25 0.05 300);
-  --destructive: oklch(0.58 0.2 27);
-  --border: oklch(0.91 0.02 300);
-  --input: oklch(0.91 0.02 300);
-  --ring: oklch(0.55 0.12 300);
-  --font-heading: 'Poppins', ui-sans-serif, system-ui, sans-serif;
-  --font-body: 'Mulish', ui-sans-serif, system-ui, sans-serif;
+  color-scheme: dark;
+  --background: #10141f;
+  --foreground: #f1f3f9;
+  --card: #191f2e;
+  --card-foreground: #f1f3f9;
+  --popover: #191f2e;
+  --popover-foreground: #f1f3f9;
+  --primary: #b6a0ff;
+  --primary-foreground: #171126;
+  --secondary: #252c3d;
+  --secondary-foreground: #f1f3f9;
+  --muted: #252c3d;
+  --muted-foreground: #aab4c9;
+  --accent: #34294d;
+  --accent-foreground: #e6ddff;
+  --destructive: #ff9b9b;
+  --destructive-foreground: #301018;
+  --border: #59657d;
+  --input: #59657d;
+  --ring: #b6a0ff;
+  --font-heading: ui-sans-serif, system-ui, sans-serif;
+  --font-body: ui-sans-serif, system-ui, sans-serif;
 }
 
 @theme inline {
@@ -47,6 +49,7 @@
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);

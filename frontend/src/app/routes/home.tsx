@@ -5,13 +5,13 @@ import { Button } from '@/components/ui/button'
 export function Home() {
   return (
     <section className="py-16">
-      <h1 className="text-4xl font-bold tracking-tight md:text-5xl">Workshop 3 starter</h1>
+      <h1 className="text-3xl font-bold tracking-tight">Find your next table</h1>
       <p className="mt-4 max-w-xl text-muted-foreground">
-        An empty React project ready for Claude Code. First step: let Claude interview you about the design
-        and write DESIGN.md.
+        Discover, organize, and join tabletop gaming events with RollCall. Explore D&D, trading card games,
+        board games, and social deduction meetups.
       </p>
       <Button asChild className="mt-8">
-        <Link to="/listings">See the example list</Link>
+        <Link to="/events">Explore events</Link>
       </Button>
     </section>
   )

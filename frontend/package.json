@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "typecheck": "tsc -b",
+    "test:mock": "node --test scripts/check-mock-api.mjs",
     "lint": "oxlint && node scripts/check-boundaries.mjs",
     "format": "prettier --write src",
     "preview": "vite preview"

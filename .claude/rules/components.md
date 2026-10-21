@@ -5,7 +5,7 @@ paths:
 
 # Components
 
-- One component per file, named export, kebab-case file name (`listing-card.tsx`)
+- One component per file, named export, kebab-case file name (`events-list.tsx`)
 - Props type defined right above the component
 - Variants (size, state) via `cva`, not if statements inside `className`
 - A component does not fetch data: it gets it through props or a hook from `src/features/<name>/api/use-<name>.ts`

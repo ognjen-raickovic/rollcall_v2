@@ -1,0 +1,68 @@
+import type { Game } from '../types'
+
+export const mockGames: Game[] = [
+  {
+    id: 1,
+    name: 'Dungeons & Dragons',
+    category: 'role-playing',
+    description: 'Collaborative fantasy adventures guided by a Dungeon Master.',
+    minPlayers: 2,
+    maxPlayers: 7,
+  },
+  {
+    id: 2,
+    name: 'Magic: The Gathering',
+    category: 'trading-card',
+    description: 'Build decks and explore casual or competitive formats.',
+    minPlayers: 2,
+    maxPlayers: 6,
+  },
+  {
+    id: 3,
+    name: 'Yu-Gi-Oh!',
+    category: 'trading-card',
+    description: 'Summon monsters and duel with your own deck.',
+    minPlayers: 2,
+    maxPlayers: 2,
+  },
+  {
+    id: 4,
+    name: 'Catan',
+    category: 'board-game',
+    description: 'Trade resources and build settlements together.',
+    minPlayers: 3,
+    maxPlayers: 4,
+  },
+  {
+    id: 5,
+    name: 'Blood on the Clocktower',
+    category: 'social-deduction',
+    description: 'A storyteller guides a village through mystery and deduction.',
+    minPlayers: 5,
+    maxPlayers: 20,
+  },
+  {
+    id: 6,
+    name: 'Ticket to Ride',
+    category: 'board-game',
+    description: 'Connect cities by collecting and playing train cards.',
+    minPlayers: 2,
+    maxPlayers: 5,
+  },
+  {
+    id: 7,
+    name: 'Pathfinder',
+    category: 'role-playing',
+    description: 'Fantasy role-playing with tactical choices and shared stories.',
+    minPlayers: 2,
+    maxPlayers: 7,
+  },
+  {
+    id: 8,
+    name: 'Pandemic',
+    category: 'board-game',
+    description: 'Work as a team to contain outbreaks around the world.',
+    minPlayers: 2,
+    maxPlayers: 4,
+  },
+]
