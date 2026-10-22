@@ -1,11 +1,12 @@
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router'
 
 import { ApiError } from '@/lib/mock-db'
 
-import { eventCover, eventFormDefaults, eventFormSchema } from '../api/event-form-values'
+import { eventFormDefaults, eventFormSchema } from '../api/event-form-values'
+import { eventCover } from '../api/event-covers'
 import type { EventFormValues } from '../api/event-form-values'
 import { useCreateEvent, useUpdateEvent } from '../api/use-events'
 import type { Event, NewEvent } from '../types'
@@ -17,7 +18,10 @@ export function useEventForm({ event, currentUserId, games }: UseEventFormOption
   const navigate = useNavigate()
   const create = useCreateEvent()
   const update = useUpdateEvent()
+  const [imagePending, setImagePending] = useState(false)
+  const [imageError, setImageError] = useState<string | null>(null)
   const schema = eventFormSchema.superRefine((values, context) => {
+    if (imageError) context.addIssue({ code: 'custom', path: ['imageUrl'], message: imageError })
     if (event && values.capacity < event.attendeeIds.length)
       context.addIssue({
         code: 'custom',
@@ -36,16 +40,22 @@ export function useEventForm({ event, currentUserId, games }: UseEventFormOption
     defaultValues: eventFormDefaults(event),
     reValidateMode: 'onChange',
   })
-  const pending = create.isPending || update.isPending || form.formState.isSubmitting
+  const pending = imagePending || create.isPending || update.isPending || form.formState.isSubmitting
+
+  function reportImageError(message: string | null) {
+    setImageError(message)
+    if (message) form.setError('imageUrl', { message })
+    else form.clearErrors('imageUrl')
+  }
 
   const submit = form.handleSubmit(async (values) => {
-    if (saving.current) return
+    if (saving.current || imagePending) return
     saving.current = true
     form.clearErrors('root')
     const game = games.find((item) => item.id === values.gameId)
     const input: NewEvent = {
       ...values,
-      imageUrl: event && event.gameId === values.gameId ? event.imageUrl : eventCover(game?.category),
+      imageUrl: values.imageUrl ?? eventCover(game?.category),
     }
     try {
       const actor = { userId: currentUserId }
@@ -80,5 +90,5 @@ export function useEventForm({ event, currentUserId, games }: UseEventFormOption
       saving.current = false
     }
   })
-  return { form, submit, pending }
+  return { form, submit, pending, imagePending, setImagePending, reportImageError }
 }

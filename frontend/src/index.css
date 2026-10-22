@@ -33,6 +33,29 @@
   --font-body: ui-sans-serif, system-ui, sans-serif;
 }
 
+:root[data-theme='light'] {
+  color-scheme: light;
+  --background: #f5f6fa;
+  --foreground: #1b2233;
+  --card: #ffffff;
+  --card-foreground: #1b2233;
+  --popover: #ffffff;
+  --popover-foreground: #1b2233;
+  --primary: #6545b5;
+  --primary-foreground: #ffffff;
+  --secondary: #e9ecf4;
+  --secondary-foreground: #252c3d;
+  --muted: #e9ecf4;
+  --muted-foreground: #536079;
+  --accent: #eee8fc;
+  --accent-foreground: #493077;
+  --destructive: #b42335;
+  --destructive-foreground: #ffffff;
+  --border: #7b879d;
+  --input: #7b879d;
+  --ring: #6545b5;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

@@ -18,7 +18,7 @@ export function EventImage({ src, title, category, className, priority = false }
       {src && failedSrc !== src ? (
         <img
           src={src}
-          alt={`Tabletop illustration for ${title}`}
+          alt={`Event cover for ${title}`}
           loading={priority ? 'eager' : 'lazy'}
           className="h-full w-full object-cover"
           onError={() => setFailedSrc(src)}

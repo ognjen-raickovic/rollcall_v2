@@ -1,3 +1,5 @@
+import type { EventTag } from './event-tags'
+
 export type EventStatus = 'scheduled' | 'cancelled'
 export type ExperienceLevel = 'all-levels' | 'beginner' | 'experienced'
 export type EventVisibility = 'public' | 'private' | 'unlisted'
@@ -18,7 +20,7 @@ export type Event = {
   experienceLevel: ExperienceLevel
   price: number
   imageUrl: string | null
-  tags: string[]
+  tags: EventTag[]
   minimumAge: number
   visibility: EventVisibility
   status: EventStatus
