@@ -14,6 +14,9 @@ test('RollCall mock contracts and event lifecycle', async (t) => {
     const { usersApi } = await server.ssrLoadModule('/src/features/users/api/users-api.ts')
     const { gamesApi } = await server.ssrLoadModule('/src/features/games/api/games-api.ts')
     const { eventsApi } = await server.ssrLoadModule('/src/features/events/api/events-api.ts')
+    const { eventFormSchema, eventFormDefaults, localDateTime, isoDateTime } = await server.ssrLoadModule(
+      '/src/features/events/api/event-form-values.ts',
+    )
     const { sessionApi } = await server.ssrLoadModule('/src/features/users/api/session-api.ts')
     const { safeReturnTo, loginPath } = await server.ssrLoadModule('/src/lib/auth-navigation.ts')
     const { mockReferences } = await server.ssrLoadModule('/src/lib/mock-db.ts')
@@ -90,7 +93,7 @@ test('RollCall mock contracts and event lifecycle', async (t) => {
         errorCode('VALIDATION_ERROR'),
       )
       await assert.rejects(
-        eventsApi.create({ ...input, visibility: 'private' }, host),
+        eventsApi.create({ ...input, visibility: 'members-only' }, host),
         errorCode('VALIDATION_ERROR'),
       )
       await assert.rejects(
@@ -102,6 +105,81 @@ test('RollCall mock contracts and event lifecycle', async (t) => {
         errorCode('VALIDATION_ERROR'),
       )
       assert.deepEqual(await eventsApi.list(), before)
+    })
+
+    await t.test('shared form validation and local date/time conversion', async () => {
+      const date = new Date(Date.now() + 3 * day)
+      date.setUTCHours(12, 30, 0, 0)
+      assert.equal(isoDateTime(localDateTime(date.toISOString())), date.toISOString())
+      assert.equal(isoDateTime('2028-02-30T12:30'), '')
+      assert.equal(isoDateTime(''), '')
+      const formValues = {
+        ...input,
+        startsAt: localDateTime(input.startsAt),
+        endsAt: localDateTime(input.endsAt),
+        title: '  A welcoming test table  ',
+        tags: 'Casual play,  New players',
+      }
+      const parsed = eventFormSchema.parse(formValues)
+      assert.equal(parsed.title, 'A welcoming test table')
+      assert.deepEqual(parsed.tags, ['Casual play', 'New players'])
+      assert.ok(Date.parse(parsed.startsAt) > Date.now())
+      const empty = eventFormSchema.safeParse(eventFormDefaults())
+      assert.equal(empty.success, false)
+      for (const field of [
+        'title',
+        'description',
+        'gameId',
+        'city',
+        'venue',
+        'address',
+        'startsAt',
+        'endsAt',
+      ]) {
+        assert.ok(
+          empty.error.issues.some((issue) => issue.path[0] === field),
+          `Required ${field} has a validation issue`,
+        )
+      }
+      for (const changes of [
+        { tags: 'Same, same' },
+        { tags: 'a' },
+        { capacity: 0 },
+        { minimumAge: -1 },
+        { endsAt: formValues.startsAt },
+        { startsAt: '2020-01-01T12:30' },
+      ]) {
+        assert.equal(eventFormSchema.safeParse({ ...formValues, ...changes }).success, false)
+      }
+    })
+
+    await t.test('private events, host-only editing, and existing participant access', async () => {
+      const privateEvent = await eventsApi.create(
+        { ...input, title: 'Private test table', visibility: 'private' },
+        host,
+      )
+      assert.ok(!(await eventsApi.list()).some((item) => item.id === privateEvent.id))
+      await assert.rejects(eventsApi.get(privateEvent.id), errorCode('UNAUTHORIZED'))
+      await assert.rejects(eventsApi.get(privateEvent.id, player), errorCode('FORBIDDEN'))
+      await assert.rejects(
+        eventsApi.update(privateEvent.id, { title: 'Unauthorized edit' }, player),
+        errorCode('FORBIDDEN'),
+      )
+      await assert.rejects(eventsApi.join(privateEvent.id, player), errorCode('FORBIDDEN'))
+      assert.equal((await eventsApi.get(privateEvent.id, host)).title, privateEvent.title)
+      await eventsApi.update(privateEvent.id, { visibility: 'public' }, host)
+      assert.ok(
+        (await eventsApi.list({ search: 'Private test table', availableOnly: true })).some(
+          (item) => item.id === privateEvent.id,
+        ),
+      )
+      await eventsApi.join(privateEvent.id, player)
+      await eventsApi.update(privateEvent.id, { visibility: 'private' }, host)
+      assert.equal((await eventsApi.get(privateEvent.id, player)).attendeeIds.length, 1)
+      await eventsApi.leave(privateEvent.id, player)
+      await assert.rejects(eventsApi.get(privateEvent.id, player), errorCode('FORBIDDEN'))
+      assert.deepEqual((await eventsApi.get(privateEvent.id, host)).attendeeIds, [])
+      await eventsApi.remove(privateEvent.id, host)
     })
 
     const event = await eventsApi.create(input, host)

@@ -1,6 +1,6 @@
 export type EventStatus = 'scheduled' | 'cancelled'
 export type ExperienceLevel = 'all-levels' | 'beginner' | 'experienced'
-export type EventVisibility = 'public' | 'unlisted'
+export type EventVisibility = 'public' | 'private' | 'unlisted'
 
 export type Event = {
   id: number
@@ -40,6 +40,6 @@ export type EventFilters = {
   startsBefore?: string
   availableOnly?: boolean
   status?: EventStatus
-  visibility?: EventVisibility
+  visibility?: Exclude<EventVisibility, 'private'>
   upcomingOnly?: boolean
 }

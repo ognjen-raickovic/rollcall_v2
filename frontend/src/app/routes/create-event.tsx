@@ -1,18 +1,19 @@
-import { Link } from 'react-router'
+import { EventEditor } from '@/features/events/components/event-editor'
+import { useGames } from '@/features/games/api/use-games'
+import { useSession } from '@/features/users/api/use-session'
 
 export function CreateEvent() {
+  const session = useSession()
+  const games = useGames()
   return (
-    <section className="max-w-2xl space-y-4">
-      <h1 className="text-3xl font-bold">Create an event</h1>
-      <p className="text-muted-foreground">
-        The event form will be added in a later task. You cannot submit events from this page yet.
-      </p>
-      <Link
-        to="/events"
-        className="inline-block text-primary underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-ring"
-      >
-        Back to events
-      </Link>
-    </section>
+    <EventEditor
+      mode="create"
+      currentUserId={session.data?.id ?? null}
+      hostName={session.data?.displayName}
+      games={games.data}
+      gamesPending={games.isPending}
+      gamesError={Boolean(games.error)}
+      retryGames={() => void games.refetch()}
+    />
   )
 }

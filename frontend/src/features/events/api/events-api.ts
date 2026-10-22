@@ -1,55 +1,13 @@
 import { z } from 'zod'
 
-import {
-  ApiError,
-  mockReferences,
-  mockRequest,
-  NotFoundError,
-  requireMockUser,
-  validate,
-  validateId,
-} from '@/lib/mock-db'
+import { ApiError, mockRequest, NotFoundError, requireMockUser, validate, validateId } from '@/lib/mock-db'
 import type { MockActor } from '@/lib/mock-db'
 
 import type { Event, EventFilters, NewEvent, UpdateEvent } from '../types'
 import { mockEvents } from './mock-events'
+import { editableEventValues, newEventSchema, updateEventSchema } from './event-validation'
 
 const timestamp = z.iso.datetime({ offset: true })
-const eventFields = z.strictObject({
-  title: z.string().trim().min(3).max(100),
-  description: z.string().trim().min(10).max(5000),
-  gameId: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
-  city: z.string().trim().min(2).max(80),
-  venue: z.string().trim().min(2).max(120),
-  address: z.string().trim().min(3).max(200),
-  startsAt: timestamp,
-  endsAt: timestamp,
-  capacity: z.number().int().min(1).max(100),
-  experienceLevel: z.enum(['all-levels', 'beginner', 'experienced']),
-  price: z.number().min(0).max(10000).multipleOf(0.01),
-  imageUrl: z
-    .union([
-      z.url({ protocol: /^https?$/ }).max(2000),
-      z
-        .string()
-        .max(2000)
-        .regex(/^\/images\/[a-z0-9-]+\.(svg|webp|png|jpg)$/),
-    ])
-    .nullable(),
-  tags: z
-    .array(z.string().trim().min(2).max(30))
-    .max(6)
-    .refine(
-      (tags) => new Set(tags.map((tag) => tag.toLowerCase())).size === tags.length,
-      'Tags must be unique.',
-    ),
-  minimumAge: z.number().int().min(0).max(99),
-  visibility: z.enum(['public', 'unlisted']),
-})
-const updateSchema = eventFields
-  .extend({ status: z.enum(['scheduled', 'cancelled']) })
-  .partial()
-  .refine((value) => Object.values(value).some((field) => field !== undefined), 'Supply at least one field.')
 const filtersSchema = z
   .strictObject({
     search: z.string().trim().max(100).optional(),
@@ -85,21 +43,15 @@ function requireOrganizer(event: Event, actorId: number) {
     throw new ApiError('FORBIDDEN', 403, 'Only the organizer can change this event.')
 }
 
-function validateEvent(input: NewEvent) {
-  if (!mockReferences.gameIds.has(input.gameId)) {
-    throw new ApiError('VALIDATION_ERROR', 400, 'Choose an existing game.', {
-      gameId: ['Game does not exist.'],
-    })
-  }
-  if (Date.parse(input.startsAt) <= Date.now()) {
-    throw new ApiError('VALIDATION_ERROR', 400, 'The start must be in the future.', {
-      startsAt: ['Choose a future time.'],
-    })
-  }
-  if (Date.parse(input.endsAt) <= Date.parse(input.startsAt)) {
-    throw new ApiError('VALIDATION_ERROR', 400, 'The end must follow the start.', {
-      endsAt: ['End must be after start.'],
-    })
+function requirePrivateAccess(event: Event, actor: MockActor) {
+  if (event.visibility !== 'private') return
+  const userId = requireMockUser(actor)
+  if (event.organizerId !== userId && !event.attendeeIds.includes(userId)) {
+    throw new ApiError(
+      'FORBIDDEN',
+      403,
+      'Only the host and current participants can view this private event.',
+    )
   }
 }
 
@@ -134,13 +86,17 @@ export const eventsApi = {
         .sort((a, b) => Date.parse(a.startsAt) - Date.parse(b.startsAt) || a.id - b.id)
     }),
 
-  get: (id: number): Promise<Event> => mockRequest(() => findEvent(id)),
+  get: (id: number, actor: MockActor = { userId: null }): Promise<Event> =>
+    mockRequest(() => {
+      const event = findEvent(id)
+      requirePrivateAccess(event, actor)
+      return event
+    }),
 
   create: (input: NewEvent, actor: MockActor): Promise<Event> =>
     mockRequest(() => {
       const organizerId = requireMockUser(actor)
-      const values = validate(eventFields, input)
-      validateEvent(values)
+      const values = validate(newEventSchema, input)
       const now = new Date().toISOString()
       const event: Event = {
         ...values,
@@ -160,14 +116,16 @@ export const eventsApi = {
       const actorId = requireMockUser(actor)
       const event = findEvent(id)
       requireOrganizer(event, actorId)
-      const values = validate(updateSchema, changes)
+      const values = validate(updateEventSchema, changes)
       const definedValues = Object.fromEntries(
         Object.entries(values).filter(([, value]) => value !== undefined),
       )
       const updated: Event = { ...event, ...definedValues }
-      validateEvent(updated)
+      validate(newEventSchema, editableEventValues(updated))
       if (updated.capacity < event.attendeeIds.length)
-        throw new ApiError('CONFLICT', 409, 'Capacity cannot be below current attendance.')
+        throw new ApiError('CONFLICT', 409, 'Capacity cannot be below current attendance.', {
+          capacity: [`At least ${event.attendeeIds.length} player seats are already taken.`],
+        })
       updated.updatedAt = new Date().toISOString()
       events = events.map((item) => (item.id === id ? updated : item))
       return updated
@@ -185,6 +143,7 @@ export const eventsApi = {
     mockRequest(() => {
       const actorId = requireMockUser(actor)
       const event = findEvent(id)
+      requirePrivateAccess(event, actor)
       requireOpenEvent(event)
       if (event.organizerId === actorId)
         throw new ApiError('CONFLICT', 409, 'The organizer does not occupy a player seat.')
@@ -200,6 +159,7 @@ export const eventsApi = {
     mockRequest(() => {
       const actorId = requireMockUser(actor)
       const event = findEvent(id)
+      requirePrivateAccess(event, actor)
       requireOpenEvent(event)
       if (event.organizerId === actorId)
         throw new ApiError('CONFLICT', 409, 'The organizer cannot leave their own event.')

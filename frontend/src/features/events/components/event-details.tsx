@@ -1,14 +1,27 @@
 ﻿import type { ReactNode } from 'react'
-import { ArrowLeft, CalendarDays, Clock3, Globe2, Link2, MapPin, ShieldCheck, Tag, Users } from 'lucide-react'
-import { Link } from 'react-router'
+import {
+  ArrowLeft,
+  CalendarDays,
+  Clock3,
+  Globe2,
+  Link2,
+  LockKeyhole,
+  MapPin,
+  ShieldCheck,
+  Tag,
+  Users,
+} from 'lucide-react'
+import { Link, Navigate, useLocation } from 'react-router'
 
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ApiError } from '@/lib/mock-db'
+import { loginPath } from '@/lib/auth-navigation'
 
 import { useEvent } from '../api/use-events'
 import { EventAttendance } from './event-attendance'
 import { EventImage } from './event-image'
+import { EventNotice } from './event-notice'
 
 type EventDetailsProps = {
   eventId: string | undefined
@@ -29,7 +42,8 @@ export function EventDetails({
 }: EventDetailsProps) {
   const id = Number(eventId)
   const validId = /^\d+$/.test(eventId ?? '') && Number.isSafeInteger(id) && id > 0
-  const { data: event, isPending, error, refetch } = useEvent(validId ? id : 0)
+  const location = useLocation()
+  const { data: event, isPending, error, refetch } = useEvent(validId ? id : 0, currentUserId)
   const backLink = (
     <Link
       to="/events"
@@ -47,7 +61,7 @@ export function EventDetails({
         {backLink}
       </section>
     )
-  if (isPending)
+  if (isPending || sessionPending)
     return (
       <section role="status" aria-label="Loading event details" className="space-y-6">
         <span className="sr-only">Loading event details...</span>
@@ -59,17 +73,39 @@ export function EventDetails({
         </div>
       </section>
     )
+  // A successful private leave returns the final snapshot, then revokes read access.
+  // Redirect before a refetch error can unmount the participation success callback.
+  if (
+    event?.visibility === 'private' &&
+    currentUserId !== null &&
+    event.organizerId !== currentUserId &&
+    !event.attendeeIds.includes(currentUserId)
+  ) {
+    return <Navigate to="/events" replace state={{ eventNotice: 'You’ve left the private event.' }} />
+  }
   if (error || !event) {
     const missing = error instanceof ApiError && error.code === 'NOT_FOUND'
+    const restricted = error instanceof ApiError && ['UNAUTHORIZED', 'FORBIDDEN'].includes(error.code)
     return (
       <section className="space-y-4 rounded-xl border bg-card p-8">
-        <h1 className="text-3xl font-bold">{missing ? 'Event not found' : 'Event could not be loaded'}</h1>
+        <h1 className="text-3xl font-bold">
+          {missing ? 'Event not found' : restricted ? 'Private event' : 'Event could not be loaded'}
+        </h1>
         <p role="alert" className="text-muted-foreground">
-          {missing
-            ? 'This table may have been removed, or the link may be incorrect. There are more game nights to explore.'
-            : 'Please try again in a moment.'}
+          {restricted
+            ? 'Only the host and current participants can view this event. Log in with an authorized demo profile to continue.'
+            : missing
+              ? 'This table may have been removed, or the link may be incorrect. There are more game nights to explore.'
+              : 'Please try again in a moment.'}
         </p>
-        {!missing && (
+        {restricted && !currentUserId && (
+          <Button asChild>
+            <Link to={loginPath(`${location.pathname}${location.search}${location.hash}`)}>
+              Log in to view event
+            </Link>
+          </Button>
+        )}
+        {!missing && !restricted && (
           <Button variant="outline" onClick={() => void refetch()}>
             Try again
           </Button>
@@ -86,12 +122,16 @@ export function EventDetails({
     beginner: 'Beginner friendly',
     experienced: 'Experienced players',
   }[event.experienceLevel]
-  const visibility = event.visibility === 'public' ? 'Public event' : 'Unlisted event'
-  const VisibilityIcon = event.visibility === 'public' ? Globe2 : Link2
+  const visibility = { public: 'Public event', private: 'Private event', unlisted: 'Unlisted event' }[
+    event.visibility
+  ]
+  const VisibilityIcon =
+    event.visibility === 'public' ? Globe2 : event.visibility === 'private' ? LockKeyhole : Link2
 
   return (
     <div className="space-y-8">
       {backLink}
+      <EventNotice />
       <header className="space-y-4">
         <div className="flex flex-wrap items-center gap-3 text-xs font-semibold tracking-wide text-primary uppercase">
           <span className="flex items-center gap-2">
@@ -182,7 +222,11 @@ export function EventDetails({
                   <dd className="mt-1 text-sm leading-relaxed text-muted-foreground">
                     {visibility}
                     <br />
-                    {event.visibility === 'public' ? 'Discoverable by everyone' : 'Shared by direct link'}
+                    {event.visibility === 'public'
+                      ? 'Discoverable by everyone'
+                      : event.visibility === 'private'
+                        ? 'Host and current participants only'
+                        : 'Shared by direct link'}
                   </dd>
                 </div>
               </div>

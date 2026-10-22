@@ -47,7 +47,14 @@ export function EventAttendance({
     const variables = { id: event.id, actor: { userId: currentUserId } }
     if (attending)
       leave.mutate(variables, {
-        onSuccess: () => setFeedback('You’ve left the event. Your seat is available for another player.'),
+        onSuccess: () => {
+          if (event.visibility === 'private')
+            void navigate('/events', {
+              replace: true,
+              state: { eventNotice: 'You’ve left the private event.' },
+            })
+          else setFeedback('You’ve left the event. Your seat is available for another player.')
+        },
       })
     else
       join.mutate(variables, {
@@ -126,7 +133,7 @@ export function EventAttendance({
       )}
       {isOrganizer ? (
         <Button asChild variant="outline" className="w-full">
-          <Link to={`/events/${event.id}/edit`}>Edit event placeholder</Link>
+          <Link to={`/events/${event.id}/edit`}>Edit Event</Link>
         </Button>
       ) : (
         <Button

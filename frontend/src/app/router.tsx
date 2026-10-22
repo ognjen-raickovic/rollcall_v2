@@ -1,8 +1,6 @@
 import { lazy } from 'react'
 import { createBrowserRouter } from 'react-router'
 
-import { CreateEvent } from '@/app/routes/create-event'
-import { EditEvent } from '@/app/routes/edit-event'
 import { NotFound } from '@/app/routes/not-found'
 import { RootLayout } from '@/app/routes/root-layout'
 import { RequireSession } from '@/features/users/components/require-session'
@@ -10,6 +8,12 @@ import { RequireSession } from '@/features/users/components/require-session'
 const Home = lazy(() => import('@/app/routes/home').then((module) => ({ default: module.Home })))
 const Login = lazy(() => import('@/app/routes/login').then((module) => ({ default: module.Login })))
 const Events = lazy(() => import('@/app/routes/events').then((module) => ({ default: module.Events })))
+const CreateEvent = lazy(() =>
+  import('@/app/routes/create-event').then((module) => ({ default: module.CreateEvent })),
+)
+const EditEvent = lazy(() =>
+  import('@/app/routes/edit-event').then((module) => ({ default: module.EditEvent })),
+)
 const EventDetailsRoute = lazy(() =>
   import('@/app/routes/event-details').then((module) => ({ default: module.EventDetailsRoute })),
 )

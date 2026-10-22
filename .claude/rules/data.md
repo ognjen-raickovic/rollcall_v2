@@ -10,4 +10,4 @@ paths:
 - The mock uses `delay` and `NotFoundError` from `@/lib/mock-db`; a feature's mock data stays in its own `api/` folder
 - Mock data looks real (real titles, cities, prices), no "Lorem ipsum"
 - Hooks live in `src/features/<name>/api/use-<name>.ts`: reads use `useQuery`, writes use `useMutation` and call `invalidateQueries` on success
-- Cache keys: `[entity]`, `[entity, id]`, `[entity, filter]`
+- Cache keys: `[entity]`, `[entity, id]`, `[entity, filter]`. Event details use `['events', id, userId]` to isolate private records by demo identity.

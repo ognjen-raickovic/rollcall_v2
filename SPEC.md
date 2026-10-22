@@ -14,9 +14,10 @@ and TanStack Query. Mock data lives in memory and resets on reload. No backend, 
 real authentication, payments, messaging, notifications, maps, or waitlists.
 
 The foundation, discovery homepage, and frontend-only demo login/session are implemented.
-The current task completes event discovery and participation with Montenegro mock events,
-filters, illustrated cards, complete details, and mutation feedback. Event creation/editing forms
-and advanced administration remain outside scope. `docs/entities.md` owns the detailed field,
+Discovery and participation include Montenegro mock events, filters, illustrated cards,
+complete details, and mutation feedback. Event creation/editing now use one reusable validated
+form, with host-only edits and public/private visibility. Advanced administration, invitations,
+and recurring events remain outside scope. `docs/entities.md` owns the detailed field,
 validation, access, and future HTTP contracts; local types/APIs implement them.
 
 ## Feature ownership
@@ -56,8 +57,8 @@ cached with TanStack Query and the selected demo user ID is stored in sessionSto
 | `/` | Hero, search, category navigation, featured upcoming events, how it works |
 | `/events` | Upcoming public Montenegro events; card grid, title/city/game/availability controls, category URLs, reset |
 | `/events/:eventId` | Complete details, host/game queries, session-aware join/leave, success/error feedback and missing-event recovery |
-| `/events/new` | Protected create placeholder, no submitted form |
-| `/events/:eventId/edit` | Protected edit placeholder, no submitted form |
+| `/events/new` | Signed-in creation form; success navigates to the new event |
+| `/events/:eventId/edit` | Host-only prefilled editor using the same form; success returns to updated details |
 | `/login` | Demo profile selection with loading, empty, error, and pending states |
 | `*` | Not-found fallback |
 
@@ -67,12 +68,33 @@ create/edit redirect to login, as does joining an event. Login accepts only safe
 all session consumers and a protected page redirects to login. Route guards simulate a signed-in
 session only; API organizer/capacity/access rules remain authoritative within the mock.
 
-Events may be public or unlisted. Unlisted events are accessible by direct link but absent
-from discovery; no invitation or private-event administration is implemented. Minimum age is
+Events may be public, private, or unlisted. Private events are absent from discovery and
+readable only by their host and existing participants. No new players can join private events;
+existing players may leave, after which they lose read access. Unlisted events retain their
+previous link-access behavior. There is no invitation or private-event administration UI. Minimum age is
 displayed as event guidance, without collecting birth dates or adding age verification.
 Join/leave updates the detail cache immediately and refreshes affected lists. Hosts occupy
 a separate seat, full-table participants can still leave, and duplicate joins never add a
 second seat. Discovery defaults are applied by API filters, not by reading fixtures in UI code.
+
+## Event management
+
+The shared form covers title, description, game, city, venue, address, local start/end date-time,
+capacity, minimum age, tags, visibility, experience level, and EUR entry price. The host is set
+from the current demo user. The game determines a local cover illustration on creation or a
+game change; an existing cover is preserved when the game does not change. No uploads are added.
+
+Form/API validation share entity constraints, including future start, end after start, integer
+capacity 1–100, and capacity at least current attendance. Tags are optional comma-separated
+values, at most six, unique ignoring case. The form converts local picker values to ISO instants.
+Errors are inline and entered values survive failed saves. Loading game catalogs, empty/error
+catalogs, missing events, unauthorized edits, and pending saves have explicit states.
+
+Only signed-in demo users can create; only the host can open the editor or update the event.
+Editing preserves organizer, attendance, creation timestamp, and event status. Saving a canceled
+event keeps it canceled. Success navigates to details with a confirmation. Create/update cache
+the returned event for the actor and invalidate discovery/detail queries. Public scheduled
+future events appear when they match active filters; private and unlisted events do not.
 
 The ten mock events cover Podgorica, Niksic, Budva, Kotor, Bar, Cetinje, Herceg Novi, and Tivat.
 Venues are fictional. Core dates roll forward on reload to keep the demo usable; past,

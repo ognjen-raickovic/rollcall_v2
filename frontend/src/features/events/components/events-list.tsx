@@ -7,6 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { useEvents } from '../api/use-events'
 import { EventCard } from './event-card'
 import { EventFilters } from './event-filters'
+import { EventNotice } from './event-notice'
 
 type EventsListProps = {
   games?: { id: number; name: string; category: string }[]
@@ -55,6 +56,7 @@ export function EventsList({ games = [], gamesPending, gamesError, retryGames }:
 
   return (
     <div className="mt-8 space-y-6">
+      <EventNotice />
       <EventFilters
         search={search}
         city={selectedCity}

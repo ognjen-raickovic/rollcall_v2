@@ -107,7 +107,7 @@ Code: `frontend/src/features/events/`.
 | imageUrl | string or null | Required key; null, HTTP(S) URL up to 2000 characters, or local `/images/<kebab-name>.(svg,webp,png,jpg)` path |
 | tags | string[] | Required; 0–6 unique tags (case-insensitive), each 2–30 trimmed characters |
 | minimumAge | number | Required integer 0–99; 0 means all ages; informational event guidance |
-| visibility | EventVisibility | Required: `public` or `unlisted`; unlisted events stay out of discovery |
+| visibility | EventVisibility | Required: `public`, `private`, or `unlisted`; only public events enter discovery |
 | status | EventStatus | Assigned `scheduled` on create; update may set `scheduled` or `cancelled` |
 | createdAt | ISO timestamp string | Assigned on create, immutable |
 | updatedAt | ISO timestamp string | Assigned on create and successful state changes |
@@ -125,7 +125,7 @@ removes its embedded attendance.
 
 ### Access and attendance
 
-Reads are public. Mock writes require `MockActor = { userId: number | null }` as the last
+Public/unlisted reads are public. Mock writes require `MockActor = { userId: number | null }` as the last
 argument. Missing/null/unknown user is 401. Any known mock user can create. Only the organizer
 can update/remove; a different known user receives 403. There is no global default user.
 The demo session supplies the selected user ID to attendance through route props. A future backend must derive the actor from a verified session,
@@ -140,7 +140,13 @@ A user can only join/leave as themselves; there is no endpoint to change another
 
 Public discovery shows only upcoming scheduled public events. Unlisted events are accessible
 by direct link and can be joined under the same attendance rules; this is not an invitation
-system or a privacy guarantee. The mock API can explicitly filter unlisted records for contract
+system or a privacy guarantee. Private events are not returned by list APIs. `get` requires a
+known mock actor (401 otherwise), then checks for host/current participation (403 otherwise).
+Private events do not admit new participants; existing participants can repeat join or leave
+under the normal scheduled/future rules. Leaving revokes their private read access and the UI
+returns to discovery with confirmation. Making an existing event private preserves its attendees.
+There are no invitations, membership management, or real authentication/security.
+The mock API can explicitly filter unlisted records for contract
 checks, but the app does not expose this as discovery. Minimum age is guidance only: demo
 profiles do not have a date of birth, and there is no age verification in this workshop.
 
@@ -152,7 +158,7 @@ then state constraints. Join/leave check event availability before membership/ca
 | Mock function | Intended HTTP | Result |
 | --- | --- | --- |
 | `eventsApi.list(filters?)` | `GET /events` with filters below | `Promise<Event[]>` |
-| `eventsApi.get(id)` | `GET /events/:id` | `Promise<Event>` |
+| `eventsApi.get(id, actor?)` | `GET /events/:id` (future server derives actor from session) | `Promise<Event>` |
 | `eventsApi.create(input, actor)` | `POST /events` with NewEvent | `Promise<Event>` |
 | `eventsApi.update(id, changes, actor)` | `PATCH /events/:id` with UpdateEvent | `Promise<Event>` |
 | `eventsApi.remove(id, actor)` | `DELETE /events/:id` | `Promise<void>` |
@@ -183,9 +189,12 @@ use the games catalog to choose matching game IDs; category is not a duplicated 
 
 Hooks: `useEvents`, `useEvent`, `useCreateEvent`, `useUpdateEvent`, `useRemoveEvent`,
 `useJoinEvent`, `useLeaveEvent`. Mutation variables contain the API input plus `actor` (and
-`id` where needed). Cache keys follow `[domain]`, `[domain, id]`, `[domain, filters]`.
-All event mutation successes invalidate the `['events']` prefix (lists and details). Join/leave
-also set the returned entity into `['events', id]` immediately; their errors invalidate the prefix
+`id` where needed). Lists use `['events', filters]`. Detail hooks accept `useEvent(id, userId?)`
+and key records by `['events', id, userId]`, with null for anonymous reads; changing identity
+selects another cache entry rather than rendering a previous user's private record.
+All event mutation successes invalidate the `['events']` prefix (lists and details). Create,
+update, join, and leave also set the returned entity into `['events', id, actor.userId]`
+immediately; attendance errors invalidate the prefix
 to refresh possibly stale capacity. Pending controls prevent repeated clicks, while the API
 retains idempotent joins/leaves and atomic capacity checks. Visible success messages use a live
 status region; mutation errors use an alert. Removal
@@ -212,11 +221,12 @@ sessionStorage key `rollcall.demo-user-id`, so it survives refresh within the ta
 unknown stored IDs are cleared. Storage failures fall back to in-memory state until reload.
 Only the selected ID is persisted; profiles continue to come from the existing mock API.
 
-Anonymous users can browse everything. Create/edit placeholders require a demo session;
+Anonymous users can browse public/unlisted events. Create/edit require a demo session;
 event join/leave derives the actor from the current user. Anonymous join redirects to
 `/login?returnTo=<encoded internal path>`, then returns to the event without automatically
-joining. Only the organizer sees the edit link; guarded placeholder routes currently check
-session presence, not organizer ownership. Any future write must still use existing API rules.
+joining. Only the organizer sees the Edit Event link. The editor checks ownership before
+rendering any form and update checks it again in the API. Non-hosts get an authorization state;
+missing/invalid IDs get recovery links. Private detail reads use the same explicit mock actor.
 
 `returnTo` rejects external URLs, protocol-relative paths, backslashes, control characters,
 and login self-redirects (including encoded equivalents). Invalid targets fall back to `/events`.
@@ -232,6 +242,39 @@ these independently handle profile/game loading failures and retries without los
 These are component props, not duplicated entities or cross-feature imports. `/events` accepts
 `category` in its URL and filters events using games supplied by the route; the event REST
 contract itself still has no category field or category parameter.
+
+## Shared create/edit form
+
+`EventForm` is used by both `/events/new` and `/events/:eventId/edit`, with route-composed
+game summaries and demo identity. `EventEditor` owns loading/error/empty/authorization states;
+the form owns inputs and `useEventForm` submits via `useCreateEvent`/`useUpdateEvent`.
+Profile/game features are not imported into events.
+
+`api/event-validation.ts` defines the shared field, new-event, and partial-update schemas.
+Updates validate the merged editable values before mutating state. `api/event-form-values.ts`
+adapts comma-separated tags and local `datetime-local` picker strings to the same NewEvent
+contract; it does not perform requests. Impossible dates/local times and missing, past, or
+reversed schedules are rejected. End time and venue are required by the existing contract.
+Capacity/age are integers; price is EUR with at most two decimals. The form validates capacity
+against known attendance, and the API rechecks latest attendance, returning a 409 with an
+inline `fields.capacity` message if a concurrent change makes the submitted capacity too low.
+
+Form inputs include experience level and price so edits preserve those event details. Covers
+are picked from bundled game-category illustrations on create/game changes; otherwise the
+existing image is preserved. No image-upload feature is added. Tags may be blank, otherwise
+comma-separated, unique ignoring case, with existing count/length limits.
+
+All required fields have labels and associated inline errors. Validation failures show a summary;
+server errors retain the user's values and map field errors back into the form. Submit controls
+and fields are disabled during a save, with a submission lock preventing duplicate dispatches.
+Successful create/edit operations navigate to the saved event with a live confirmation notice.
+The form never submits organizerId, attendeeIds, status, IDs, createdAt, or updatedAt. Edits preserve
+current status (including canceled), and only API-assigned fields may change those values.
+
+The new private value extends rather than renames the previous unlisted contract. The list
+filter still accepts only public/unlisted visibility, so private data cannot be enumerated via
+discovery. Host/current-participant access is simulated in memory and does not constitute
+real security. New events and edits, including privacy changes, reset on page reload.
 
 ## Fixture coverage and future implementation
 
