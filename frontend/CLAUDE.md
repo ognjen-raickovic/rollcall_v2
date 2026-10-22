@@ -38,8 +38,8 @@ Dependency direction: shared code -> features -> app, never the other way around
 - No errors in the browser console
 
 ## RollCall scope
-- Read `../SPEC.md` for scope. Homepage, demo login, and event discovery/details are implemented; create/edit
-  routes remain placeholders. Do not add event forms or advanced administration in this task.
+- Read `../SPEC.md` for scope. Homepage, demo login, discovery/details, and shared create/edit
+  forms are implemented. Recurring events, invitations, uploads, and advanced administration remain out of scope.
 - User profiles/games expose read APIs only. Events expose CRUD and join/leave, applying the scoped
   CRUD guidance in `.claude/rules/data.md`. Use events as the feature implementation reference.
 - Relationships use numeric IDs. Shared request/error/reference helpers live in `src/lib/mock-db.ts`;
@@ -51,4 +51,8 @@ Dependency direction: shared code -> features -> app, never the other way around
   an account slot; events get a user ID through props. Never import users into events or shared code.
 - Event host/game query components are passed into detail render slots from the route.
   Discovery uses API filters for upcoming/public events; mock records are never read by UI components.
+- Reuse the event schema in `api/event-validation.ts` for form/API validation. Form conversion
+  lives in `api/event-form-values.ts`; `EventForm` and `useEventForm` serve both routes.
+- Editor access and update operations require the host. Private event reads require the host
+  or existing participants. Event detail cache keys include the current demo user ID.
 - If Playwright MCP is unavailable, use local Playwright if available and report skipped checks.

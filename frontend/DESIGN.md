@@ -17,7 +17,11 @@ The discovery homepage now uses a two-column hero, search panel, four category t
 three upcoming event cards, and a simple how-it-works section. Use typography and a
 code-native tabletop illustration with lucide icons; external photography is not required.
 The login page pairs a short introduction with clearly selectable demo-player profiles.
-Creation/editing forms remain placeholders.
+Creation/editing share a focused form with grouped sections for basics, location/schedule,
+players, and tags/visibility. Use existing input/textarea/button primitives and labeled native
+selects/date-time pickers. Keep hosting tips secondary in a desktop sidebar and below the form
+on phones. Inline errors use destructive text, a summary explains failed validation/saves,
+and pending controls prevent duplicate submissions. Confirmation appears on the detail page.
 
 Event discovery uses a labeled search/filter panel followed by a soonest-first card grid.
 Controls cover event title, city, game, and open seats, with a persistent reset link. Cards
@@ -77,4 +81,4 @@ Dark is the default. There is no theme switch or separate light palette yet.
   ornamental animation, or invented activity counts. Hover/focus and pending indicators have a purpose.
 - No heavy gaming fonts, emoji icons, or everything inside shadowed cards.
 - No raw color/font/radius values in components; add and document tokens first.
-- No creation/editing forms or advanced administrative UI in the homepage/session task.
+- No recurring events, invitations, uploads, or advanced administrative UI in event management.

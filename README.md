@@ -6,8 +6,8 @@ The Gathering, Yu-Gi-Oh!, board games, and social deduction games.
 Built for **AI-DEV 2026 Workshop 3**, from
 [jovanp-najveci/ai-frontend-starter](https://github.com/jovanp-najveci/ai-frontend-starter).
 The frontend includes domain mock APIs, a discovery homepage, Montenegro event discovery
-and complete details, and demo login with session-aware navigation and participation. Creation/editing forms
-remain placeholders.
+and complete details, demo login, participation, and reusable event creation/editing forms
+with inline validation and host authorization.
 
 ## Setup
 
@@ -43,7 +43,7 @@ frontend/
   src/app/                   Providers, router, route composition
   src/features/users/        Public profiles, demo session API/hooks, login and route guard
   src/features/games/        Game catalog types, read mocks, query hooks
-  src/features/events/       Types, mock CRUD/attendance, hooks, minimal data views
+  src/features/events/       Types, mock CRUD/attendance, shared validation/form, discovery/details
   src/components/ui/         Starter shadcn primitives
   src/components/layout/     Navigation and app layout
   src/lib/                   Mock helpers, reference IDs, utilities
@@ -71,12 +71,18 @@ matches event titles; city, game, and open-seat controls combine with it and can
 Event details show the host, game, address, schedule, tags, minimum age, visibility, and
 capacity. Join/leave updates visible seats and provides success/error feedback; anonymous
 protected actions redirect to login and back. Full, past, and canceled tables cannot be joined.
-Create/edit are protected placeholders. UI branding is always **RollCall**.
+Signed-in users can create events; only the host can edit them. Both routes use a shared
+React Hook Form + Zod form, preserving entered data on errors and navigating to details on
+success. Public future events appear in matching discovery filters. UI branding is always **RollCall**.
+
+Private events are hidden from discovery and readable only by the host and current participants.
+Unlisted events remain accessible by link. Private events do not accept new players; no
+invitation workflow is implemented. These are mock access checks, not real authentication.
 
 Ten fictional Montenegro events cover Podgorica, Niksic, Budva, and other cities. Core dates
 roll forward on reload; special canceled, past, and unlisted examples remain available by
 direct link. Images are local SVG illustrations in `frontend/public/images/`, with no external
-image service. Unlisted is a discovery setting, not private-event security; minimum age is
+image service. Minimum age is
 displayed as guidance without verification.
 
 ## Team workflow: Codex and Claude Code

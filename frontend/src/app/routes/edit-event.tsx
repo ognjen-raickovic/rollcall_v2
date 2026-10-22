@@ -1,19 +1,23 @@
-import { Link } from 'react-router'
+import { useParams } from 'react-router'
+
+import { EventEditor } from '@/features/events/components/event-editor'
+import { useGames } from '@/features/games/api/use-games'
+import { useSession } from '@/features/users/api/use-session'
 
 export function EditEvent() {
+  const { eventId } = useParams()
+  const session = useSession()
+  const games = useGames()
   return (
-    <section className="max-w-2xl space-y-4">
-      <h1 className="text-3xl font-bold">Edit an event</h1>
-      <p className="text-muted-foreground">
-        The editing form and organizer controls will be added in a later task. No changes can be saved here
-        yet.
-      </p>
-      <Link
-        to="/events"
-        className="inline-block text-primary underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-ring"
-      >
-        Back to events
-      </Link>
-    </section>
+    <EventEditor
+      mode="edit"
+      eventId={eventId}
+      currentUserId={session.data?.id ?? null}
+      hostName={session.data?.displayName}
+      games={games.data}
+      gamesPending={games.isPending}
+      gamesError={Boolean(games.error)}
+      retryGames={() => void games.refetch()}
+    />
   )
 }
