@@ -1,11 +1,21 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="dark" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Discover, organize, and join tabletop gaming events with RollCall." />
     <meta name="theme-color" content="#10141f" />
+    <script>
+      ;(() => {
+        let theme = 'dark'
+        try {
+          if (localStorage.getItem('rollcall.theme') === 'light') theme = 'light'
+        } catch {}
+        document.documentElement.dataset.theme = theme
+        document.documentElement.classList.toggle('dark', theme === 'dark')
+      })()
+    </script>
     <title>RollCall</title>
   </head>
   <body>

@@ -44,7 +44,8 @@ cached with TanStack Query and the selected demo user ID is stored in sessionSto
   category links from the homepage, reset controls, and loading/empty/error states.
 - Inspect: host and game names, full schedule/address, tags, minimum age, visibility,
   experience level, price, participant count, and remaining seats or a clear Full status.
-- Organize: create valid events, then edit/remove only events you organize.
+- Organize: create valid events, then edit only events you organize. Host-only removal is
+  available in the mock API; no removal action is exposed in this frontend MVP.
 - Participate: join upcoming scheduled events with space; leave before they start.
 - Sign in: choose one of eight demo profiles, return to the intended page, and log out via
   navigation. No credentials are collected. Reload restores the selection in the current tab;
@@ -82,11 +83,24 @@ second seat. Discovery defaults are applied by API filters, not by reading fixtu
 The shared form covers title, description, game, city, venue, address, local start/end date-time,
 capacity, minimum age, tags, visibility, experience level, and EUR entry price. The host is set
 from the current demo user. The game determines a local cover illustration on creation or a
-game change; an existing cover is preserved when the game does not change. No uploads are added.
+game change unless the host supplies an optional custom cover. Create and edit accept JPG,
+PNG, or WebP files up to 3 MiB, with immediate preview, replacement, removal, and clear errors.
+The browser resizes covers to a maximum 1600px edge and encodes them as bounded data URLs
+through the existing imageUrl field. Custom covers survive game changes and appear on cards
+and details. Removing one restores the selected game's default. Covers remain in mock memory
+only and reset on full reload; no external storage, image service, or upload HTTP call is added.
 
 Form/API validation share entity constraints, including future start, end after start, integer
-capacity 1–100, and capacity at least current attendance. Tags are optional comma-separated
-values, at most six, unique ignoring case. The form converts local picker values to ISO instants.
+capacity 1–100, and capacity at least current attendance. Tags are optional selections from
+`EVENT_TAGS` in the events feature: Beginner friendly, Veterans only, Casual, Competitive,
+One-shot, Campaign, Bring your own deck, and Equipment provided. The accessible checkbox
+dropdown accepts at most six unique tags and displays removable chips. Arbitrary tags and
+the Beginner friendly/Veterans only combination are rejected by the API.
+
+Experience level governs tags: Beginner friendly is allowed for all-levels/beginner, while
+Veterans only requires experienced. Changing experience removes incompatible selected tags
+with a status message; it never silently changes the experience level. Editing preserves
+existing valid tags. The form converts local picker values to ISO instants.
 Errors are inline and entered values survive failed saves. Loading game catalogs, empty/error
 catalogs, missing events, unauthorized edits, and pending saves have explicit states.
 
@@ -106,7 +120,12 @@ Take inspiration from Meetup's discovery hierarchy: useful filters, scannable ev
 dates/locations, and a prominent primary action. Use charcoal/navy surfaces, restrained purple
 accents, and clean typography. `frontend/DESIGN.md` owns guidance and `frontend/src/index.css`
 owns tokens. The homepage uses a confident hero, code-native tabletop illustration, category
-tiles, and responsive event cards. Existing palette/font/radius tokens are unchanged.
+tiles, and responsive event cards. Dark remains the default. A matching semantic light
+palette is selectable from the navbar, and `rollcall.theme` in localStorage restores the
+choice on reload. A small head script applies it before the app starts; blocked storage
+falls back to the current page's preference. Session, event, and theme state are independent.
+No theme colors are hardcoded in components. The desktop form/sidebar align at the top;
+required markers remain without the former introductory paragraph.
 
 ## Acceptance and collaboration
 

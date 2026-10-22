@@ -4,6 +4,7 @@ import { Dices } from 'lucide-react'
 import { Link, NavLink, Outlet } from 'react-router'
 
 import { cn } from '@/lib/utils'
+import { ThemeToggle } from './theme-toggle'
 
 const links = [
   { to: '/', label: 'Discover' },
@@ -25,7 +26,7 @@ export function AppLayout({ account }: AppLayoutProps) {
       <header className="border-b bg-card">
         <nav
           aria-label="Main navigation"
-          className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-6 gap-y-4 px-4 py-4 md:py-6"
+          className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-4 gap-y-4 px-4 py-4 md:py-6"
         >
           <Link
             to="/"
@@ -54,10 +55,17 @@ export function AppLayout({ account }: AppLayoutProps) {
               </li>
             ))}
           </ul>
-          <div className="ml-auto md:ml-0">{account}</div>
+          <div className="ml-auto flex items-center gap-2 md:ml-0">
+            <ThemeToggle />
+            {account}
+          </div>
         </nav>
       </header>
-      <main id="main-content" tabIndex={-1} className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">
+      <main
+        id="main-content"
+        tabIndex={-1}
+        className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 [overflow-wrap:anywhere]"
+      >
         <Suspense
           fallback={
             <p role="status" className="py-12 text-muted-foreground">

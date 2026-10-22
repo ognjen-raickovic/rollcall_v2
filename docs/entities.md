@@ -19,7 +19,7 @@ Users and games are read-only in this scope. Events support CRUD plus attendance
 - Error codes: `VALIDATION_ERROR` (400), `UNAUTHORIZED` (401), `FORBIDDEN` (403),
   `NOT_FOUND` (404), `CONFLICT` (409). Validation field errors are arrays of messages.
 - Strict inputs reject unknown keys, including attempts to set IDs, organizers, attendees,
-  or timestamps. Strings are trimmed before validation. Failed mutations leave data unchanged.
+  createdAt, or updatedAt. Strings are trimmed before validation. Failed mutations leave data unchanged.
 - Mocks add 400 ms latency and clone every result. State is in memory, per browser runtime;
   reload resets it. Event writes run their checks and mutation together after latency so
   simultaneous joins cannot claim the same final seat. This is not a multi-client backend.
@@ -104,8 +104,8 @@ Code: `frontend/src/features/events/`.
 | attendeeIds | number[] | Assigned empty; unique existing users, excluding organizer; managed by join/leave |
 | experienceLevel | ExperienceLevel | Required: `all-levels`, `beginner`, `experienced` |
 | price | number | Required, EUR, 0–10000, maximum two decimal places; 0 means free |
-| imageUrl | string or null | Required key; null, HTTP(S) URL up to 2000 characters, or local `/images/<kebab-name>.(svg,webp,png,jpg)` path |
-| tags | string[] | Required; 0–6 unique tags (case-insensitive), each 2–30 trimmed characters |
+| imageUrl | string or null | Required key; null, HTTP(S) URL up to 2000 characters, local `/images/<kebab-name>.(svg,webp,png,jpg)` path, or bounded JPG/PNG/WebP data URL in the mock only |
+| tags | EventTag[] | Required; 0–6 unique canonical values from EVENT_TAGS; optional selection in the form |
 | minimumAge | number | Required integer 0–99; 0 means all ages; informational event guidance |
 | visibility | EventVisibility | Required: `public`, `private`, or `unlisted`; only public events enter discovery |
 | status | EventStatus | Assigned `scheduled` on create; update may set `scheduled` or `cancelled` |
@@ -122,6 +122,41 @@ future start and end order. Past events remain readable and removable, but canno
 unless the update moves their start into the future. Organizer, game, and attendees have no
 cascade behavior because users/games cannot be deleted in this scope. Removing an event also
 removes its embedded attendance.
+
+`EventTag` and `EVENT_TAGS` live in `features/events/event-tags.ts`: `Beginner friendly`,
+`Veterans only`, `Casual`, `Competitive`, `One-shot`, `Campaign`, `Bring your own deck`,
+and `Equipment provided`. Values are exact and case-sensitive; arbitrary tags are rejected.
+Beginner friendly and Veterans only are mutually exclusive. The former is allowed for
+all-levels/beginner; Veterans only requires experienced. API updates validate the merged
+tags and experience. The UI keeps experience authoritative, disables incompatible choices,
+and removes selected incompatible tags with feedback when experience changes.
+
+### Optional mock covers and backend handoff
+
+The file control accepts JPG/JPEG, PNG, and WebP with matching extension/MIME/signature,
+at most 3 MiB (3 × 1024 × 1024 bytes, presented as 3 MB in UI). The browser decodes the file,
+resizes it without upscaling so the longest edge is at most 1600px, and encodes WebP at
+0.82 quality (or the browser's supported canvas fallback). It releases decoded bitmaps and
+canvas buffers after processing. Corrupt files and processing failures retain prior form
+values and show errors. Saving waits for image preparation; unmounted forms ignore late results.
+
+The resulting bounded `data:image/(jpeg|png|webp);base64,...` string travels through the
+existing imageUrl field. Mock validation checks permitted MIME, base64 structure, decoded
+size <= 3 MiB, and header signature. SVG data, blob URLs, oversized data, and arbitrary
+schemes are rejected. Full image decoding happens in the browser preparation step.
+There are no retained File objects, object URLs to revoke, image keys in browser storage,
+network uploads, or external storage services. Cards/details render the same saved image.
+
+Known bundled game covers represent the default. A form without a custom cover tracks
+the selected game. Existing custom covers are prefilled and preserved across game changes
+until replaced or removed; removing one restores the current game's bundled cover.
+Custom images, like other event changes, reset on full reload.
+
+Data URLs are a Workshop 3 mock representation, not a chosen backend storage contract.
+Workshop 4 will decide storage and upload transport, including whether create/update sends
+a URL, an asset reference, or another agreed payload. No storage provider, media endpoint,
+or server persistence has been implemented or mandated. Event imageUrl remains a renderable
+string/null; backend validation, ownership, and image lifecycle must be defined then.
 
 ### Access and attendance
 
@@ -184,7 +219,7 @@ returns all public events, including canceled/past events. `/events` and homepag
 always use `upcomingOnly: true` and `visibility: 'public'`. City/game/availability filters combine
 with title search using AND; `availableOnly: true` excludes full tables. An empty city/game
 selector means no restriction. Future HTTP booleans/numbers are parsed
-from query strings before validation. Category discovery is a later route-composition concern:
+from query strings before validation. Category discovery is handled by route composition:
 use the games catalog to choose matching game IDs; category is not a duplicated event field.
 
 Hooks: `useEvents`, `useEvent`, `useCreateEvent`, `useUpdateEvent`, `useRemoveEvent`,
@@ -252,17 +287,17 @@ Profile/game features are not imported into events.
 
 `api/event-validation.ts` defines the shared field, new-event, and partial-update schemas.
 Updates validate the merged editable values before mutating state. `api/event-form-values.ts`
-adapts comma-separated tags and local `datetime-local` picker strings to the same NewEvent
+adapts local `datetime-local` picker strings to the same NewEvent
 contract; it does not perform requests. Impossible dates/local times and missing, past, or
 reversed schedules are rejected. End time and venue are required by the existing contract.
 Capacity/age are integers; price is EUR with at most two decimals. The form validates capacity
 against known attendance, and the API rechecks latest attendance, returning a 409 with an
 inline `fields.capacity` message if a concurrent change makes the submitted capacity too low.
 
-Form inputs include experience level and price so edits preserve those event details. Covers
-are picked from bundled game-category illustrations on create/game changes; otherwise the
-existing image is preserved. No image-upload feature is added. Tags may be blank, otherwise
-comma-separated, unique ignoring case, with existing count/length limits.
+Form inputs include experience level and price so edits preserve those event details.
+`event-covers.ts` owns defaults, custom-cover recognition, preparation, and data-URL checks.
+The optional file input and curated tag selector share React Hook Form state across both routes.
+Tags may be empty, otherwise canonical and unique, with a maximum of six and experience rules.
 
 All required fields have labels and associated inline errors. Validation failures show a summary;
 server errors retain the user's values and map field errors back into the form. Submit controls

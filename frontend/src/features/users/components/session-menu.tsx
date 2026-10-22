@@ -42,8 +42,10 @@ export function SessionMenu() {
 
   return (
     <div className="flex items-center gap-2">
-      <UserAvatar name={session.data.displayName} size="sm" />
-      <span className="max-w-32 truncate text-sm font-medium" title={session.data.displayName}>
+      <span className="hidden sm:inline-flex">
+        <UserAvatar name={session.data.displayName} size="sm" />
+      </span>
+      <span className="max-w-20 truncate text-sm font-medium sm:max-w-32" title={session.data.displayName}>
         {session.data.displayName}
       </span>
       <Button

@@ -25,6 +25,11 @@ Keep foundation routes simple until finished pages are requested.
 - Keep mock records inside each feature's `api/`; shared request/error/reference helpers may
   live in `src/lib`. Components use query hooks, not API modules directly.
 - Update `docs/entities.md` alongside entity/API changes, and `SPEC.md` alongside scope changes.
+- Curated event tags and experience compatibility come from `frontend/src/features/events/event-tags.ts`.
+  Cover preparation belongs to events; bounded image data URLs are mock-only and never stored
+  in browser storage. Backend picture storage remains a next-workshop decision.
+- Theme tokens live in `frontend/src/index.css`; `src/lib/theme.ts` and the early HTML script
+  share the `rollcall.theme` preference key. Default to dark and keep blocked-storage fallback.
 - Use a separate GitHub feature branch per task/person; review through PRs. Inspect existing
   changes, preserve teammates' work, and coordinate shared contract/router/token/lock files.
 - Do not commit, push, or merge without explicit user approval. Never expose secrets or env files.

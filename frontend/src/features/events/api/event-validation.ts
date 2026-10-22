@@ -3,6 +3,8 @@ import { z } from 'zod'
 import { mockReferences } from '@/lib/mock-db'
 
 import type { Event, NewEvent } from '../types'
+import { EVENT_TAGS, tagMatchesExperience } from '../event-tags'
+import { validEventImageDataUrl } from './event-covers'
 
 export const eventFields = z.strictObject({
   title: z
@@ -44,16 +46,19 @@ export const eventFields = z.strictObject({
         .string()
         .max(2000)
         .regex(/^\/images\/[a-z0-9-]+\.(svg|webp|png|jpg)$/),
+      z.string().refine(validEventImageDataUrl, 'Choose a valid JPG, PNG, or WebP cover of 3 MB or less.'),
     ])
     .nullable(),
   tags: z
-    .array(z.string().trim())
+    .array(z.enum(EVENT_TAGS, { error: 'Choose tags from the predefined list.' }))
     .max(6, 'Use no more than 6 tags.')
-    .refine((tags) => tags.every((tag) => tag.length >= 2), 'Each tag needs at least 2 characters.')
-    .refine((tags) => tags.every((tag) => tag.length <= 30), 'Keep each tag to 30 characters.')
     .refine(
       (tags) => new Set(tags.map((tag) => tag.toLowerCase())).size === tags.length,
       'Tags must be unique.',
+    )
+    .refine(
+      (tags) => !(tags.includes('Beginner friendly') && tags.includes('Veterans only')),
+      'Beginner friendly and Veterans only cannot be selected together.',
     ),
   minimumAge: z
     .number({ error: 'Enter a minimum age, or 0 for all ages.' })
@@ -64,6 +69,12 @@ export const eventFields = z.strictObject({
 })
 
 export const newEventSchema = eventFields.superRefine((input, context) => {
+  if (input.tags.some((tag) => !tagMatchesExperience(tag, input.experienceLevel)))
+    context.addIssue({
+      code: 'custom',
+      path: ['tags'],
+      message: 'Choose tags that match the experience level. Veterans only requires Experienced players.',
+    })
   if (Date.parse(input.startsAt) <= Date.now())
     context.addIssue({
       code: 'custom',

@@ -20,6 +20,13 @@ test('RollCall mock contracts and event lifecycle', async (t) => {
     const { sessionApi } = await server.ssrLoadModule('/src/features/users/api/session-api.ts')
     const { safeReturnTo, loginPath } = await server.ssrLoadModule('/src/lib/auth-navigation.ts')
     const { mockReferences } = await server.ssrLoadModule('/src/lib/mock-db.ts')
+    const { EVENT_TAGS } = await server.ssrLoadModule('/src/features/events/event-tags.ts')
+    const { eventFields, newEventSchema } = await server.ssrLoadModule(
+      '/src/features/events/api/event-validation.ts',
+    )
+    const { MAX_EVENT_IMAGE_BYTES, validEventImageDataUrl, prepareEventCover } = await server.ssrLoadModule(
+      '/src/features/events/api/event-covers.ts',
+    )
     const host = { userId: 1 }
     const player = { userId: 2 }
     const errorCode = (code) => (error) => error.code === code && Number.isInteger(error.status)
@@ -62,6 +69,7 @@ test('RollCall mock contracts and event lifecycle', async (t) => {
         assert.ok(event.attendeeIds.every((id) => mockReferences.userIds.has(id) && id !== event.organizerId))
         assert.equal(new Set(event.attendeeIds).size, event.attendeeIds.length)
         assert.ok(event.attendeeIds.length <= event.capacity)
+        assert.ok(event.tags.every((tag) => EVENT_TAGS.includes(tag)))
       }
     })
 
@@ -118,11 +126,11 @@ test('RollCall mock contracts and event lifecycle', async (t) => {
         startsAt: localDateTime(input.startsAt),
         endsAt: localDateTime(input.endsAt),
         title: '  A welcoming test table  ',
-        tags: 'Casual play,  New players',
+        tags: ['Casual', 'Equipment provided'],
       }
       const parsed = eventFormSchema.parse(formValues)
       assert.equal(parsed.title, 'A welcoming test table')
-      assert.deepEqual(parsed.tags, ['Casual play', 'New players'])
+      assert.deepEqual(parsed.tags, ['Casual', 'Equipment provided'])
       assert.ok(Date.parse(parsed.startsAt) > Date.now())
       const empty = eventFormSchema.safeParse(eventFormDefaults())
       assert.equal(empty.success, false)
@@ -142,8 +150,11 @@ test('RollCall mock contracts and event lifecycle', async (t) => {
         )
       }
       for (const changes of [
-        { tags: 'Same, same' },
-        { tags: 'a' },
+        { tags: ['Casual', 'Casual'] },
+        { tags: ['Arbitrary tag'] },
+        { tags: ['Beginner friendly', 'Veterans only'] },
+        { tags: ['Veterans only'] },
+        { tags: EVENT_TAGS.filter((tag) => tag !== 'Veterans only') },
         { capacity: 0 },
         { minimumAge: -1 },
         { endsAt: formValues.startsAt },
@@ -151,6 +162,60 @@ test('RollCall mock contracts and event lifecycle', async (t) => {
       ]) {
         assert.equal(eventFormSchema.safeParse({ ...formValues, ...changes }).success, false)
       }
+    })
+
+    await t.test('curated tag consistency and bounded custom image contracts', async () => {
+      const png =
+        'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aD1sAAAAASUVORK5CYII='
+      assert.equal(validEventImageDataUrl(png), true)
+      assert.equal(validEventImageDataUrl('data:image/svg+xml;base64,PHN2Zz48L3N2Zz4='), false)
+      assert.equal(validEventImageDataUrl('data:image/png;base64,bm90IGFuIGltYWdl'), false)
+      const oversized = 'data:image/png;base64,' + Buffer.alloc(MAX_EVENT_IMAGE_BYTES + 1).toString('base64')
+      assert.equal(validEventImageDataUrl(oversized), false)
+      assert.equal(eventFields.shape.imageUrl.safeParse(oversized).success, false)
+      await assert.rejects(
+        prepareEventCover(new File(['<svg/>'], 'cover.svg', { type: 'image/svg+xml' })),
+        /JPG, PNG, or WebP/,
+      )
+      await assert.rejects(
+        prepareEventCover(
+          new File([new Uint8Array(MAX_EVENT_IMAGE_BYTES + 1)], 'large.png', { type: 'image/png' }),
+        ),
+        /3 MB/,
+      )
+      await assert.rejects(
+        prepareEventCover(new File(['invalid'], 'fake.png', { type: 'image/png' })),
+        /not a valid/,
+      )
+      assert.equal(
+        newEventSchema.safeParse({ ...input, tags: ['Veterans only'], experienceLevel: 'experienced' })
+          .success,
+        true,
+      )
+      for (const changes of [
+        { tags: ['Veterans only'], experienceLevel: 'all-levels' },
+        { tags: ['Beginner friendly'], experienceLevel: 'experienced' },
+        { tags: ['Veterans only', 'Beginner friendly'] },
+      ])
+        assert.equal(newEventSchema.safeParse({ ...input, ...changes }).success, false)
+      const created = await eventsApi.create(
+        { ...input, imageUrl: png, tags: ['Casual', 'Equipment provided'] },
+        host,
+      )
+      assert.equal((await eventsApi.get(created.id)).imageUrl, png)
+      await assert.rejects(
+        eventsApi.update(created.id, { tags: ['Veterans only'] }, host),
+        errorCode('VALIDATION_ERROR'),
+      )
+      assert.deepEqual((await eventsApi.get(created.id)).tags, ['Casual', 'Equipment provided'])
+      const updated = await eventsApi.update(
+        created.id,
+        { experienceLevel: 'experienced', tags: ['Veterans only'] },
+        host,
+      )
+      assert.equal(updated.imageUrl, png)
+      assert.ok((await eventsApi.list()).some((event) => event.id === created.id && event.imageUrl === png))
+      await eventsApi.remove(created.id, host)
     })
 
     await t.test('private events, host-only editing, and existing participant access', async () => {

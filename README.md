@@ -8,6 +8,8 @@ Built for **AI-DEV 2026 Workshop 3**, from
 The frontend includes domain mock APIs, a discovery homepage, Montenegro event discovery
 and complete details, demo login, participation, and reusable event creation/editing forms
 with inline validation and host authorization.
+The final polish adds optional custom event covers, curated multi-select tags, and a
+matching light theme alongside the default dark theme.
 
 ## Setup
 
@@ -21,13 +23,20 @@ pnpm dev                        # http://localhost:5173
 pnpm typecheck
 pnpm lint                       # oxlint + feature boundary checker
 pnpm build                      # frontend/dist
-pnpm test:mock                  # mock API integration checks, no backend needed
+pnpm test:mock                   # mock API integration checks, no backend needed
 pnpm format                     # Prettier on frontend/src
 pnpm --filter frontend preview  # preview the production build
 ```
 
 On PowerShell with disabled script execution, use `pnpm.cmd` instead of `pnpm`.
 No environment variables, backend, database, or API keys are required.
+
+For submission checks, run typecheck, lint, build, and `pnpm test:mock`. The mock suite
+covers entity references, validation, authorization, private access, capacity, concurrent
+joins, response isolation, and demo sessions. Preview the production build, then review
+home, discovery, details, login, and create/edit at 375px and 1440px. Keep creation/editing
+journeys within one page runtime: reloading intentionally restores fixture event data.
+See [the final frontend review](docs/frontend-review.md) for executed checks and limitations.
 
 ## Architecture and scope
 
@@ -75,6 +84,18 @@ Signed-in users can create events; only the host can edit them. Both routes use 
 React Hook Form + Zod form, preserving entered data on errors and navigating to details on
 success. Public future events appear in matching discovery filters. UI branding is always **RollCall**.
 
+Create/edit supports optional JPG, PNG, or WebP covers up to 3 MiB (shown as 3 MB in the UI).
+The browser resizes them to a maximum 1600px edge and passes a bounded data URL through
+the existing mock image field; cards/details render the result. Replace or remove a custom
+cover in the form, or keep the game-based default. Custom covers survive game changes and
+reset with event data on reload. Nothing is uploaded externally or stored in browser storage;
+backend picture storage will be decided in the next workshop.
+
+Tags use eight predefined options, with at most six selections and removable chips. The
+experience level controls Beginner friendly/Veterans only compatibility. The navbar theme
+toggle saves dark/light preference in localStorage (`rollcall.theme`); dark is the default,
+and unavailable storage still permits switching for the current page runtime.
+
 Private events are hidden from discovery and readable only by the host and current participants.
 Unlisted events remain accessible by link. Private events do not accept new players; no
 invitation workflow is implemented. These are mock access checks, not real authentication.
@@ -82,8 +103,9 @@ invitation workflow is implemented. These are mock access checks, not real authe
 Ten fictional Montenegro events cover Podgorica, Niksic, Budva, and other cities. Core dates
 roll forward on reload; special canceled, past, and unlisted examples remain available by
 direct link. Images are local SVG illustrations in `frontend/public/images/`, with no external
-image service. Minimum age is
-displayed as guidance without verification.
+image service. Minimum age is displayed as guidance without verification. Event removal
+exists in the mock API only; the MVP has no deletion UI. A newly created private event
+is initially visible to its host only.
 
 ## Team workflow: Codex and Claude Code
 

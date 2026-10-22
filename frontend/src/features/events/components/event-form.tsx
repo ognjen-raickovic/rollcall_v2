@@ -1,3 +1,5 @@
+import { useState } from 'react'
+import { useController } from 'react-hook-form'
 import { ArrowLeft, CalendarDays, Dices, LoaderCircle, LockKeyhole, MapPin, Tag, Users } from 'lucide-react'
 import { Link, useNavigate } from 'react-router'
 
@@ -6,8 +8,12 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 
 import { useEventForm } from '../hooks/use-event-form'
-import type { Event } from '../types'
+import { eventCover } from '../api/event-covers'
+import { tagMatchesExperience } from '../event-tags'
+import type { Event, ExperienceLevel } from '../types'
+import { EventCoverInput } from './event-cover-input'
 import { EventFormField } from './event-form-field'
+import { EventTagSelect } from './event-tag-select'
 
 type EventFormProps = {
   event?: Event
@@ -17,13 +23,23 @@ type EventFormProps = {
 }
 
 export function EventForm({ event, currentUserId, hostName, games }: EventFormProps) {
-  const { form, submit, pending } = useEventForm({ event, currentUserId, games })
+  const { form, submit, pending, imagePending, setImagePending, reportImageError } = useEventForm({
+    event,
+    currentUserId,
+    games,
+  })
+  const { field: tagsField } = useController({ name: 'tags', control: form.control })
+  const { field: imageField } = useController({ name: 'imageUrl', control: form.control })
+  const [tagNotice, setTagNotice] = useState('')
   const {
     register,
     formState: { errors },
   } = form
   const navigate = useNavigate()
   const visibility = form.watch('visibility')
+  const experience = form.watch('experienceLevel')
+  const gameId = form.watch('gameId')
+  const fallback = eventCover(games.find((game) => game.id === gameId)?.category)
   const cancelTo = event ? `/events/${event.id}` : '/events'
   const inputStyle = 'h-11 bg-background'
   const selectStyle =
@@ -57,10 +73,6 @@ export function EventForm({ event, currentUserId, hostName, games }: EventFormPr
           aria-busy={pending}
           className="min-w-0 space-y-6 lg:col-span-2"
         >
-          <p className="text-xs text-muted-foreground">
-            Fields marked with * are required. Dates and times use{' '}
-            {Intl.DateTimeFormat().resolvedOptions().timeZone}.
-          </p>
           {Object.keys(errors).length > 0 && (
             <div role="alert" className="space-y-2 rounded-lg border border-destructive/40 bg-card p-4">
               <p className="font-semibold">
@@ -198,7 +210,7 @@ export function EventForm({ event, currentUserId, hostName, games }: EventFormPr
                   label="Start date and time"
                   required
                   error={errors.startsAt?.message}
-                  help="Choose a time in the future."
+                  help="Choose a future time in your local timezone."
                 >
                   {(attributes) => (
                     <Input
@@ -288,7 +300,25 @@ export function EventForm({ event, currentUserId, hostName, games }: EventFormPr
                   error={errors.experienceLevel?.message}
                 >
                   {(attributes) => (
-                    <select {...register('experienceLevel')} {...attributes} required className={selectStyle}>
+                    <select
+                      {...register('experienceLevel')}
+                      {...attributes}
+                      required
+                      className={selectStyle}
+                      onChange={(event) => {
+                        const next = event.currentTarget.value as ExperienceLevel
+                        form.setValue('experienceLevel', next, { shouldDirty: true, shouldValidate: true })
+                        const kept = tagsField.value.filter((tag) => tagMatchesExperience(tag, next))
+                        const removed = tagsField.value.filter((tag) => !tagMatchesExperience(tag, next))
+                        if (removed.length)
+                          form.setValue('tags', kept, { shouldDirty: true, shouldValidate: true })
+                        setTagNotice(
+                          removed.length
+                            ? `Removed ${removed.join(', ')} to match the experience level.`
+                            : '',
+                        )
+                      }}
+                    >
                       <option value="all-levels">All experience levels</option>
                       <option value="beginner">Beginner friendly</option>
                       <option value="experienced">Experienced players</option>
@@ -328,20 +358,50 @@ export function EventForm({ event, currentUserId, hostName, games }: EventFormPr
                 <Tag className="size-5 text-primary" aria-hidden="true" /> Make it yours
               </h2>
               <EventFormField
-                name="tags"
-                label="Tags"
-                error={errors.tags?.message}
-                help="Optional. Up to 6 comma-separated tags, 2–30 characters each, with no duplicates."
+                name="imageUrl"
+                label="Event cover image"
+                error={errors.imageUrl?.message}
+                help="Optional. JPG, PNG, or WebP, up to 3 MB. Images are resized for display and reset with event data on reload."
               >
                 {(attributes) => (
-                  <Input
-                    {...register('tags')}
+                  <EventCoverInput
                     {...attributes}
-                    placeholder="Beginner friendly, Casual play, Bring a deck"
-                    className={inputStyle}
+                    inputRef={imageField.ref}
+                    value={imageField.value}
+                    fallback={fallback}
+                    pending={pending}
+                    processing={imagePending}
+                    onChange={imageField.onChange}
+                    onPendingChange={setImagePending}
+                    onError={reportImageError}
                   />
                 )}
               </EventFormField>
+              <EventFormField
+                name="tags"
+                label="Tags"
+                error={errors.tags?.message}
+                help="Optional. Choose up to six tags from the list. Availability follows the experience level."
+              >
+                {(attributes) => (
+                  <EventTagSelect
+                    {...attributes}
+                    inputRef={tagsField.ref}
+                    value={tagsField.value}
+                    experience={experience}
+                    disabled={pending}
+                    onChange={(tags) => {
+                      tagsField.onChange(tags)
+                      setTagNotice('')
+                    }}
+                  />
+                )}
+              </EventFormField>
+              {tagNotice && (
+                <p role="status" className="text-sm text-muted-foreground">
+                  {tagNotice}
+                </p>
+              )}
               <EventFormField
                 name="visibility"
                 label="Visibility"
@@ -369,7 +429,7 @@ export function EventForm({ event, currentUserId, hostName, games }: EventFormPr
             <p className="max-w-sm text-xs leading-relaxed text-muted-foreground">
               {event
                 ? 'Saving updates this event for your players.'
-                : 'You’ll be the host. A cover illustration is selected from your game.'}
+                : 'You’ll be the host. Your cover and tags help players find their table.'}
             </p>
             <div className="flex shrink-0 gap-3">
               <Button
@@ -382,7 +442,13 @@ export function EventForm({ event, currentUserId, hostName, games }: EventFormPr
               </Button>
               <Button type="submit" disabled={pending}>
                 {pending && <LoaderCircle className="animate-spin" aria-hidden="true" />}
-                {pending ? 'Saving...' : event ? 'Save changes' : 'Create Event'}
+                {imagePending
+                  ? 'Preparing image...'
+                  : pending
+                    ? 'Saving...'
+                    : event
+                      ? 'Save changes'
+                      : 'Create Event'}
               </Button>
             </div>
           </div>

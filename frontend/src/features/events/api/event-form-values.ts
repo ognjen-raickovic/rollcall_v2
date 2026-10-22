@@ -2,6 +2,7 @@ import { z } from 'zod'
 
 import type { Event, NewEvent } from '../types'
 import { editableEventValues, eventFields, newEventSchema } from './event-validation'
+import { customEventCover } from './event-covers'
 
 export function localDateTime(iso: string): string {
   const date = new Date(iso)
@@ -23,7 +24,6 @@ export const eventFormSchema = eventFields
   .extend({
     startsAt: z.string().min(1, 'Choose a start date and time.').transform(isoDateTime),
     endsAt: z.string().min(1, 'Choose an end date and time.').transform(isoDateTime),
-    tags: z.string().transform((value) => (value.trim() ? value.split(',').map((tag) => tag.trim()) : [])),
   })
   .pipe(newEventSchema)
 
@@ -53,16 +53,6 @@ export function eventFormDefaults(event?: Event): EventFormValues {
     ...values,
     startsAt: localDateTime(values.startsAt),
     endsAt: localDateTime(values.endsAt),
-    tags: values.tags.join(', '),
+    imageUrl: customEventCover(values.imageUrl),
   }
-}
-
-export function eventCover(category: string | undefined): string {
-  const covers: Record<string, string> = {
-    'role-playing': '/images/role-playing.svg',
-    'trading-card': '/images/trading-card.svg',
-    'board-game': '/images/board-games.svg',
-    'social-deduction': '/images/social-deduction.svg',
-  }
-  return covers[category ?? ''] ?? '/images/board-games.svg'
 }

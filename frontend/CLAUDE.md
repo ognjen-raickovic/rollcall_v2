@@ -39,12 +39,14 @@ Dependency direction: shared code -> features -> app, never the other way around
 
 ## RollCall scope
 - Read `../SPEC.md` for scope. Homepage, demo login, discovery/details, and shared create/edit
-  forms are implemented. Recurring events, invitations, uploads, and advanced administration remain out of scope.
+  forms, optional browser-side covers, curated tags, and light/dark themes are implemented.
+  Recurring events, invitations, cloud uploads, and advanced administration remain out of scope.
 - User profiles/games expose read APIs only. Events expose CRUD and join/leave, applying the scoped
   CRUD guidance in `.claude/rules/data.md`. Use events as the feature implementation reference.
 - Relationships use numeric IDs. Shared request/error/reference helpers live in `src/lib/mock-db.ts`;
   entity records stay in their feature's `api/` folder. Features never import each other's types.
-- Writes take a mock actor and enforce `../docs/entities.md`; reads are public.
+- Writes take a mock actor and enforce `../docs/entities.md`. Profiles, games, and
+  public/unlisted events have public reads; private events require an authorized mock actor.
 - The users domain owns `session-api.ts`, session query/mutation hooks, login UI, and the
   route guard. Session selection is tab-scoped; no real credentials, tokens, or auth service.
 - Compose session-aware navigation and event participation in app routes. Shared layout gets
@@ -53,6 +55,14 @@ Dependency direction: shared code -> features -> app, never the other way around
   Discovery uses API filters for upcoming/public events; mock records are never read by UI components.
 - Reuse the event schema in `api/event-validation.ts` for form/API validation. Form conversion
   lives in `api/event-form-values.ts`; `EventForm` and `useEventForm` serve both routes.
+- Use `event-tags.ts` for the canonical EventTag values and experience compatibility. Native
+  checkboxes in the Radix popover provide multi-selection; no arbitrary tags are accepted.
+- `api/event-covers.ts` validates/prepares JPG/PNG/WebP files up to 3 MiB, resizing to a maximum
+  1600px edge and encoding a bounded data URL. Preserve custom covers across game changes;
+  removing a custom cover restores the selected game's default. Never store cover data in
+  localStorage/sessionStorage. No object URLs or backend storage providers are needed.
+- `src/lib/theme.ts` and the head script in `index.html` share `rollcall.theme`. Keep both
+  bootstrapping and runtime switching consistent; all palettes stay in `src/index.css`.
 - Editor access and update operations require the host. Private event reads require the host
   or existing participants. Event detail cache keys include the current demo user ID.
 - If Playwright MCP is unavailable, use local Playwright if available and report skipped checks.
