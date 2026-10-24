@@ -35,8 +35,12 @@ export function createGeographyRepository(client: DatabaseClient): GeographyRepo
         return cityRowsSchema.parse(data).map((row) => ({
           id: row.id,
           countryId: row.country_id,
+          countryIsoCode: row.country_iso_code,
+          countryName: row.country_name,
           name: row.name,
           administrativeDivision: row.administrative_division,
+          admin1Code: row.admin1_code,
+          admin2Code: row.admin2_code,
           latitude: row.latitude,
           longitude: row.longitude,
         }))

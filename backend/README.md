@@ -1,8 +1,9 @@
-# RollCall backend: Milestone 1
+# RollCall backend: foundation and Balkan geography
 
 Fastify REST API with TypeScript and Zod, backed by local Supabase PostgreSQL through
 Supabase's Data API. Only health, countries and city search are implemented. The React
-app remains independent and continues to use its existing mock APIs/demo login.
+app remains independent and continues to use its existing mock APIs/demo login. Milestone 2A
+adds GeoNames import tools and backend search; frontend integration remains Milestone 2B.
 
 ## Prerequisites
 
@@ -37,6 +38,8 @@ applies migrations/seeds when initializing a fresh stack. If a previously initia
 local database needs rebuilding, `pnpm db:reset` explicitly resets only the local
 database, destroys local data and reapplies migrations plus development seed. Never run
 an unqualified reset or a linked/remote migration command as part of this setup.
+For normal upgrades, apply pending migrations with `pnpm exec supabase db push --local`
+without resetting data. Inspect what must be preserved before any destructive local reset.
 
 Stop the API with Ctrl+C. Stop local Supabase with `pnpm db:stop`.
 
@@ -58,10 +61,15 @@ read `supabase/config.toml` and CLI status rather than assuming Supabase's defau
 | `CITY_SEARCH_DEFAULT_LIMIT` | Suggestions when no limit is supplied; default `4`                                        |
 | `CITY_SEARCH_MAX_LIMIT`     | Configurable result ceiling, hard-bounded at `20`; default `20`                           |
 
-Environment is validated before listening. The backend needs no database password,
+Environment is validated before listening. The runtime API needs no database password,
 service-role key or Supabase access token. `.env` is ignored. The browser needs no
 Supabase environment variables in this milestone. Changing server configuration does
 not connect the existing frontend to the backend.
+
+The separate importer uses `GEOGRAPHY_DATABASE_URL` in ignored `backend/.env`, containing
+the local PostgreSQL connection string. It rejects non-loopback hosts and is never called
+by the API. See [geographic import](../docs/geographic-import.md) for setup and safety rules;
+do not reuse maintenance privileges for ordinary HTTP requests.
 
 ## Implemented HTTP API
 
@@ -81,7 +89,11 @@ City DTO:
   "id": 1,
   "countryId": 1,
   "name": "Podgorica",
+  "countryIsoCode": "ME",
+  "countryName": "Montenegro",
   "administrativeDivision": null,
+  "admin1Code": null,
+  "admin2Code": null,
   "latitude": null,
   "longitude": null
 }
@@ -93,13 +105,17 @@ No private profile/event information is included in geography responses.
 
 `country` is required, trimmed and uppercased, and must contain two ASCII letters.
 `q` is optional, trimmed, and at most 80 characters; empty input requests suggestions.
-Search is a database-normalized prefix match, tolerating case and diacritics such as
-`Cacak` → `Čačak`. A supplied `limit` must be an integer in the configured range
+Search uses canonical/source alternate names, tolerating case, accents and common Serbian
+Latin/Cyrillic forms such as `Cacak` → `Čačak`. Exact matches rank ahead of prefixes,
+then substrings for at least three normalized characters; shorter queries use prefixes only.
+A supplied `limit` must be an integer in the configured range
 `1..CITY_SEARCH_MAX_LIMIT`; the default is `CITY_SEARCH_DEFAULT_LIMIT`. SQL also caps
 results at 20. Unknown query keys or repeated/invalid values fail validation rather than
-silently broadening a query. Unknown/disabled countries and unmatched names return `[]`.
-Results order by population descending (unknown last), then normalized name and ID; the hand-curated
-development seed does not invent population data.
+silently broadening a query. Unsupported/unknown/disabled countries and unmatched names return
+`[]`; search is currently restricted to enabled ME/RS/BA/HR. Results are deduplicated by city
+ID. Population descending (unknown last), normalized name and ID break ties within each
+match rank. Empty input uses prominence ordering. The hand-curated development seed does
+not invent population data; the explicit import supplies available source population.
 
 Errors use the shared contract:
 
@@ -127,8 +143,33 @@ and Croatia (HR). The development seed contains only these real places:
 - HR: Zagreb, Split, Rijeka.
 
 This is a small, manually curated development dataset, not a GeoNames import or a complete
-city directory. No population, coordinates or source IDs are fabricated. Milestone 2 will
-add a reproducible, attributed comprehensive import and frontend autocomplete.
+city directory. No population, coordinates or source IDs are fabricated. Resetting a local
+database restores this sample rather than downloading the full geographic dataset.
+
+## Geographic import: Milestone 2A
+
+The actual four-country import contains 46,241 GeoNames places. Counts, preserved legacy
+ambiguities and checksums are in [geographic import](../docs/geographic-import.md) and
+[verification](../docs/geographic-verification.md).
+
+Set `GEOGRAPHY_DATABASE_URL` in ignored `backend/.env`, then run from the repository root:
+
+```bash
+pnpm geography:import --directory .tmp/geonames --download --dry-run
+pnpm geography:import --directory .tmp/geonames
+pnpm geography:benchmark
+```
+
+The package executes in `backend/`, so paths are relative to that directory. Local country
+text/ZIP inputs also work without downloading. `--download` fills missing archives;
+`--download --refresh` explicitly chooses newer archives. Each country imports transactionally
+by stable source identity and preserves existing internal IDs/references. Ambiguous seed
+matches are reported rather than merged. No city is deleted when a newer extract omits it.
+
+Read [geographic import](../docs/geographic-import.md) for the exact feature-code allowlist,
+offline/refresh/report flags, SHA-256 provenance, CC BY 4.0 attribution, source limitations,
+search ranking and Milestone 2B frontend requirements. A dry-run is not an executed import;
+record actual per-country counts and rerun results when verifying a dataset.
 
 ## Checks
 
@@ -151,7 +192,8 @@ without requiring a live database. SQL lint/tests require a running local Supaba
 `db:test:concurrency` uses separate local PostgreSQL transactions through Docker to test
 competing final-seat joins and attendance/capacity edits; it never targets a hosted project.
 Database-backed integration tests are opt-in and reject non-loopback Supabase targets.
-With the local stack running and `backend/.env` configured, run:
+With the local stack running and `backend/.env` configured (including
+`GEOGRAPHY_DATABASE_URL` for the maintenance tests), run:
 
 ```bash
 RUN_LOCAL_INTEGRATION=true pnpm test:integration
@@ -166,9 +208,11 @@ Remove-Item Env:RUN_LOCAL_INTEGRATION
 ```
 
 Without the opt-in the suite reports a skip. A skipped integration suite is not a pass
-against PostgreSQL. The test reads real local seed data through the actual repository
-and checks that direct anonymous event reads are denied. Record the commands actually
-executed in the milestone handoff.
+against PostgreSQL. Tests exercise the real repository and anonymous permission checks.
+Importer tests create, migrate and remove a randomly named disposable local database;
+the local maintenance account needs permission to create databases. They never reset the
+application database. Imported-place coverage skips explicitly until the geographic import
+has run. Record executed checks in the milestone handoff.
 
 Build output is `backend/dist`; `pnpm --filter backend start` runs the compiled API.
 Run `pnpm build` first. No script deploys or modifies a remote project.
@@ -176,7 +220,7 @@ Run `pnpm build` first. No script deploys or modifies a remote project.
 ## Safety and later milestones
 
 The Supabase client uses only unprivileged geography grants/RLS. All non-geography tables
-have RLS and remain inaccessible to Data API client roles in Milestone 1. No service-role
+have RLS and remain inaccessible to Data API client roles in Milestones 1/2A. No service-role
 repository, real login, event write route, storage bucket/upload, invitation interface or
 admin dashboard is implemented. Server-side authorization and tests must accompany each
 future grant/API. Roles cannot be assigned through client input.

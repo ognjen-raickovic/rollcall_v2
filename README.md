@@ -17,6 +17,10 @@ Only health and geography endpoints are implemented; event/auth APIs and real up
 remain future milestones. Start with [backend setup](backend/README.md),
 [architecture](docs/backend-architecture.md), [schema](docs/database-schema.md), and
 [roadmap](docs/backend-roadmap.md).
+**Milestone 2A** adds reproducible GeoNames imports and improved Balkan place search;
+frontend country/city selection remains Milestone 2B. The verified local import contains
+46,241 GeoNames places across the four countries. See [verification](docs/geographic-verification.md) and
+[geographic import](docs/geographic-import.md) for source/license, filters and rerun commands.
 Executed checks and local environment limitations are recorded in
 [Milestone 1 verification](docs/backend-verification.md).
 
@@ -58,9 +62,21 @@ pnpm db:stop
 `pnpm db:reset` explicitly resets **only the local** database, reapplies migrations and
 loads development seeds. It destroys local data. Do not run it against a hosted project.
 Neither backend startup nor frontend startup automatically initializes a database.
-The countries seed contains ME, RS, BA and HR; its small city list is development-only,
-not a complete geographic dataset. Docker/Supabase must be available for live database
+The countries seed contains ME, RS, BA and HR; its small city list is development-only.
+Apply pending local migrations without a reset using `pnpm exec supabase db push --local`.
+Populate broader source coverage explicitly with the geographic importer; neither seed nor
+import claims perfect geographic completeness. Docker/Supabase must be available for live database
 checks. See [backend/README.md](backend/README.md) for exact environment and test commands.
+
+```bash
+# Set the maintenance-only local GEOGRAPHY_DATABASE_URL in ignored backend/.env first.
+pnpm geography:import --directory .tmp/geonames --download --dry-run
+pnpm geography:import --directory .tmp/geonames
+```
+
+Importer paths are relative to `backend/`. Inputs/checksums and per-country outcomes are
+reported; reruns preserve source-backed city IDs and application references. Downloads are
+ignored and no importer runs automatically during application startup.
 
 For submission checks, run typecheck, lint, build, `pnpm test:mock`, and `pnpm test:backend`.
 Run local SQL/integration checks when Docker/Supabase are available and report any skipped
@@ -90,11 +106,13 @@ frontend/
   src/components/layout/     Navigation and app layout
   src/lib/                   Mock helpers, reference IDs, utilities
 backend/                     Fastify API, server config, geography data access and tests
+  scripts/geography/         Local GeoNames download/validation/import tooling
 supabase/                    Local CLI config, SQL migrations, development seed and DB tests
 docs/entities.md             Frontend mock contracts and implemented backend API boundary
 docs/backend-architecture.md Data access, authorization and service architecture
 docs/database-schema.md      Relational model, privacy, constraints and ER diagram
 docs/backend-roadmap.md      Milestone boundaries and future integration
+docs/geographic-import.md    GeoNames scope, attribution, safe reruns and search behavior
 .claude/                     Preserved rules, commands, design skill, reviewer, format hook
 ```
 
@@ -128,7 +146,7 @@ the existing mock image field; cards/details render the result. Replace or remov
 cover in the form, or keep the game-based default. Custom covers survive game changes and
 reset with event data on reload. Nothing is uploaded externally or stored in browser storage;
 Supabase Storage is planned for later backend uploads; no bucket or upload integration
-is implemented in Milestone 1.
+is implemented in Milestones 1/2A.
 
 Tags use eight predefined options, with at most six selections and removable chips. The
 experience level controls Beginner friendly/Veterans only compatibility. The navbar theme
@@ -153,6 +171,8 @@ Implemented routes are `GET /health`, `GET /api/countries`, and
 prove database readiness. Geography is read through Supabase's Data API using an
 unprivileged key, explicit grants and RLS. No service-role key or database password is
 needed by the API. Never put privileged credentials in a frontend environment file.
+The separate local importer uses a maintenance-only PostgreSQL connection and never runs
+inside a request. Its privileges are not added to the runtime Supabase client.
 
 The schema includes UUID profiles linked to Supabase Auth and UUID events, numeric
 geography/game IDs, country/city relationships, per-game experience and unique attendance.
@@ -160,6 +180,9 @@ Exact addresses, private self-declared age information and roles are separated f
 public-safe records. Non-geography application tables have RLS enabled and no client
 grants in this milestone; their future endpoints/authorization are not implemented.
 The numeric frontend demo IDs are unchanged and are not real account identities.
+The city endpoint searches canonical/alternate names with exact/prefix priority, substring
+fallback for three or more characters and four prominent suggestions by default. Existing
+DTO fields remain; country and administrative codes are additive.
 
 No hosted Supabase project is created, linked, migrated, reset or deployed by these
 commands. Live authentication, profile/event APIs, invitation codes, role administration,

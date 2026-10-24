@@ -36,3 +36,6 @@ supabase/.temp/
 supabase/.branches/
 coverage/
 backend/.tmp/
+
+# Downloaded geographic extracts and local import reports
+backend/.geography/

@@ -10,8 +10,12 @@ const cities = [
   {
     id: 1,
     countryId: 1,
+    countryIsoCode: 'ME',
+    countryName: 'Montenegro',
     name: 'Podgorica',
     administrativeDivision: null,
+    admin1Code: null,
+    admin2Code: null,
     latitude: null,
     longitude: null,
   },

@@ -3,7 +3,8 @@
 RollCall helps tabletop players discover, organize, and join gaming events. This repository
 started as the frontend MVP for AI-DEV 2026 Workshop 3, based on
 `jovanp-najveci/ai-frontend-starter`. Backend Milestone 1 adds an independent API/database
-foundation; the React app still runs entirely on its existing mocks.
+foundation; Milestone 2A adds GeoNames imports and backend place search. The React app
+still runs entirely on its existing mocks until the separate Milestone 2B integration.
 
 ## Shared rules
 
@@ -32,16 +33,22 @@ Keep foundation routes simple until finished pages are requested.
 - Curated event tags and experience compatibility come from `frontend/src/features/events/event-tags.ts`.
   Cover preparation belongs to events; bounded image data URLs are mock-only and never stored
   in browser storage. Supabase Storage is planned for real pictures in a later backend
-  milestone; do not add uploads or buckets during Milestone 1.
+  milestone; do not add uploads or buckets during geography work.
 - Theme tokens live in `frontend/src/index.css`; `src/lib/theme.ts` and the early HTML script
   share the `rollcall.theme` preference key. Default to dark and keep blocked-storage fallback.
 - Use a separate GitHub feature branch per task/person; review through PRs. Inspect existing
   changes, preserve teammates' work, and coordinate shared contract/router/token/lock files.
 - Do not commit, push, or merge without explicit user approval. Never expose secrets or env files.
-- Keep database credentials and privileged keys server-side. Milestone 1 uses only an
+- Keep database credentials and privileged keys server-side. The runtime API uses only an
   unprivileged Supabase key with explicit grants/RLS for geography reads. Never add a
   service-role bypass as a shortcut. Do not create, alter, reset, link, or deploy a remote
   Supabase project without explicit approval. Local reset scripts must remain explicitly local.
+- Geographic imports are separate local maintenance commands, never API request paths.
+  Read `docs/geographic-import.md` before imports. Preserve city IDs/references, retain
+  source identifiers and report real counts/checksums. Do not reset a populated local
+  database without checking what must be preserved. Keep downloaded datasets out of Git.
+- Milestone 2A changes imports/schema/backend search only. Do not connect the React frontend,
+  replace event mocks, or add authentication, invitation codes or administrative features.
 - Frontend mock IDs remain numeric. Database profiles reference Supabase Auth UUIDs and
   database events use UUIDs; do not coerce IDs or silently migrate frontend models.
 - Run commands from the repository root: `pnpm install`, `pnpm dev`, `pnpm format`,

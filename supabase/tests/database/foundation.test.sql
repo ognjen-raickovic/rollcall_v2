@@ -1,4 +1,4 @@
--- Run against a freshly reset LOCAL Supabase database: pnpm db:test.
+-- Run against the migrated LOCAL Supabase database: pnpm db:test.
 -- Transaction rolls back all fixtures and temporary testing grants.
 begin;
 create extension if not exists pgtap with schema extensions;
@@ -47,15 +47,21 @@ select ok(not (select prosecdef from pg_proc where oid = 'public.search_cities(t
 -- A disabled country is hidden even if addressed directly through the Data API.
 insert into public.countries(iso_code, name, enabled) values ('ZZ', 'Disabled test fixture', false);
 insert into public.cities(country_id, name) select id, 'Hidden fixture' from public.countries where iso_code = 'ZZ';
+create temporary table expected_visible_city_count as
+  select count(*)::integer as value from public.cities city
+  join public.countries country on country.id = city.country_id where country.enabled;
+grant select on expected_visible_city_count to anon;
 set local role anon;
 select is((select count(*)::integer from public.countries), 4, 'anonymous callers see the four enabled countries');
-select is((select count(*)::integer from public.cities), 13, 'anonymous callers see only enabled-country development cities');
-select results_eq($$select name from public.search_cities('RS', 'Cacak', 4)$$,
-  $$values ('Čačak'::text)$$, 'ASCII city search matches diacritics');
-select results_eq($$select name from public.search_cities('ME', 'NIKSIC', 4)$$,
-  $$values ('Nikšić'::text)$$, 'search ignores case and accents');
+select is((select count(*)::integer from public.cities),
+  (select value from expected_visible_city_count), 'anonymous callers see only enabled-country cities regardless of import size');
+select ok(exists (select 1 from public.search_cities('RS', 'Cacak', 4) where normalized_name = 'cacak'),
+  'ASCII city search matches diacritics');
+select ok(exists (select 1 from public.search_cities('ME', 'NIKSIC', 4) where normalized_name = 'niksic'),
+  'search ignores case and accents');
 select is((select count(*)::integer from public.search_cities('HR', '', 2)), 2, 'limit controls suggestions');
-select is((select count(*)::integer from public.search_cities('ME', 'Čačak', 4)), 0, 'country scope cannot leak another country');
+select ok(not exists (select 1 from public.search_cities('ME', 'Čačak', 4) where country_iso_code <> 'ME'),
+  'country scope cannot leak another country');
 select is((select count(*)::integer from public.search_cities('ME', '%', 4)), 0, 'percent is literal rather than a search wildcard');
 select is((select count(*)::integer from public.search_cities('ME', '_', 4)), 0, 'underscore is literal rather than a search wildcard');
 select is((select count(*)::integer from public.search_cities('ZZ', '', 4)), 0, 'disabled country returns no cities');
@@ -80,7 +86,7 @@ select throws_ok($$insert into public.profiles(id, display_name) values
   ('00000000-0000-4000-8000-000000000004', 'Missing Auth user')$$,
   '23503', null, 'profiles require an existing Supabase Auth UUID');
 select throws_ok($$update public.profiles set country_id = (select id from public.countries where iso_code = 'ME'),
-  city_id = (select id from public.cities where name = 'Sarajevo') where display_name = 'Host fixture'$$,
+  city_id = (select id from public.cities where name = 'Sarajevo' order by population desc nulls last, id limit 1) where display_name = 'Host fixture'$$,
   '23503', null, 'profile city must belong to its selected country');
 select throws_ok($$insert into private.profile_private(profile_id, birth_year, age_declared_at) values
   ('00000000-0000-4000-8000-000000000001', extract(year from current_date)::integer + 1, now())$$,
@@ -99,7 +105,7 @@ insert into public.events(id, host_id, game_id, city_id, title, description, sta
   capacity, experience_level, visibility, tags)
 select '10000000-0000-4000-8000-000000000001', '00000000-0000-4000-8000-000000000001',
   (select id from public.games where name = 'Dungeons & Dragons'),
-  (select id from public.cities where name = 'Podgorica'),
+  (select id from public.cities where name = 'Podgorica' order by population desc nulls last, id limit 1),
   'One seat fixture', 'A development-only event used to verify seat invariants.',
   now() + interval '1 day', now() + interval '1 day 3 hours', 1, 'all-levels', 'private', array['Casual'];
 insert into private.event_locations(event_id, address) values

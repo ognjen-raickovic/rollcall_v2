@@ -1,0 +1,261 @@
+{
+  "recordedAt": "2026-10-24T15:55:11.595Z",
+  "source": "GeoNames country extracts",
+  "license": "CC BY 4.0",
+  "attribution": "https://www.geonames.org/",
+  "includedFeatureCodes": [
+    "PPL",
+    "PPLA",
+    "PPLA2",
+    "PPLA3",
+    "PPLA4",
+    "PPLA5",
+    "PPLC",
+    "PPLCD",
+    "PPLF",
+    "PPLG",
+    "PPLL",
+    "PPLR"
+  ],
+  "countries": [
+    {
+      "source": {
+        "country": "ME",
+        "sourceUrl": "https://download.geonames.org/export/dump/ME.zip",
+        "file": "ME.zip",
+        "sha256": "c4186b53f724e2e6d1ddad05fef71b9e11fcf45754425b9368a2708921a5c2fc",
+        "textSha256": "797eb452c52022898f8d34a250f288d38bbf67e2258da40f016f44da727f1994",
+        "bytes": 376330,
+        "textBytes": 1550775,
+        "downloadedAt": null,
+        "lastModified": null
+      },
+      "verifiedDownload": {
+        "country": "ME",
+        "sourceUrl": "https://download.geonames.org/export/dump/ME.zip",
+        "file": "ME.zip",
+        "sha256": "c4186b53f724e2e6d1ddad05fef71b9e11fcf45754425b9368a2708921a5c2fc",
+        "textSha256": "797eb452c52022898f8d34a250f288d38bbf67e2258da40f016f44da727f1994",
+        "bytes": 376330,
+        "textBytes": 1550775,
+        "downloadedAt": "2026-10-24T15:54:28.955Z",
+        "lastModified": "Sat, 24 Oct 2026 01:53:01 GMT"
+      },
+      "parse": {
+        "total": 14153,
+        "excludedClass": 10112,
+        "excludedFeatureCode": {
+          "PPLH": 1,
+          "PPLW": 20,
+          "PPLX": 15,
+          "PPLQ": 3,
+          "PPLCH": 2
+        },
+        "wrongCountry": 0,
+        "invalid": 0,
+        "duplicateSourceIds": 0,
+        "invalidAliases": 0,
+        "eligible": 4000
+      },
+      "firstImport": {
+        "inserted": 3996,
+        "updated": 0,
+        "adoptedSeeds": 4,
+        "ambiguousSeeds": 0,
+        "unchanged": 0,
+        "staleSourceRows": 0,
+        "aliasesInserted": 1618
+      },
+      "rerun": {
+        "inserted": 0,
+        "updated": 0,
+        "adoptedSeeds": 0,
+        "ambiguousSeeds": 0,
+        "unchanged": 4000,
+        "staleSourceRows": 0,
+        "aliasesInserted": 0
+      }
+    },
+    {
+      "source": {
+        "country": "RS",
+        "sourceUrl": "https://download.geonames.org/export/dump/RS.zip",
+        "file": "RS.zip",
+        "sha256": "488a40b80a0de1f3bdbead7105b487387bc76e868ebaf5c7d7f30ef1c1d89d24",
+        "textSha256": "e4b2d91e1b37fbf4d7663397184107fe862fdb2926147398ce42f94a377c3720",
+        "bytes": 758307,
+        "textBytes": 3050538,
+        "downloadedAt": null,
+        "lastModified": null
+      },
+      "verifiedDownload": {
+        "country": "RS",
+        "sourceUrl": "https://download.geonames.org/export/dump/RS.zip",
+        "file": "RS.zip",
+        "sha256": "488a40b80a0de1f3bdbead7105b487387bc76e868ebaf5c7d7f30ef1c1d89d24",
+        "textSha256": "e4b2d91e1b37fbf4d7663397184107fe862fdb2926147398ce42f94a377c3720",
+        "bytes": 758307,
+        "textBytes": 3050538,
+        "downloadedAt": "2026-10-24T15:54:29.353Z",
+        "lastModified": "Sat, 24 Oct 2026 01:54:17 GMT"
+      },
+      "parse": {
+        "total": 24549,
+        "excludedClass": 15035,
+        "excludedFeatureCode": {
+          "PPLX": 20,
+          "PPLH": 2,
+          "PPLCH": 2,
+          "PPLQ": 1
+        },
+        "wrongCountry": 0,
+        "invalid": 0,
+        "duplicateSourceIds": 0,
+        "invalidAliases": 0,
+        "eligible": 9489
+      },
+      "firstImport": {
+        "inserted": 9487,
+        "updated": 0,
+        "adoptedSeeds": 2,
+        "ambiguousSeeds": 1,
+        "unchanged": 0,
+        "staleSourceRows": 0,
+        "aliasesInserted": 11021
+      },
+      "rerun": {
+        "inserted": 0,
+        "updated": 0,
+        "adoptedSeeds": 0,
+        "ambiguousSeeds": 1,
+        "unchanged": 9489,
+        "staleSourceRows": 0,
+        "aliasesInserted": 0
+      }
+    },
+    {
+      "source": {
+        "country": "BA",
+        "sourceUrl": "https://download.geonames.org/export/dump/BA.zip",
+        "file": "BA.zip",
+        "sha256": "2c24c52268a6b0f15f6e4a026fbc02f76196d0d0fd76dda62fdcd859183aebcf",
+        "textSha256": "30fc98ae87c8c9014debc2c3e20597e40d745b42fdef270891ea8ac19ace0ba4",
+        "bytes": 1349470,
+        "textBytes": 5344634,
+        "downloadedAt": null,
+        "lastModified": null
+      },
+      "verifiedDownload": {
+        "country": "BA",
+        "sourceUrl": "https://download.geonames.org/export/dump/BA.zip",
+        "file": "BA.zip",
+        "sha256": "2c24c52268a6b0f15f6e4a026fbc02f76196d0d0fd76dda62fdcd859183aebcf",
+        "textSha256": "30fc98ae87c8c9014debc2c3e20597e40d745b42fdef270891ea8ac19ace0ba4",
+        "bytes": 1349470,
+        "textBytes": 5344634,
+        "downloadedAt": "2026-10-24T15:54:29.784Z",
+        "lastModified": "Sat, 24 Oct 2026 01:49:29 GMT"
+      },
+      "parse": {
+        "total": 51889,
+        "excludedClass": 29905,
+        "excludedFeatureCode": {
+          "PPLW": 551,
+          "PPLQ": 18,
+          "PPLX": 24,
+          "PPLS": 1,
+          "PPLH": 1
+        },
+        "wrongCountry": 0,
+        "invalid": 0,
+        "duplicateSourceIds": 0,
+        "invalidAliases": 0,
+        "eligible": 21389
+      },
+      "firstImport": {
+        "inserted": 21386,
+        "updated": 0,
+        "adoptedSeeds": 3,
+        "ambiguousSeeds": 0,
+        "unchanged": 0,
+        "staleSourceRows": 0,
+        "aliasesInserted": 5227
+      },
+      "rerun": {
+        "inserted": 0,
+        "updated": 0,
+        "adoptedSeeds": 0,
+        "ambiguousSeeds": 0,
+        "unchanged": 21389,
+        "staleSourceRows": 0,
+        "aliasesInserted": 0
+      }
+    },
+    {
+      "source": {
+        "country": "HR",
+        "sourceUrl": "https://download.geonames.org/export/dump/HR.zip",
+        "file": "HR.zip",
+        "sha256": "420be7f102ead9af610e24b9d48b73e33da576c22405cb1f2ec7e9d01007a0cf",
+        "textSha256": "0c47006f31c57890c3c2fb5146f5d1e2713e6d5c641ca26adc9850ef6df76eff",
+        "bytes": 800322,
+        "textBytes": 3096878,
+        "downloadedAt": null,
+        "lastModified": null
+      },
+      "verifiedDownload": {
+        "country": "HR",
+        "sourceUrl": "https://download.geonames.org/export/dump/HR.zip",
+        "file": "HR.zip",
+        "sha256": "420be7f102ead9af610e24b9d48b73e33da576c22405cb1f2ec7e9d01007a0cf",
+        "textSha256": "0c47006f31c57890c3c2fb5146f5d1e2713e6d5c641ca26adc9850ef6df76eff",
+        "bytes": 800322,
+        "textBytes": 3096878,
+        "downloadedAt": "2026-10-24T15:54:30.306Z",
+        "lastModified": "Sat, 24 Oct 2026 01:51:37 GMT"
+      },
+      "parse": {
+        "total": 26633,
+        "excludedClass": 15002,
+        "excludedFeatureCode": {
+          "PPLX": 165,
+          "PPLW": 33,
+          "PPLQ": 60,
+          "PPLS": 2,
+          "PPLH": 4,
+          "PPLCH": 4
+        },
+        "wrongCountry": 0,
+        "invalid": 0,
+        "duplicateSourceIds": 0,
+        "invalidAliases": 0,
+        "eligible": 11363
+      },
+      "firstImport": {
+        "inserted": 11361,
+        "updated": 0,
+        "adoptedSeeds": 2,
+        "ambiguousSeeds": 1,
+        "unchanged": 0,
+        "staleSourceRows": 0,
+        "aliasesInserted": 5535
+      },
+      "rerun": {
+        "inserted": 0,
+        "updated": 0,
+        "adoptedSeeds": 0,
+        "ambiguousSeeds": 1,
+        "unchanged": 11363,
+        "staleSourceRows": 0,
+        "aliasesInserted": 0
+      }
+    }
+  ],
+  "verification": {
+    "cityCount": 46243,
+    "aliasCount": 23401,
+    "identicalCatalogDigest": "6ecd55d9dcb68df8a22e26ea22e06ae050096cd821839a012e9ff26478fccfbb",
+    "originalCityIdsPreserved": 13
+  },
+  "note": "Actual local import snapshot. Remote extracts are mutable; archive/text bytes remain ignored. Retain matching checksums for exact reproduction. Two ambiguous development samples remain separate."
+}

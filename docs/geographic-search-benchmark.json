@@ -1,0 +1,202 @@
+{
+  "generatedAt": "2026-10-24T15:52:43.112Z",
+  "role": "anon",
+  "counts": [
+    {
+      "iso_code": "BA",
+      "places": 21389
+    },
+    {
+      "iso_code": "HR",
+      "places": 11363
+    },
+    {
+      "iso_code": "ME",
+      "places": 4000
+    },
+    {
+      "iso_code": "RS",
+      "places": 9489
+    }
+  ],
+  "context": "Single local client, warm caches, actual imported records; not a production SLA.",
+  "observedTrigramUse": false,
+  "indexNote": "Planner choices depend on selectivity and RLS; index existence is tested separately. No planner settings are forced.",
+  "queries": [
+    {
+      "country": "ME",
+      "q": "",
+      "roundTrips": 12,
+      "medianMs": 1.769,
+      "p95Ms": 7.813,
+      "rpcExecutionMs": 0.47,
+      "coreExecutionMs": 0.074,
+      "indexes": ["cities_country_suggestions_idx"]
+    },
+    {
+      "country": "RS",
+      "q": "",
+      "roundTrips": 12,
+      "medianMs": 1.386,
+      "p95Ms": 1.868,
+      "rpcExecutionMs": 0.284,
+      "coreExecutionMs": 0.058,
+      "indexes": ["cities_country_suggestions_idx"]
+    },
+    {
+      "country": "BA",
+      "q": "",
+      "roundTrips": 12,
+      "medianMs": 1.468,
+      "p95Ms": 1.786,
+      "rpcExecutionMs": 0.297,
+      "coreExecutionMs": 0.045,
+      "indexes": ["cities_country_suggestions_idx"]
+    },
+    {
+      "country": "HR",
+      "q": "",
+      "roundTrips": 12,
+      "medianMs": 1.492,
+      "p95Ms": 1.727,
+      "rpcExecutionMs": 0.285,
+      "coreExecutionMs": 0.049,
+      "indexes": ["cities_country_suggestions_idx"]
+    },
+    {
+      "country": "ME",
+      "q": "nik",
+      "roundTrips": 12,
+      "medianMs": 8.41,
+      "p95Ms": 9.698,
+      "rpcExecutionMs": 7.51,
+      "coreExecutionMs": 5.699,
+      "indexes": [
+        "cities_country_suggestions_idx",
+        "countries_pkey",
+        "city_aliases_country_prefix_idx",
+        "cities_id_country_id_key"
+      ]
+    },
+    {
+      "country": "RS",
+      "q": "Cacak",
+      "roundTrips": 12,
+      "medianMs": 28.692,
+      "p95Ms": 33.174,
+      "rpcExecutionMs": 40.472,
+      "coreExecutionMs": 24.545,
+      "indexes": [
+        "cities_country_suggestions_idx",
+        "countries_pkey",
+        "city_aliases_country_prefix_idx",
+        "cities_id_country_id_key"
+      ]
+    },
+    {
+      "country": "RS",
+      "q": "Београд",
+      "roundTrips": 12,
+      "medianMs": 43.502,
+      "p95Ms": 73.496,
+      "rpcExecutionMs": 38.402,
+      "coreExecutionMs": 33.597,
+      "indexes": [
+        "cities_country_suggestions_idx",
+        "countries_pkey",
+        "city_aliases_country_prefix_idx",
+        "cities_id_country_id_key"
+      ]
+    },
+    {
+      "country": "HR",
+      "q": "rij",
+      "roundTrips": 12,
+      "medianMs": 25.29,
+      "p95Ms": 28.219,
+      "rpcExecutionMs": 17.933,
+      "coreExecutionMs": 18.975,
+      "indexes": [
+        "cities_country_suggestions_idx",
+        "countries_pkey",
+        "city_aliases_country_prefix_idx",
+        "cities_id_country_id_key"
+      ]
+    },
+    {
+      "country": "ME",
+      "q": "gor",
+      "roundTrips": 12,
+      "medianMs": 6.175,
+      "p95Ms": 8.061,
+      "rpcExecutionMs": 4.914,
+      "coreExecutionMs": 3.882,
+      "indexes": [
+        "cities_country_suggestions_idx",
+        "city_aliases_country_prefix_idx",
+        "cities_id_country_id_key",
+        "countries_pkey"
+      ]
+    },
+    {
+      "country": "RS",
+      "q": "grad",
+      "roundTrips": 12,
+      "medianMs": 25.028,
+      "p95Ms": 29.151,
+      "rpcExecutionMs": 22.973,
+      "coreExecutionMs": 27.073,
+      "indexes": [
+        "cities_country_suggestions_idx",
+        "countries_pkey",
+        "city_aliases_country_prefix_idx",
+        "cities_id_country_id_key"
+      ]
+    },
+    {
+      "country": "BA",
+      "q": "don",
+      "roundTrips": 12,
+      "medianMs": 27.95,
+      "p95Ms": 40.059,
+      "rpcExecutionMs": 25.053,
+      "coreExecutionMs": 21.698,
+      "indexes": [
+        "cities_country_name_prefix_idx",
+        "city_aliases_country_prefix_idx",
+        "cities_id_country_id_key",
+        "countries_pkey"
+      ]
+    },
+    {
+      "country": "HR",
+      "q": "a",
+      "roundTrips": 12,
+      "medianMs": 7.788,
+      "p95Ms": 11.729,
+      "rpcExecutionMs": 4.89,
+      "coreExecutionMs": 3.922,
+      "indexes": [
+        "cities_country_suggestions_idx",
+        "city_aliases_country_prefix_idx",
+        "cities_id_country_id_key",
+        "countries_pkey"
+      ]
+    },
+    {
+      "country": "BA",
+      "q": "NoSuchPlaceRollCall",
+      "roundTrips": 12,
+      "medianMs": 53.537,
+      "p95Ms": 63.08,
+      "rpcExecutionMs": 51.202,
+      "coreExecutionMs": 62.002,
+      "indexes": [
+        "cities_country_name_prefix_idx",
+        "countries_pkey",
+        "city_aliases_country_prefix_idx",
+        "cities_id_country_id_key"
+      ]
+    }
+  ]
+}

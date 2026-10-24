@@ -43,8 +43,12 @@ export const cityRowsSchema = z.array(
   z.object({
     id: z.number().int().positive(),
     country_id: z.number().int().positive(),
+    country_iso_code: z.string().regex(/^[A-Z]{2}$/),
+    country_name: z.string().min(2),
     name: z.string(),
     administrative_division: z.string().nullable(),
+    admin1_code: z.string().nullable(),
+    admin2_code: z.string().nullable(),
     latitude: z.number().nullable(),
     longitude: z.number().nullable(),
   }),

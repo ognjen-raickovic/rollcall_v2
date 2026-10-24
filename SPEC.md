@@ -10,8 +10,9 @@ never "RollCall v2" in the UI.
 ## Delivery stages
 
 Workshop 3 delivered the working frontend described below. Backend development is now
-incremental: Milestone 1 adds the separate foundation described in the final section of
-this specification. It does not connect the frontend to live data or real authentication.
+incremental: Milestone 1 adds the separate foundation; Milestone 2A adds geographic import
+and backend search. Milestone 2B will connect country/city selection to the frontend.
+Neither the foundation nor 2A replaces event mocks or implements real authentication.
 
 ## Workshop 3 scope
 
@@ -165,9 +166,9 @@ The foundation includes:
 Initial enabled countries are Montenegro (ME), Serbia (RS), Bosnia and Herzegovina (BA),
 and Croatia (HR). Countries are rows, not a frontend enum. Place storage supports many
 thousands of settlements, stable external source identifiers and indexed normalized-name
-search. Milestone 2 will add reproducible comprehensive imports from an appropriately
-licensed source such as GeoNames, attribution and frontend country/city autocomplete.
-The development seed must never be described as comprehensive.
+search. Milestone 2A implements reproducible imports from GeoNames; frontend country/city
+autocomplete is separate Milestone 2B work. The development seed and the source dataset
+must never be described as perfectly complete.
 
 Database profiles use actual Supabase Auth UUIDs. Events also use UUIDs; catalog and
 geography keys are numeric. Real event models retain the existing validation rules with
@@ -193,3 +194,34 @@ See [backend architecture](docs/backend-architecture.md),
 [database schema](docs/database-schema.md), and [roadmap](docs/backend-roadmap.md) for the
 implemented foundations, access model and next milestones. No remote project changes,
 deployment, commits, pushes or merges are authorized by this milestone.
+
+## Backend Milestone 2A: Balkan geographic data and search
+
+Use the ME, RS, BA and HR GeoNames country extracts, with the documented populated-place
+feature-code allowlist, stable GeoNames identifiers and CC BY 4.0 attribution. Import cities,
+towns, villages and eligible smaller settlements without a population threshold. Historical,
+abandoned, destroyed, grouped and city-section records are excluded as documented in
+[geographic import](docs/geographic-import.md). Source accuracy/completeness is not guaranteed.
+
+The import is an explicit local maintenance operation: downloaded archives/text are ignored,
+inputs have SHA-256 checksums, records are validated, and per-country transactions retain
+internal city IDs and application references. Reruns update by source identity; known seed
+adoption must be unambiguous. No city is deleted merely because it disappears from a source
+extract. No runtime API client gains write privileges.
+
+Search remains `GET /api/cities?country=ME&q=...&limit=4`, with mandatory country filtering,
+strict validation and the existing response fields. Additive country/administrative-code fields
+help distinguish same-name places. Search uses canonical and source alternate names, case/
+accent normalization and common Serbian Latin/Cyrillic forms. Exact/prefix matches rank ahead
+of substring matches; substring search begins at three normalized characters. Empty input
+favors populous places. The default remains four results and the hard maximum twenty.
+
+Database migrations add aliases/source administrative metadata and suitable prefix/trigram
+indexes while preserving grants/RLS. Verify real import counts, rerun identity stability,
+country isolation, search behavior and query performance on the loaded dataset; do not infer
+those results from schema definitions alone.
+
+Milestone 2A does not change React routes/forms, mock events, login, styles or themes. It does
+not add authentication, event HTTP operations, private room codes, deployments or remote database
+changes. Milestone 2B must add country selection, debounced bounded city suggestions, selected
+city IDs and clearing an incompatible selection when country changes, through feature API layers.
