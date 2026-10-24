@@ -38,6 +38,11 @@ Dependency direction: shared code -> features -> app, never the other way around
 - No errors in the browser console
 
 ## RollCall scope
+- Backend Milestone 1 is independent of this app. Keep all current routes, forms, mock APIs,
+  numeric IDs and themes unchanged. Do not connect Supabase, change the city string contract,
+  make venue optional in the existing form, or replace demo sessions during this milestone.
+  The database's UUID profiles/events, city IDs and optional venue are documented separately
+  in `../docs/database-schema.md`; later integration will use deliberate API adapters.
 - Read `../SPEC.md` for scope. Homepage, demo login, discovery/details, and shared create/edit
   forms, optional browser-side covers, curated tags, and light/dark themes are implemented.
   Recurring events, invitations, cloud uploads, and advanced administration remain out of scope.

@@ -1,2 +1,7 @@
 packages:
   - frontend
+  - backend
+
+# tsx uses esbuild's platform binary; permit only its installation check.
+allowBuilds:
+  esbuild: true

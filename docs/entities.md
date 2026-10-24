@@ -1,10 +1,89 @@
 ﻿# RollCall entities and API contract
 
-Shared contract for Workshop 3 mocks and a future backend. Feature types live in
-`frontend/src/features/<domain>/types.ts`; APIs and fixtures live in that feature's `api/`.
-Users and games are read-only in this scope. Events support CRUD plus attendance.
+Shared contract for the unchanged Workshop 3 mocks and the separate backend foundation.
+Feature types live in `frontend/src/features/<domain>/types.ts`; APIs and fixtures live in
+that feature's `api/`. Users and games are read-only in the frontend scope; mock events
+support CRUD plus attendance. The backend model intentionally differs where stated below.
 
-## Common conventions
+## Backend Milestone 1: implemented API
+
+Only the following HTTP endpoints are implemented. All other HTTP paths later in this
+document describe the Workshop 3 mock-shaped intended contract, not existing server routes.
+
+| Method/path | Result | Access |
+| --- | --- | --- |
+| `GET /health` | Process liveness response, independent of the database | Public |
+| `GET /api/countries` | `{ id: number, isoCode: string, name: string }[]` for enabled countries | Public, geography-only RLS/grants |
+| `GET /api/cities?country=ME&q=pod&limit=4` | `CitySuggestion[]` | Public, geography-only RLS/grants |
+
+`CitySuggestion` contains `id: number`, `countryId: number`, `name: string`,
+`administrativeDivision: string | null`, `latitude: number | null`, and
+`longitude: number | null`. No address, private profile data or account role is returned.
+Country/city IDs are database references, not frontend fixture IDs.
+
+City queries are strict: required trimmed two-letter country code, normalized to uppercase;
+optional trimmed `q` of 0–80 characters; optional integer `limit` between 1 and the
+configured maximum (hard cap 20; default result count 4). Repeated/unknown query parameters
+are rejected. Empty `q` returns suggestions. The database normalizes case/diacritics and
+performs indexed prefix matching; literal wildcard characters are not broad-match syntax.
+Disabled/unknown countries and no matches return `[]`. Ordering is population descending
+(null last), then normalized name and ID.
+
+Success returns arrays directly, without an envelope. Errors use
+`{ code, message, fields: Record<string, string[]> }`: `VALIDATION_ERROR` (400),
+`NOT_FOUND` (404), `DEPENDENCY_UNAVAILABLE` (503), and `INTERNAL_ERROR` (500).
+Invalid upstream rows and unavailable Supabase calls fail safely rather than returning
+mock fallback data. `/health` is liveness, not a database readiness guarantee.
+
+## Backend model and transition
+
+The database is defined by versioned migrations in `supabase/migrations/`; exact columns,
+constraints, delete behavior and the ER diagram are in [database schema](database-schema.md).
+
+| Entity | Database foundation | Difference from Workshop 3 |
+| --- | --- | --- |
+| Country | Numeric PK; unique ISO alpha-2 code, name, enabled, created timestamp | Relational country catalog; ME/RS/BA/HR seeded, no frontend enum |
+| City | Numeric PK; country FK, name, normalized name, optional administrative division/coordinates/population/source ID, created timestamp | Event/profile city is a selected ID; thousands of places supported |
+| Profile | UUID PK/FK to `auth.users`; display name, optional country/city, biography, timestamps | Real Auth identity replaces numeric demo IDs later; no credentials/roles/age in public DTOs |
+| Private profile | Optional self-declared birth year and declaration timestamp in a protected table | Private, approximate age guidance; no birth date or verification |
+| Account role | Protected profile relationship with `user`, `admin`, or `superadmin` | No arbitrary client role assignment or management endpoint |
+| Game | Numeric PK; existing category/name/description/player guidance | Separate curated database catalog; no game write API yet |
+| User game experience | Composite user/game relationship with `beginner`, `intermediate`, or `veteran`, timestamps | Independently self-declared for each game; not a verified qualification |
+| Event | UUID PK; host UUID/game/city FKs, optional venue, schedule/capacity/experience/price/tags/age/visibility/status, future cover reference, timestamps | Country derives from city; mock numeric IDs/string city/required venue remain unchanged in the frontend |
+| Event location | Required in-person address separated from public event fields, explicit public-sharing flag default false | Exact residential address is excluded from public reads by default |
+| Event participant | Composite event/profile PK, attendance timestamp; host excluded | Many-to-many attendance with serialized capacity protection rather than an embedded ID array |
+
+Only geography has Data API read grants in Milestone 1. Other application tables have RLS
+enabled and no client access until their future endpoints/policies are implemented and
+tested. Auth/profile/event APIs are not available just because their tables exist.
+
+Frontend integration must deliberately adopt UUID profile/event IDs and selected city IDs
+through feature API adapters; never cast UUIDs to numbers or equate a numeric demo profile
+with an Auth account. Keep catalog/geography numeric identifiers as IDs, not display names.
+The current forms and mocks are untouched in this milestone. Future REST event/profile
+DTOs must omit private age, roles, invitation secrets and exact addresses unless the
+specific actor is authorized for an explicit protected response.
+
+Existing host/attendance, capacity 1–100, future scheduling, EUR price, tag/experience and
+visibility rules remain the basis for future endpoints. Venue becomes optional only in
+the backend model now; an in-person address remains required in its protected relationship.
+Supabase Storage is planned for covers, but no bucket, upload API or persisted image
+transport exists in Milestone 1. Mock data URLs are never production database payloads.
+
+Public discovery, direct-link unlisted access and private-code access are separate future
+read/join contracts. Private event details and addresses must be withheld before
+authorization. Codes will require cryptographic generation, rate-limited validation/joining,
+rotation/revocation and separate server-managed encrypted retrieval plus verification hashes.
+Ordinary participants never receive a code. No invitation workflow or role-management
+endpoint is implemented now; see [authorization design](backend-architecture.md).
+
+## Workshop 3 frontend mock contract
+
+The following sections continue to describe the functioning frontend demo. Their numeric
+IDs, address responses and proposed HTTP-shaped operations are not grants or response
+contracts for the new database. The backend transition above takes precedence for real data.
+
+## Mock common conventions
 
 - IDs: positive safe integers, assigned by the server/mock. Unknown well-formed resource IDs
   produce 404; malformed IDs produce 400. Relationships use IDs, not imported feature types.
@@ -152,11 +231,11 @@ the selected game. Existing custom covers are prefilled and preserved across gam
 until replaced or removed; removing one restores the current game's bundled cover.
 Custom images, like other event changes, reset on full reload.
 
-Data URLs are a Workshop 3 mock representation, not a chosen backend storage contract.
-Workshop 4 will decide storage and upload transport, including whether create/update sends
-a URL, an asset reference, or another agreed payload. No storage provider, media endpoint,
-or server persistence has been implemented or mandated. Event imageUrl remains a renderable
-string/null; backend validation, ownership, and image lifecycle must be defined then.
+Data URLs are a Workshop 3 mock representation, not a backend storage contract. Supabase
+Storage is now the planned provider for a later backend milestone. Upload transport,
+ownership, bucket policies and image lifecycle still require implementation; no bucket,
+media endpoint or server persistence is added in Milestone 1. The frontend event imageUrl
+remains a renderable string/null and its current preparation/preview behavior is unchanged.
 
 ### Access and attendance
 
@@ -326,6 +405,7 @@ in `frontend/public/images/` cover role-playing, trading cards, board games, and
 No remote image service or real HTTP API is used. Local images have alt text and a fallback
 if an image fails. IDs in shared references must match users/games fixtures.
 
-A later backend should preserve these return payloads, error codes, and access semantics,
-with durable storage, authenticated sessions, database foreign keys, unique attendance,
-and transactional capacity enforcement. No HTTP server is implemented in Workshop 3.
+A later frontend/backend integration should preserve working journeys and compatible error
+semantics while explicitly adapting the changed UUID/city/address model described above.
+No HTTP server was implemented in Workshop 3. Backend Milestone 1 adds only the health/
+geography server routes; event/profile/auth routes remain planned.

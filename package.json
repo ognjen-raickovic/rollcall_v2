@@ -4,10 +4,22 @@
   "packageManager": "pnpm@12.14.0",
   "scripts": {
     "dev": "pnpm --filter frontend dev",
-    "typecheck": "pnpm --filter frontend typecheck",
-    "lint": "pnpm --filter frontend lint",
-    "build": "pnpm --filter frontend build",
+    "dev:backend": "pnpm --filter backend dev",
+    "typecheck": "pnpm -r --filter frontend --filter backend typecheck",
+    "lint": "pnpm -r --filter frontend --filter backend lint",
+    "build": "pnpm -r --filter frontend --filter backend build",
+    "test:backend": "pnpm --filter backend test",
+    "test:integration": "pnpm --filter backend test:integration",
+    "db:start": "supabase start",
+    "db:stop": "supabase stop",
+    "db:reset": "supabase db reset --local",
+    "db:lint": "supabase db lint --local --level warning --fail-on warning",
+    "db:test": "supabase test db",
+    "db:test:concurrency": "node supabase/tests/check-concurrency.mjs",
     "test:mock": "pnpm --filter frontend test:mock",
     "format": "pnpm --filter frontend format"
+  },
+  "devDependencies": {
+    "supabase": "2.122.0"
   }
 }
