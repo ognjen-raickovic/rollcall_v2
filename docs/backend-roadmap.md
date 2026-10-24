@@ -42,23 +42,28 @@ execution/test status must be reported from actual local results, not inferred f
 The seed remains an intentionally incomplete development sample; imported data is broader
 source coverage, not a claim of perfect completeness or verified administrative truth.
 
-## Milestone 2B: frontend country and city selection
+## Milestone 2B: frontend country and city integration
 
-1. Add a geography feature API/hooks layer consuming the existing country/search endpoints.
+1. A geography feature API/hooks layer consumes the existing country/search endpoints.
    Keep data access inside feature boundaries; do not download the entire place catalog.
-2. Add country selection and debounced city autocomplete. Empty input requests about four
+2. Country selection and debounced city autocomplete use actual backend results. Empty input requests about four
    prominent suggestions; typing requests new bounded results. Handle loading, errors,
    empty results and stale requests, with accessible keyboard selection.
-3. Store/submit the selected city ID, show its name and administrative context, and clear
+3. Forms store/submit the selected city ID and display snapshot, show administrative context, and clear
    an incompatible city whenever country changes. Country choices come from the API.
-4. Deliberately adapt existing string-city form/mock contracts rather than coercing IDs or
+4. Existing string-city form/mock contracts are adapted explicitly rather than coercing IDs or
    replacing event/auth mocks as an accidental side effect. Preserve themes, layouts,
    validation and all working journeys.
 
-No 2B UI integration is part of Milestone 2A. Real event persistence and authentication
-remain separate later milestones.
+This milestone retains event/auth/attendance mocks and allows a blank venue. UI exact-address
+display is limited to hosts/current participants, while real privacy enforcement remains a
+future backend responsibility. Legacy fixtures keep their city text and known country without
+invented IDs; edits require confirmation from a real suggestion. See
+[location UI](location-ui.md) for contracts, setup and remaining limitations.
 
-## Later: real identity and profiles
+Real event persistence and authentication remain separate later milestones.
+
+## Milestone 3 planning: real identity and profiles
 
 Integrate Supabase Auth, verified bearer identity and request-isolated clients. Create
 Auth-linked profiles through a controlled onboarding flow, enforce self-only writes and
@@ -70,8 +75,8 @@ granting application table access.
 ## Later: real event and attendance APIs
 
 Introduce authenticated create/update/remove and safe event read/discovery DTOs. Adopt
-UUID user/event IDs deliberately in frontend feature API adapters. Make venue optional
-while requiring a protected in-person address; exclude exact addresses from public results
+UUID user/event IDs deliberately in frontend feature API adapters. Preserve the optional venue
+and require a protected in-person address; exclude exact addresses from public results
 by default. Preserve tag/experience, schedule, capacity, host ownership and idempotent
 join/leave semantics. Implement verified-actor transactional RPCs and concurrent final-seat
 tests against PostgreSQL before switching the frontend from mocks.

@@ -1,11 +1,12 @@
-import { ArrowDown, ArrowRight, Dices, MapPin, Search, Sparkles, Swords } from 'lucide-react'
+import { ArrowDown, ArrowRight, Dices, Search, Sparkles, Swords } from 'lucide-react'
 import { Form, Link } from 'react-router'
+import type { ReactNode } from 'react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
-export function DiscoveryHero() {
+export function DiscoveryHero({ locationFilters }: { locationFilters: ReactNode }) {
   return (
     <section aria-labelledby="hero-title" className="py-6 md:py-12">
       <div className="grid items-center gap-8 lg:grid-cols-2 lg:gap-16">
@@ -20,7 +21,7 @@ export function DiscoveryHero() {
           </h1>
           <p className="max-w-lg text-base leading-relaxed text-muted-foreground md:text-lg">
             Your next adventure starts around a table. Find local game nights, meet your party, and make room
-            for one more.
+            for one more. Discover local tables as our community grows across the Balkans.
           </p>
           <div className="flex flex-wrap items-center gap-4">
             <Button asChild size="lg">
@@ -68,7 +69,7 @@ export function DiscoveryHero() {
         method="get"
         role="search"
         aria-label="Discover tabletop events"
-        className="mt-8 grid gap-4 rounded-xl border bg-card p-4 md:mt-12 md:grid-cols-[1fr_1fr_auto] md:items-end md:p-6"
+        className="mt-8 grid gap-4 rounded-xl border bg-card p-4 md:mt-12 md:grid-cols-2 md:items-start md:p-6 lg:grid-cols-4 [&_label]:min-h-4"
       >
         <div className="space-y-2">
           <Label htmlFor="discovery-search">
@@ -79,22 +80,11 @@ export function DiscoveryHero() {
             name="search"
             placeholder="D&D, Commander, board games..."
             maxLength={100}
-            className="h-12 bg-background"
+            className="h-11 bg-background"
           />
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="discovery-city">
-            <MapPin className="size-4 text-primary" aria-hidden="true" /> Where’s your table?
-          </Label>
-          <Input
-            id="discovery-city"
-            name="city"
-            placeholder="City, e.g. Podgorica"
-            maxLength={80}
-            className="h-12 bg-background"
-          />
-        </div>
-        <Button type="submit" className="h-12 px-6">
+        {locationFilters}
+        <Button type="submit" className="h-11 px-6 md:mt-6">
           <Search aria-hidden="true" /> Find events
         </Button>
       </Form>

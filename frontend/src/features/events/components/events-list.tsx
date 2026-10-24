@@ -1,5 +1,6 @@
 ﻿import { useSearchParams } from 'react-router'
 import { CalendarDays } from 'lucide-react'
+import type { ReactNode } from 'react'
 
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -14,12 +15,26 @@ type EventsListProps = {
   gamesPending: boolean
   gamesError: boolean
   retryGames: () => void
+  locationFilters: ReactNode
 }
 
-export function EventsList({ games = [], gamesPending, gamesError, retryGames }: EventsListProps) {
+export function EventsList({
+  games = [],
+  gamesPending,
+  gamesError,
+  retryGames,
+  locationFilters,
+}: EventsListProps) {
   const [params, setParams] = useSearchParams()
   const search = params.get('search') ?? ''
   const city = params.get('city') ?? ''
+  const country = (params.get('country') ?? (city ? 'ME' : '')).toUpperCase()
+  const rawCityId = params.get('cityId') ?? ''
+  const cityId = rawCityId ? Number(rawCityId) : undefined
+  const invalidLocation =
+    (Boolean(country) && !/^[A-Z]{2}$/.test(country)) ||
+    (Boolean(rawCityId) &&
+      (!country || !/^\d+$/.test(rawCityId) || !Number.isSafeInteger(cityId) || Number(cityId) < 1))
   const category = params.get('category') ?? ''
   const rawGameId = params.get('gameId') ?? ''
   const gameId = rawGameId ? Number(rawGameId) : undefined
@@ -30,10 +45,11 @@ export function EventsList({ games = [], gamesPending, gamesError, retryGames }:
   const invalidAvailability = !['', 'true', 'false'].includes(rawAvailability)
   const invalidCategory =
     Boolean(category) && !gamesPending && !gamesError && !games.some((game) => game.category === category)
-  const catalog = useEvents({ upcomingOnly: true, visibility: 'public' })
   const result = useEvents({
     search,
     city,
+    country: country || undefined,
+    cityId: invalidLocation ? undefined : cityId,
     gameId: invalidGameId ? undefined : gameId,
     availableOnly,
     upcomingOnly: true,
@@ -41,16 +57,12 @@ export function EventsList({ games = [], gamesPending, gamesError, retryGames }:
   })
   const matchingGameIds = new Set(games.filter((game) => game.category === category).map((game) => game.id))
   const events = category ? result.data?.filter((event) => matchingGameIds.has(event.gameId)) : result.data
-  const cities = [...new Set(catalog.data?.map((event) => event.city))].sort((a, b) => a.localeCompare(b))
-  // Match the canonical option value when an incoming URL uses different city capitalization.
-  const selectedCity = cities.find((item) => item.toLowerCase() === city.trim().toLowerCase()) ?? city
-  const pending = result.isPending || catalog.isPending || gamesPending
-  const error = result.error || catalog.error || gamesError
-  const invalid = invalidGameId || invalidAvailability || invalidCategory
+  const pending = result.isPending || gamesPending
+  const error = result.error || gamesError
+  const invalid = invalidGameId || invalidAvailability || invalidCategory || invalidLocation
 
   function retry() {
     if (gamesError) retryGames()
-    void catalog.refetch()
     void result.refetch()
   }
 
@@ -59,13 +71,12 @@ export function EventsList({ games = [], gamesPending, gamesError, retryGames }:
       <EventNotice />
       <EventFilters
         search={search}
-        city={selectedCity}
         gameId={rawGameId}
         category={category}
         availableOnly={availableOnly}
-        cities={cities}
+        locationFilters={locationFilters}
         games={games}
-        pending={catalog.isPending || gamesPending}
+        pending={gamesPending}
         filterKey={params.toString()}
       />
       {invalid ? (
@@ -112,7 +123,7 @@ export function EventsList({ games = [], gamesPending, gamesError, retryGames }:
             <p role="status" className="text-sm text-muted-foreground">
               <span className="font-semibold text-foreground">{events.length}</span> upcoming{' '}
               {events.length === 1 ? 'event' : 'events'}
-              {city ? ` in ${selectedCity}` : ' across Montenegro'}
+              {city ? ` in ${city}` : country ? ' in the selected country' : ' across our community'}
             </p>
             <p className="text-xs text-muted-foreground">
               Soonest first · Times shown in your local timezone

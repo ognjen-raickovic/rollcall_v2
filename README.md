@@ -18,11 +18,17 @@ remain future milestones. Start with [backend setup](backend/README.md),
 [architecture](docs/backend-architecture.md), [schema](docs/database-schema.md), and
 [roadmap](docs/backend-roadmap.md).
 **Milestone 2A** adds reproducible GeoNames imports and improved Balkan place search;
-frontend country/city selection remains Milestone 2B. The verified local import contains
+the verified local import contains
 46,241 GeoNames places across the four countries. See [verification](docs/geographic-verification.md) and
 [geographic import](docs/geographic-import.md) for source/license, filters and rerun commands.
 Executed checks and local environment limitations are recorded in
 [Milestone 1 verification](docs/backend-verification.md).
+
+**Milestone 2B** connects country/city controls to those geography endpoints. Event CRUD,
+participation, users, games and demo login remain mocked. Forms require a selected city,
+venue is optional, and discovery supports country/city URL filters. See
+[location UI integration](docs/location-ui.md) for setup and the transitional event model.
+See [Milestone 2B verification](docs/location-ui-verification.md) for executed checks and limitations.
 
 ## Setup
 
@@ -43,8 +49,9 @@ pnpm --filter frontend preview  # preview the production build
 ```
 
 On PowerShell with disabled script execution, use `pnpm.cmd` instead of `pnpm`.
-No environment variables, backend, database, or API keys are required to run the
-frontend demo. The backend requires its own environment, described below.
+The frontend builds and renders mock event browsing without a backend. Country/city
+selection requires Fastify and local Supabase; unavailable geography displays errors and
+retry controls, without a silent fixture fallback. No browser Supabase key is required.
 
 For local backend development, install/start Docker Desktop and run from the root:
 
@@ -58,6 +65,11 @@ pnpm db:test:concurrency         # separate-transaction final-seat/capacity chec
 pnpm test:integration           # opt-in; see backend/README.md
 pnpm db:stop
 ```
+
+For UI development, keep Supabase running, start `pnpm dev:backend` in one terminal and
+`pnpm dev` in another. Vite proxies `/api` to Fastify in dev and preview. Optional
+`frontend/.env` settings are documented in `frontend/.env.example`; default local setup
+needs no frontend key or production URL. See [location UI setup](docs/location-ui.md).
 
 `pnpm db:reset` explicitly resets **only the local** database, reapplies migrations and
 loads development seeds. It destroys local data. Do not run it against a hosted project.
@@ -102,6 +114,7 @@ frontend/
   src/features/users/        Public profiles, demo session API/hooks, login and route guard
   src/features/games/        Game catalog types, read mocks, query hooks
   src/features/events/       Types, mock CRUD/attendance, shared validation/form, discovery/details
+  src/features/geography/    HTTP geography API/hooks and reusable country/city controls
   src/components/ui/         Starter shadcn primitives
   src/components/layout/     Navigation and app layout
   src/lib/                   Mock helpers, reference IDs, utilities
@@ -119,26 +132,33 @@ docs/geographic-import.md    GeoNames scope, attribution, safe reruns and search
 Features never import each other, including types. Routes compose them, and shared code
 never imports features or app code. `pnpm lint` enforces these boundaries. Components use
 TanStack Query hooks; feature APIs own data access. Each feature stores its own mock records.
-Shared reference IDs validate relationships without cross-feature imports.
+Shared reference IDs validate mock relationships without cross-feature imports. Geography
+and events share only the `src/lib/location.ts` selection-reference contract; routes compose
+their controls rather than introducing feature imports.
 
 Mock writes take an explicit `{ userId }` actor and simulate permissions; this is **not
 real authentication**. Event data lives in memory and refresh resets changes. Choose a demo
 profile at `/login`; its ID stays in sessionStorage for this tab until logout/close (memory
-fallback if storage is blocked). No password is needed. The frontend does not use the
-new database/API and has no durable event storage or real authentication. Payments,
+fallback if storage is blocked). No password is needed. Only geography uses the new
+database/API; there is no durable event storage or real authentication. Payments,
 messaging, maps and waitlists are not implemented.
 See `docs/entities.md` for exact contracts and error behavior.
 
 Routes: `/`, `/events`, `/events/:eventId`, `/events/new`, `/events/:eventId/edit`, `/login`,
 and a not-found fallback. The homepage includes search, categories, and upcoming events.
 Search/category links filter the upcoming public event list through URL parameters. Search
-matches event titles; city, game, and open-seat controls combine with it and can be reset.
-Event details show the host, game, address, schedule, tags, minimum age, visibility, and
+matches event titles; country/city, game, and open-seat controls combine with it and can be reset.
+Event details show the host, game, schedule, tags, minimum age, visibility, and
 capacity. Join/leave updates visible seats and provides success/error feedback; anonymous
 protected actions redirect to login and back. Full, past, and canceled tables cannot be joined.
 Signed-in users can create events; only the host can edit them. Both routes use a shared
 React Hook Form + Zod form, preserving entered data on errors and navigating to details on
 success. Public future events appear in matching discovery filters. UI branding is always **RollCall**.
+
+The location picker requires a backend suggestion before submission and retains its real
+integer city ID plus display labels. Legacy fixtures keep city strings and a known ME
+country, with no invented IDs. Venue is optional. Exact addresses are displayed only to
+the host/current participants; mock data is still client-side, so this is not real security.
 
 Create/edit supports optional JPG, PNG, or WebP covers up to 3 MiB (shown as 3 MB in the UI).
 The browser resizes them to a maximum 1600px edge and passes a bounded data URL through
@@ -146,7 +166,7 @@ the existing mock image field; cards/details render the result. Replace or remov
 cover in the form, or keep the game-based default. Custom covers survive game changes and
 reset with event data on reload. Nothing is uploaded externally or stored in browser storage;
 Supabase Storage is planned for later backend uploads; no bucket or upload integration
-is implemented in Milestones 1/2A.
+is implemented through Milestone 2B.
 
 Tags use eight predefined options, with at most six selections and removable chips. The
 experience level controls Beginner friendly/Veterans only compatibility. The navbar theme
@@ -186,7 +206,8 @@ DTO fields remain; country and administrative codes are additive.
 
 No hosted Supabase project is created, linked, migrated, reset or deployed by these
 commands. Live authentication, profile/event APIs, invitation codes, role administration,
-Storage policies/uploads and frontend country/city autocomplete require later work.
+Storage policies/uploads and persistent event integration require later work. Frontend
+country/city autocomplete reads the existing geography API in Milestone 2B.
 
 ## Team workflow: Codex and Claude Code
 

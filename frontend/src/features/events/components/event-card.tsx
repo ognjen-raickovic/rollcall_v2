@@ -58,7 +58,9 @@ export function EventCard({ event, gameName, category }: EventCardProps) {
         </Link>
         <p className="flex items-start gap-2 text-sm text-muted-foreground">
           <MapPin className="mt-1 size-4 shrink-0" aria-hidden="true" />
-          {event.venue}, {event.city}
+          {[event.venue, event.location?.cityName ?? event.city, event.location?.countryName ?? 'Montenegro']
+            .filter(Boolean)
+            .join(', ')}
         </p>
         <div className="mt-auto flex items-center justify-between gap-2 border-t pt-4 text-xs text-muted-foreground">
           <span className="flex items-center gap-2">

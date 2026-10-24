@@ -123,6 +123,19 @@ test('RollCall mock contracts and event lifecycle', async (t) => {
       assert.equal(isoDateTime(''), '')
       const formValues = {
         ...input,
+        city: 'Podgorica',
+        countryCode: 'ME',
+        // Synthetic selection IDs for unit validation only; production selections come from HTTP.
+        location: {
+          cityId: 9000001,
+          countryId: 1,
+          countryIsoCode: 'ME',
+          countryName: 'Montenegro',
+          cityName: 'Podgorica',
+          administrativeDivision: null,
+          admin1Code: null,
+          admin2Code: null,
+        },
         startsAt: localDateTime(input.startsAt),
         endsAt: localDateTime(input.endsAt),
         title: '  A welcoming test table  ',
@@ -134,22 +147,16 @@ test('RollCall mock contracts and event lifecycle', async (t) => {
       assert.ok(Date.parse(parsed.startsAt) > Date.now())
       const empty = eventFormSchema.safeParse(eventFormDefaults())
       assert.equal(empty.success, false)
-      for (const field of [
-        'title',
-        'description',
-        'gameId',
-        'city',
-        'venue',
-        'address',
-        'startsAt',
-        'endsAt',
-      ]) {
+      for (const field of ['title', 'description', 'gameId', 'city', 'address', 'startsAt', 'endsAt']) {
         assert.ok(
           empty.error.issues.some((issue) => issue.path[0] === field),
           `Required ${field} has a validation issue`,
         )
       }
       for (const changes of [
+        { location: null },
+        { city: 'Different city' },
+        { countryCode: 'RS' },
         { tags: ['Casual', 'Casual'] },
         { tags: ['Arbitrary tag'] },
         { tags: ['Beginner friendly', 'Veterans only'] },
@@ -162,6 +169,62 @@ test('RollCall mock contracts and event lifecycle', async (t) => {
       ]) {
         assert.equal(eventFormSchema.safeParse({ ...formValues, ...changes }).success, false)
       }
+      assert.equal(eventFormSchema.parse({ ...formValues, venue: '' }).venue, '')
+      assert.equal(eventFormSchema.parse({ ...formValues, venue: undefined }).venue, '')
+      assert.equal(eventFormSchema.safeParse({ ...formValues, venue: 'x' }).success, false)
+    })
+
+    await t.test('selected locations preserve IDs and combine with legacy/country filters', async () => {
+      const location = {
+        cityId: 9000002,
+        countryId: 2,
+        countryIsoCode: 'RS',
+        countryName: 'Serbia',
+        cityName: 'Belgrade',
+        administrativeDivision: 'Belgrade',
+        admin1Code: 'SE',
+        admin2Code: null,
+      }
+      const created = await eventsApi.create(
+        {
+          ...input,
+          title: 'Selected location contract table',
+          city: location.cityName,
+          countryCode: location.countryIsoCode,
+          location,
+          venue: undefined,
+        },
+        host,
+      )
+      assert.equal(created.location.cityId, location.cityId)
+      assert.equal(created.venue, '')
+      const filters = {
+        country: 'RS',
+        cityId: location.cityId,
+        city: 'Label does not override selected ID',
+        search: 'location contract',
+        gameId: 1,
+        availableOnly: true,
+        upcomingOnly: true,
+      }
+      assert.ok((await eventsApi.list(filters)).some((event) => event.id === created.id))
+      assert.ok(
+        !(await eventsApi.list({ ...filters, country: 'ME' })).some((event) => event.id === created.id),
+      )
+      assert.ok(
+        !(await eventsApi.list({ ...filters, cityId: 9000003 })).some((event) => event.id === created.id),
+      )
+      const edited = await eventsApi.update(created.id, { venue: 'A friendly club' }, host)
+      assert.equal(
+        (await eventsApi.update(edited.id, { title: 'Changed title only' }, host)).venue,
+        'A friendly club',
+      )
+      await assert.rejects(
+        eventsApi.update(created.id, { city: 'Mismatch' }, host),
+        errorCode('VALIDATION_ERROR'),
+      )
+      await eventsApi.remove(created.id, host)
+      assert.ok((await eventsApi.list({ country: 'ME', cityId: 9000004, city: 'Niksic' })).length > 0)
     })
 
     await t.test('curated tag consistency and bounded custom image contracts', async () => {

@@ -8,6 +8,8 @@
     "build": "tsc -b && vite build",
     "typecheck": "tsc -b",
     "test:mock": "node --test scripts/check-mock-api.mjs",
+    "test:geography": "node --test scripts/check-geography-api.mjs",
+    "test:ui": "playwright test",
     "lint": "oxlint && node scripts/check-boundaries.mjs",
     "format": "prettier --write src",
     "preview": "vite preview"
@@ -30,6 +32,7 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@playwright/test": "1.64.1",
     "@types/node": "^24.19.2",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",

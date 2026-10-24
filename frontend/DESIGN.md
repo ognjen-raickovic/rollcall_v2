@@ -31,7 +31,7 @@ Tab/Space operate checkboxes; Escape closes the popover and returns focus to its
 Keep the popup within the viewport and disable choices beyond six or incompatible with experience.
 
 Event discovery uses a labeled search/filter panel followed by a soonest-first card grid.
-Controls cover event title, city, game, and open seats, with a persistent reset link. Cards
+Controls cover event title, country, dependent city, game, and open seats, with a persistent reset link. Cards
 show local tabletop illustrations, a date badge, game/time, city/venue, price, and seat counts.
 Full tables have an explicit Full label. The four original SVG illustrations in `public/images/`
 share the approved palette; no remote photography is required.
@@ -39,9 +39,35 @@ share the approved palette; no remote photography is required.
 Event details use a full-width image, a readable information column, and an attendance/host
 sidebar that appears before the long information column on phones, keeping the join action
 close to the event heading. Keep the cover compact rather than letting it dominate the page.
-Show the exact address, schedule,
-age guidance, visibility, tags, and host/game names. Use live status feedback after joining or
+Show the exact address only to the host/current participants, alongside schedule,
+age guidance, visibility, tags, and host/game names. Other viewers see an explanation that
+the precise address is shared with confirmed participants. Use live status feedback after joining or
 leaving and actionable error panels. Avoid exposing raw entity IDs in the interface.
+
+## Location controls
+
+Preserve the existing form/discovery hierarchy and palettes. Use a labeled native country
+select loaded from the geography API, followed by a dependent searchable city input. The
+city field is disabled until a country is selected. Country/city loading, empty results,
+network errors and retry actions must be visible without blocking unrelated event browsing.
+
+The city input follows the editable ARIA combobox pattern: focus opens suggestions,
+ArrowUp/ArrowDown moves the active option, Enter confirms it, Escape closes the list and
+focus stays on the input. Keep the active option and selected city visually distinct.
+Typing clears selection; typing a familiar label alone does not validate a form. Country
+changes immediately clear the city and old suggestions. Search is debounced about 250 ms.
+Show approximately four results with a secondary administrative-region line so same-name
+places can be distinguished. Do not show raw IDs. Dropdown content must fit the field and
+viewport at 375px, wrap long names, and remain readable in both themes.
+Open the list above the input when there is more room there, and keep the keyboard-active
+option in view. Align country/city and search inputs at their labels; helper text must not
+shift neighboring controls down.
+
+Create/edit share these controls through route composition. A legacy fixture's unresolved
+city label is guidance until a real suggestion is confirmed. Venue/meeting point has no
+required marker and may be empty; omit absent venue text and stray separators in cards
+and details. Address remains required in forms. Show discreet GeoNames attribution near
+location selection; do not redesign the hero or advertise nonexistent foreign mock events.
 
 ## Token contract
 

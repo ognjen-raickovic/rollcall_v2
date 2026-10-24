@@ -11,8 +11,8 @@ never "RollCall v2" in the UI.
 
 Workshop 3 delivered the working frontend described below. Backend development is now
 incremental: Milestone 1 adds the separate foundation; Milestone 2A adds geographic import
-and backend search. Milestone 2B will connect country/city selection to the frontend.
-Neither the foundation nor 2A replaces event mocks or implements real authentication.
+and backend search. Milestone 2B connects country/city selection to the frontend while
+event CRUD, participation, users, games and authentication remain mocked.
 
 ## Workshop 3 scope
 
@@ -34,6 +34,7 @@ validation, access, and future HTTP contracts; local types/APIs implement them.
 | users | Public profiles and demo session selection; no credentials or private email |
 | games | Read-only game catalog and categories |
 | events | Discovery, details, creation, editing, removal, joining, and leaving |
+| geography | Real read-only countries/city search, query caching and accessible selection controls |
 
 An event references one organizer and one game by numeric ID. A user can organize many events
 and attend many other events. Attendee IDs represent players: the organizer is separate and
@@ -47,9 +48,9 @@ cached with TanStack Query and the selected demo user ID is stored in sessionSto
 
 ## Intended journeys
 
-- Discover: upcoming scheduled public events, title search, city/game/open-seat filters,
+- Discover: upcoming scheduled public events, title search, country/city/game/open-seat filters,
   category links from the homepage, reset controls, and loading/empty/error states.
-- Inspect: host and game names, full schedule/address, tags, minimum age, visibility,
+- Inspect: host and game names, full schedule, protected exact-address display, tags, minimum age, visibility,
   experience level, price, participant count, and remaining seats or a clear Full status.
 - Organize: create valid events, then edit only events you organize. Host-only removal is
   available in the mock API; no removal action is exposed in this frontend MVP.
@@ -63,7 +64,7 @@ cached with TanStack Query and the selected demo user ID is stored in sessionSto
 | Path | Current behavior |
 | --- | --- |
 | `/` | Hero, search, category navigation, featured upcoming events, how it works |
-| `/events` | Upcoming public Montenegro events; card grid, title/city/game/availability controls, category URLs, reset |
+| `/events` | Upcoming public mock events; card grid, title/country/city/game/availability controls, category URLs, reset |
 | `/events/:eventId` | Complete details, host/game queries, session-aware join/leave, success/error feedback and missing-event recovery |
 | `/events/new` | Signed-in creation form; success navigates to the new event |
 | `/events/:eventId/edit` | Host-only prefilled editor using the same form; success returns to updated details |
@@ -87,7 +88,7 @@ second seat. Discovery defaults are applied by API filters, not by reading fixtu
 
 ## Event management
 
-The shared form covers title, description, game, city, venue, address, local start/end date-time,
+The shared form covers title, description, game, country/selected city, optional venue, address, local start/end date-time,
 capacity, minimum age, tags, visibility, experience level, and EUR entry price. The host is set
 from the current demo user. The game determines a local cover illustration on creation or a
 game change unless the host supplies an optional custom cover. Create and edit accept JPG,
@@ -223,5 +224,42 @@ those results from schema definitions alone.
 
 Milestone 2A does not change React routes/forms, mock events, login, styles or themes. It does
 not add authentication, event HTTP operations, private room codes, deployments or remote database
-changes. Milestone 2B must add country selection, debounced bounded city suggestions, selected
-city IDs and clearing an incompatible selection when country changes, through feature API layers.
+changes. The following Milestone 2B adds country selection, debounced bounded city suggestions,
+selected city IDs and clearing an incompatible selection through feature API layers.
+
+## Milestone 2B: frontend country and city integration
+
+The frontend geography feature reads enabled countries and bounded city suggestions from
+Fastify. Country rows/IDs and selected city IDs are API values, never a hardcoded browser
+catalog. City searches are debounced about 250 ms and cached by country/query; stale
+requests are canceled or ignored. Focus opens up to four suggestions, with loading, empty,
+error and retry states. Arrow keys move the active result, Enter selects and Escape closes.
+Administrative labels distinguish same-name places, and GeoNames attribution remains visible.
+
+Both event forms require confirmation of a real city suggestion. The selected shared
+`LocationReference` stores its integer city/country IDs and display metadata alongside
+the existing event `city` label. Country/text changes invalidate selection immediately.
+Legacy fixtures retain their known ME country and city strings without invented IDs;
+editing one requires confirming a suggestion. Direct legacy mock API callers remain
+compatible, but this is not database FK validation. Event/user IDs remain numeric mocks.
+
+Venue is optional everywhere: blank becomes an empty string; a provided venue must have
+2–120 trimmed characters. Cards/details omit absent venue text and stray separators.
+Address remains required, but the exact value renders only for the host and current
+participants. Because mock objects stay in browser memory, real privacy still requires
+future server-side authorization and safe response DTOs.
+
+Discovery combines country/city with existing title/game/category/availability filters.
+Country-only filtering works. Applied filters use URL parameters, reset removes location
+state, and Back/Forward restores it. Reference-backed events filter by stable city ID;
+unresolved ME fixtures use a documented normalized country/name compatibility bridge.
+Homepage location search uses the same controls and does not advertise foreign fixtures
+that do not exist. Users may create events in any enabled supported country during the
+current page runtime; refresh still resets all mock event changes.
+
+Vite development/preview proxies `/api` to the configured Fastify origin. Browser code has
+no Supabase credentials. The frontend builds without a running backend; location failures
+show errors/retry and never masquerade as loaded catalog data. Keep themes and existing
+journeys intact. Real accounts, persistent events, invitations and uploads remain out of scope.
+
+See [location UI](docs/location-ui.md) for contracts, setup and migration considerations.

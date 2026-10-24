@@ -39,3 +39,7 @@ backend/.tmp/
 
 # Downloaded geographic extracts and local import reports
 backend/.geography/
+
+# Browser verification artifacts
+frontend/test-results/
+frontend/playwright-report/

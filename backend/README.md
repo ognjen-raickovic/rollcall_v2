@@ -2,8 +2,8 @@
 
 Fastify REST API with TypeScript and Zod, backed by local Supabase PostgreSQL through
 Supabase's Data API. Only health, countries and city search are implemented. The React
-app remains independent and continues to use its existing mock APIs/demo login. Milestone 2A
-adds GeoNames import tools and backend search; frontend integration remains Milestone 2B.
+app uses these geography reads in Milestone 2B while event/user/game APIs and demo login
+remain mocked. Milestone 2A supplies GeoNames import tools and database search.
 
 ## Prerequisites
 
@@ -29,7 +29,7 @@ configuration material and do not paste it into public issues, screenshots or co
 
 ```bash
 pnpm dev:backend
-# Separate terminal, optional; the frontend still runs on mocks:
+# Separate terminal; geography uses Fastify, event/auth operations remain mocked:
 pnpm dev
 ```
 
@@ -63,8 +63,9 @@ read `supabase/config.toml` and CLI status rather than assuming Supabase's defau
 
 Environment is validated before listening. The runtime API needs no database password,
 service-role key or Supabase access token. `.env` is ignored. The browser needs no
-Supabase environment variables in this milestone. Changing server configuration does
-not connect the existing frontend to the backend.
+Supabase environment variables. The frontend calls Fastify geography through a same-origin
+Vite proxy in development/preview, not through a browser Supabase client. See
+[location UI setup](../docs/location-ui.md) for frontend origin configuration.
 
 The separate importer uses `GEOGRAPHY_DATABASE_URL` in ignored `backend/.env`, containing
 the local PostgreSQL connection string. It rejects non-loopback hosts and is never called
@@ -220,7 +221,7 @@ Run `pnpm build` first. No script deploys or modifies a remote project.
 ## Safety and later milestones
 
 The Supabase client uses only unprivileged geography grants/RLS. All non-geography tables
-have RLS and remain inaccessible to Data API client roles in Milestones 1/2A. No service-role
+have RLS and remain inaccessible to Data API client roles through Milestone 2B. No service-role
 repository, real login, event write route, storage bucket/upload, invitation interface or
 admin dashboard is implemented. Server-side authorization and tests must accompany each
 future grant/API. Roles cannot be assigned through client input.

@@ -127,6 +127,11 @@ export function EventDetails({
   ]
   const VisibilityIcon =
     event.visibility === 'public' ? Globe2 : event.visibility === 'private' ? LockKeyhole : Link2
+  const countryName = event.location?.countryName ?? 'Montenegro'
+  const cityName = event.location?.cityName ?? event.city
+  const canViewAddress =
+    currentUserId !== null &&
+    (event.organizerId === currentUserId || event.attendeeIds.includes(currentUserId))
 
   return (
     <div className="space-y-8">
@@ -135,7 +140,7 @@ export function EventDetails({
       <header className="space-y-4">
         <div className="flex flex-wrap items-center gap-3 text-xs font-semibold tracking-wide text-primary uppercase">
           <span className="flex items-center gap-2">
-            <MapPin className="size-4" aria-hidden="true" /> {event.city}, Montenegro
+            <MapPin className="size-4" aria-hidden="true" /> {cityName}, {countryName}
           </span>
           <span className="rounded-md bg-accent px-3 py-1 text-accent-foreground">{visibility}</span>
         </div>
@@ -147,7 +152,7 @@ export function EventDetails({
             month: 'long',
             year: 'numeric',
           })}{' '}
-          · {event.venue}
+          {event.venue && <> · {event.venue}</>}
         </p>
       </header>
       <EventImage
@@ -196,11 +201,18 @@ export function EventDetails({
                 <div>
                   <dt className="text-sm font-semibold">Location</dt>
                   <dd className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                    {event.venue}
-                    <br />
-                    {event.address}
-                    <br />
-                    {event.city}, Montenegro
+                    {event.venue && <span className="block">{event.venue}</span>}
+                    {canViewAddress ? (
+                      <span className="block">{event.address}</span>
+                    ) : (
+                      <span className="mb-2 block">
+                        Exact address is shared with the host and confirmed participants.
+                      </span>
+                    )}
+                    {cityName}, {countryName}
+                    {event.location?.administrativeDivision && (
+                      <span className="block">{event.location.administrativeDivision}</span>
+                    )}
                   </dd>
                 </div>
               </div>

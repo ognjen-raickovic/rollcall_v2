@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import type { ReactNode } from 'react'
 import { useController } from 'react-hook-form'
 import { ArrowLeft, CalendarDays, Dices, LoaderCircle, LockKeyhole, MapPin, Tag, Users } from 'lucide-react'
 import { Link, useNavigate } from 'react-router'
@@ -6,6 +7,7 @@ import { Link, useNavigate } from 'react-router'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import type { LocationReference } from '@/lib/location'
 
 import { useEventForm } from '../hooks/use-event-form'
 import { eventCover } from '../api/event-covers'
@@ -15,14 +17,28 @@ import { EventCoverInput } from './event-cover-input'
 import { EventFormField } from './event-form-field'
 import { EventTagSelect } from './event-tag-select'
 
+export type EventLocationSlotProps = {
+  idPrefix: string
+  countryCode: string
+  value: LocationReference | null
+  onCountryChange: (countryCode: string) => void
+  onChange: (location: LocationReference | null) => void
+  disabled: boolean
+  error?: string
+  legacyCity?: string
+  inputRef?: (element: HTMLInputElement | null) => void
+  onBlur?: () => void
+}
+
 type EventFormProps = {
   event?: Event
   currentUserId: number
   hostName?: string
   games: { id: number; name: string; category: string }[]
+  renderLocation: (props: EventLocationSlotProps) => ReactNode
 }
 
-export function EventForm({ event, currentUserId, hostName, games }: EventFormProps) {
+export function EventForm({ event, currentUserId, hostName, games, renderLocation }: EventFormProps) {
   const { form, submit, pending, imagePending, setImagePending, reportImageError } = useEventForm({
     event,
     currentUserId,
@@ -30,6 +46,7 @@ export function EventForm({ event, currentUserId, hostName, games }: EventFormPr
   })
   const { field: tagsField } = useController({ name: 'tags', control: form.control })
   const { field: imageField } = useController({ name: 'imageUrl', control: form.control })
+  const { field: locationField } = useController({ name: 'location', control: form.control })
   const [tagNotice, setTagNotice] = useState('')
   const {
     register,
@@ -39,6 +56,8 @@ export function EventForm({ event, currentUserId, hostName, games }: EventFormPr
   const visibility = form.watch('visibility')
   const experience = form.watch('experienceLevel')
   const gameId = form.watch('gameId')
+  const countryCode = form.watch('countryCode') ?? ''
+  const city = form.watch('city')
   const fallback = eventCover(games.find((game) => game.id === gameId)?.category)
   const cancelTo = event ? `/events/${event.id}` : '/events'
   const inputStyle = 'h-11 bg-background'
@@ -161,30 +180,44 @@ export function EventForm({ event, currentUserId, hostName, games }: EventFormPr
               >
                 <MapPin className="size-5 text-primary" aria-hidden="true" /> Where &amp; when
               </h2>
-              <div className="grid min-w-0 gap-4 sm:grid-cols-2">
-                <EventFormField name="city" label="City" required error={errors.city?.message}>
-                  {(attributes) => (
-                    <Input
-                      {...register('city')}
-                      {...attributes}
-                      required
-                      maxLength={80}
-                      placeholder="e.g. Podgorica"
-                      className={inputStyle}
-                    />
-                  )}
-                </EventFormField>
+              {renderLocation({
+                idPrefix: 'event-location',
+                countryCode,
+                value: locationField.value ?? null,
+                onCountryChange: (nextCountry) => {
+                  form.setValue('countryCode', nextCountry, { shouldDirty: true, shouldValidate: true })
+                  form.setValue('city', '', { shouldDirty: true })
+                  form.setValue('location', null, { shouldDirty: true, shouldValidate: true })
+                },
+                onChange: (nextLocation) => {
+                  form.setValue('location', nextLocation, { shouldDirty: true, shouldValidate: true })
+                  form.setValue('city', nextLocation?.cityName ?? '', {
+                    shouldDirty: true,
+                    shouldValidate: true,
+                  })
+                  if (nextLocation)
+                    form.setValue('countryCode', nextLocation.countryIsoCode, {
+                      shouldDirty: true,
+                      shouldValidate: true,
+                    })
+                },
+                disabled: pending,
+                error: errors.location?.message ?? errors.city?.message ?? errors.countryCode?.message,
+                legacyCity: !event?.location && city === event?.city ? event?.city : undefined,
+                inputRef: locationField.ref,
+                onBlur: locationField.onBlur,
+              })}
+              <div className="grid min-w-0 gap-4">
                 <EventFormField
                   name="venue"
                   label="Venue or meeting point"
-                  required
+                  help="Optional. Add a café, hobby shop, or other meeting point if useful."
                   error={errors.venue?.message}
                 >
                   {(attributes) => (
                     <Input
                       {...register('venue')}
                       {...attributes}
-                      required
                       maxLength={120}
                       placeholder="e.g. The Gathering Table"
                       className={inputStyle}
@@ -192,7 +225,13 @@ export function EventForm({ event, currentUserId, hostName, games }: EventFormPr
                   )}
                 </EventFormField>
               </div>
-              <EventFormField name="address" label="Address" required error={errors.address?.message}>
+              <EventFormField
+                name="address"
+                label="Address"
+                required
+                error={errors.address?.message}
+                help="Visible here to you and confirmed participants."
+              >
                 {(attributes) => (
                   <Input
                     {...register('address')}

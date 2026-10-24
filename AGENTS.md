@@ -3,8 +3,9 @@
 RollCall helps tabletop players discover, organize, and join gaming events. This repository
 started as the frontend MVP for AI-DEV 2026 Workshop 3, based on
 `jovanp-najveci/ai-frontend-starter`. Backend Milestone 1 adds an independent API/database
-foundation; Milestone 2A adds GeoNames imports and backend place search. The React app
-still runs entirely on its existing mocks until the separate Milestone 2B integration.
+foundation; Milestone 2A adds GeoNames imports and backend place search. Milestone 2B
+connects frontend country/city selection to that API; events, users, games and demo login
+continue using their existing mocks.
 
 ## Shared rules
 
@@ -47,8 +48,15 @@ Keep foundation routes simple until finished pages are requested.
   Read `docs/geographic-import.md` before imports. Preserve city IDs/references, retain
   source identifiers and report real counts/checksums. Do not reset a populated local
   database without checking what must be preserved. Keep downloaded datasets out of Git.
-- Milestone 2A changes imports/schema/backend search only. Do not connect the React frontend,
-  replace event mocks, or add authentication, invitation codes or administrative features.
+- Milestone 2B integrates geography only. Keep events, users, games, session selection and
+  attendance mocked; do not add real authentication, invitation codes or administration.
+  Read `docs/location-ui.md` before changing location controls or event-location adapters.
+- Geography owns its API/hooks and controls. Routes compose them into event render slots;
+  shared `src/lib/location.ts` defines the location reference without cross-feature imports.
+  Never invent geographic IDs or silently select an ambiguous legacy fixture location.
+- Event forms require a confirmed city suggestion, clear it on country/text changes, and
+  allow an empty venue. Exact addresses render only for the host/current participants;
+  this is a demo UI safeguard, not server-side privacy or authorization.
 - Frontend mock IDs remain numeric. Database profiles reference Supabase Auth UUIDs and
   database events use UUIDs; do not coerce IDs or silently migrate frontend models.
 - Run commands from the repository root: `pnpm install`, `pnpm dev`, `pnpm format`,
