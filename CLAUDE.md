@@ -39,15 +39,15 @@ You may talk to me in any language.
 - @AGENTS.md is Codex's entry point and references these same starter rules.
 - Workshop 3 remains a frontend-only demo. Backend Milestone 1 adds schema/migrations,
   local Supabase infrastructure and three read-only geography/health endpoints. Milestone 2A
-  adds GeoNames imports and backend search; Milestone 2B will integrate country/city selection.
-  The frontend remains on mocks; real login, event APIs and storage uploads are later milestones.
+  adds GeoNames imports and backend search; Milestone 2B integrates country/city selection.
+  Events, users, games and demo login remain mocked; real login, event APIs and uploads are later work.
 - Optional event covers are prepared in the browser and passed through mock APIs as bounded
   data URLs. Do not persist images in browser storage or connect cloud uploads during geography work.
   Supabase Storage is the planned backend provider; transport, ownership and lifecycle will
   be implemented later. Curated tags/experience rules live in events.
 - Light/dark themes share semantic tokens. Dark is the default; only the theme preference
   persists in localStorage (`rollcall.theme`), independent of the tab-scoped demo session.
-- Domains are `users`, `games`, and `events`. User profiles/games are read-only catalogs; events
+- Domains are `users`, `games`, `events`, and `geography`. User profiles/games are read-only catalogs; events
   support CRUD and join/leave. Writes receive an explicit mock actor; the users domain now
   owns a frontend-only demo session that supplies this actor through route composition.
 - Keep foundation routes simple until finished pages are requested. Preserve `.claude/`.
@@ -73,7 +73,9 @@ You may talk to me in any language.
 - Geographic imports use a separate loopback-only maintenance connection, never the runtime
   client. Follow @docs/geographic-import.md, preserve city IDs/references and source identity,
   and keep downloaded files out of Git. Check local data before considering any reset.
-- Milestone 2A is backend/data work only: preserve React forms, mocks, themes and routes.
-  Do not implement Milestone 2B, real authentication, room codes or administration early.
+- Milestone 2B integrates only geographic reads into React. Preserve event/session/attendance
+  mocks, themes and working routes. Do not add real authentication, room codes or administration.
+- Follow @docs/location-ui.md for shared location references, route-composed geography controls,
+  required suggestion selection, legacy compatibility and the optional venue/address boundary.
 - Report executed backend/database checks and unavailable checks separately. Prepared SQL
   and mocked repository tests are not proof that a migration or live endpoint succeeded.

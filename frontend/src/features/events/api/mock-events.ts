@@ -11,7 +11,7 @@ function schedule(days: number, hour: number, duration = 3) {
     endsAt: new Date(startsAt.getTime() + duration * 3600000).toISOString(),
   }
 }
-const timestamps = { createdAt: '2026-10-10T09:00:00Z', updatedAt: '2026-10-10T09:00:00Z' }
+const timestamps = { createdAt: '2026-10-10T09:00:00Z', updatedAt: '2026-10-10T09:00:00Z', countryCode: 'ME' }
 
 export const mockEvents: Event[] = [
   {

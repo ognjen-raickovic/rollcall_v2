@@ -11,7 +11,14 @@ const timestamp = z.iso.datetime({ offset: true })
 const filtersSchema = z
   .strictObject({
     search: z.string().trim().max(100).optional(),
-    city: z.string().trim().max(80).optional(),
+    city: z.string().trim().max(200).optional(),
+    country: z
+      .string()
+      .trim()
+      .regex(/^([A-Za-z]{2})?$/)
+      .transform((value) => value.toUpperCase())
+      .optional(),
+    cityId: z.number().int().positive().max(2147483647).optional(),
     gameId: z.number().int().positive().max(Number.MAX_SAFE_INTEGER).optional(),
     startsAfter: timestamp.optional(),
     startsBefore: timestamp.optional(),
@@ -30,6 +37,26 @@ const filtersSchema = z
 
 let events = structuredClone(mockEvents)
 let nextId = Math.max(...events.map((event) => event.id)) + 1
+
+function normalizedCity(value: string): string {
+  return value.trim().normalize('NFD').replace(/\p{M}/gu, '').toLowerCase()
+}
+
+function matchesLocation(event: Event, input: EventFilters): boolean {
+  const country = event.location?.countryIsoCode ?? event.countryCode ?? 'ME'
+  if (input.country && country !== input.country) return false
+  if (input.cityId !== undefined) {
+    if (event.location) return event.location.cityId === input.cityId
+    // Legacy fixtures have names, not invented DB IDs. Scope their name bridge to
+    // Montenegro, and only use it when a selected city supplied both ID and label.
+    return (
+      input.country === 'ME' &&
+      Boolean(input.city) &&
+      normalizedCity(event.city) === normalizedCity(input.city ?? '')
+    )
+  }
+  return !input.city || normalizedCity(event.city) === normalizedCity(input.city)
+}
 
 function findEvent(id: number): Event {
   validateId(id)
@@ -71,7 +98,7 @@ export const eventsApi = {
           (event) =>
             event.title.toLowerCase().includes(search) &&
             event.visibility === (input.visibility ?? 'public') &&
-            (!input.city || event.city.toLowerCase() === input.city.toLowerCase()) &&
+            matchesLocation(event, input) &&
             (input.gameId === undefined || event.gameId === input.gameId) &&
             (!input.status || event.status === input.status) &&
             (!input.upcomingOnly ||

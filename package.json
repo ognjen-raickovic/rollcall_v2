@@ -19,6 +19,8 @@
     "geography:import": "pnpm --filter backend geography:import",
     "geography:benchmark": "pnpm --filter backend geography:benchmark",
     "test:mock": "pnpm --filter frontend test:mock",
+    "test:geography": "pnpm --filter frontend test:geography",
+    "test:ui": "pnpm --filter frontend test:ui",
     "format": "pnpm --filter frontend format"
   },
   "devDependencies": {

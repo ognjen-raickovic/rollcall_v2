@@ -1,9 +1,10 @@
 ﻿# RollCall entities and API contract
 
-Shared contract for the unchanged Workshop 3 mocks and the separate backend foundation.
+Shared contract for Workshop 3 mocks, Milestone 2B location integration and the backend foundation.
 Feature types live in `frontend/src/features/<domain>/types.ts`; APIs and fixtures live in
 that feature's `api/`. Users and games are read-only in the frontend scope; mock events
-support CRUD plus attendance. The backend model intentionally differs where stated below.
+support CRUD plus attendance. Geography alone uses real HTTP. The backend model intentionally
+differs where stated below.
 
 ## Backend Milestones 1 and 2A: implemented API
 
@@ -58,7 +59,7 @@ constraints, delete behavior and the ER diagram are in [database schema](databas
 | Account role | Protected profile relationship with `user`, `admin`, or `superadmin` | No arbitrary client role assignment or management endpoint |
 | Game | Numeric PK; existing category/name/description/player guidance | Separate curated database catalog; no game write API yet |
 | User game experience | Composite user/game relationship with `beginner`, `intermediate`, or `veteran`, timestamps | Independently self-declared for each game; not a verified qualification |
-| Event | UUID PK; host UUID/game/city FKs, optional venue, schedule/capacity/experience/price/tags/age/visibility/status, future cover reference, timestamps | Country derives from city; mock numeric IDs/string city/required venue remain unchanged in the frontend |
+| Event | UUID PK; host UUID/game/city FKs, optional venue, schedule/capacity/experience/price/tags/age/visibility/status, future cover reference, timestamps | Country derives from city; the frontend retains numeric event IDs and adds a selected location snapshot alongside its city label |
 | Event location | Required in-person address separated from public event fields, explicit public-sharing flag default false | Exact residential address is excluded from public reads by default |
 | Event participant | Composite event/profile PK, attendance timestamp; host excluded | Many-to-many attendance with serialized capacity protection rather than an embedded ID array |
 
@@ -69,13 +70,13 @@ tested. Auth/profile/event APIs are not available just because their tables exis
 Frontend integration must deliberately adopt UUID profile/event IDs and selected city IDs
 through feature API adapters; never cast UUIDs to numbers or equate a numeric demo profile
 with an Auth account. Keep catalog/geography numeric identifiers as IDs, not display names.
-The current forms and mocks are untouched in this milestone. Future REST event/profile
+Milestone 2B changes only the frontend location adapter and optional venue. Future REST event/profile
 DTOs must omit private age, roles, invitation secrets and exact addresses unless the
 specific actor is authorized for an explicit protected response.
 
 Existing host/attendance, capacity 1–100, future scheduling, EUR price, tag/experience and
-visibility rules remain the basis for future endpoints. Venue becomes optional only in
-the backend model now; an in-person address remains required in its protected relationship.
+visibility rules remain the basis for future endpoints. Venue is optional in the frontend
+and backend model; an in-person address remains required in its protected relationship.
 Supabase Storage is planned for covers, but no bucket, upload API or persisted image
 transport exists in Milestone 1. Mock data URLs are never production database payloads.
 
@@ -102,7 +103,34 @@ manual aliases are not overwritten. Source name variants are not verified curren
 verified language labels. See [geographic import](geographic-import.md) for filters, exact
 rerun commands, attribution, limitations and execution evidence.
 
-## Workshop 3 frontend mock contract
+## Milestone 2B frontend location contract
+
+`geography` owns country/city HTTP response types, query hooks and controls. Events never
+import geography. Routes compose the picker into event form/discovery render props, and
+both features use `LocationReference` from `frontend/src/lib/location.ts`:
+
+| Field | Type and constraint |
+| --- | --- |
+| `cityId`, `countryId` | Actual positive PostgreSQL integer IDs, 1–2147483647 |
+| `countryIsoCode` | Two uppercase ASCII letters supplied by the country/city API |
+| `countryName` | Trimmed display label, 2–100 characters |
+| `cityName` | Canonical trimmed display label, 1–200 characters |
+| `administrativeDivision` | Nullable region label, 1–200 characters when present |
+| `admin1Code`, `admin2Code` | Nullable source administrative codes, maximum 20/80 characters |
+
+The reference is a selection/display snapshot, not a duplicated geographic catalog or a
+database relationship guarantee. Selecting a real suggestion sets it plus the existing
+`city` label and `countryCode`. Forms require a non-null selection; free typing cannot
+submit a valid location. Changing country or editing the city text clears the selection.
+Legacy fixture editors retain the text as a hint and require the host to confirm a real
+suggestion instead of guessing an ID from a potentially ambiguous name.
+
+Countries come from `GET /api/countries`; searches use `GET /api/cities` with a mandatory
+country code, debounced `q` and four results. Query keys include country/query and consume
+abort signals, preventing stale country/query results from replacing current suggestions.
+See [location UI](location-ui.md) for keyboard behavior, setup, URLs and limitations.
+
+## Frontend mock event/user/game contract
 
 The following sections continue to describe the functioning frontend demo. Their numeric
 IDs, address responses and proposed HTTP-shaped operations are not grants or response
@@ -199,8 +227,10 @@ Code: `frontend/src/features/events/`.
 | description | string | Required, 10–5000 trimmed characters |
 | gameId | number | Required positive safe integer referencing an existing game |
 | organizerId | number | Assigned from actor on create; immutable, existing user |
-| city | string | Required, 2–80 trimmed characters |
-| venue | string | Required, 2–120 trimmed characters |
+| city | string | Required display label, 1–200 trimmed characters; equals selected `location.cityName` when a reference is supplied |
+| countryCode | string, optional for legacy calls | Two uppercase ASCII letters; equals selected location country when both are supplied; existing fixtures explicitly use ME |
+| location | LocationReference or null, optional for legacy calls | Actual selected IDs/display snapshot; required by current create/edit UI, optional only for mock compatibility |
+| venue | string | Optional on create/update; omitted create values normalize to `''`; blank allowed, otherwise 2–120 trimmed characters |
 | address | string | Required, 3–200 trimmed characters |
 | startsAt | ISO timestamp string | Required, strictly in the future on create/update |
 | endsAt | ISO timestamp string | Required, strictly after startsAt |
@@ -216,8 +246,9 @@ Code: `frontend/src/features/events/`.
 | createdAt | ISO timestamp string | Assigned on create, immutable |
 | updatedAt | ISO timestamp string | Assigned on create and successful state changes |
 
-`NewEvent` contains the required editable fields, excluding id, organizerId, attendeeIds,
-status, createdAt, updatedAt. `UpdateEvent` is a nonempty partial NewEvent plus optional status.
+`NewEvent` contains editable fields, excluding id, organizerId, attendeeIds,
+status, createdAt, updatedAt; venue and transitional location/country fields may be omitted
+by legacy mock callers. `UpdateEvent` is a nonempty partial NewEvent plus optional status.
 Both reject unknown fields. In mock partial updates, undefined values are treated as omitted;
 at least one defined field is required. Attendees cannot exceed capacity; reducing capacity below current
 attendance returns 409. Canceling preserves attendance; an organizer may reschedule a canceled
@@ -267,6 +298,11 @@ remains a renderable string/null and its current preparation/preview behavior is
 Public/unlisted reads are public. Mock writes require `MockActor = { userId: number | null }` as the last
 argument. Missing/null/unknown user is 401. Any known mock user can create. Only the organizer
 can update/remove; a different known user receives 403. There is no global default user.
+Exact address rendering is separately limited to the host/current participants. Anonymous
+and non-participating viewers see a neutral address-sharing explanation, including public
+or unlisted events. Mock API objects still contain the address in browser memory, so this
+is a UI safeguard, not server-side privacy. A future event API must omit protected addresses
+from unauthorized DTOs and enforce identity/attendance on the server.
 The demo session supplies the selected user ID to attendance through route props. A future backend must derive the actor from a verified session,
 never trust a client-supplied user ID. Mock actor objects are not HTTP request bodies.
 
@@ -309,7 +345,9 @@ then state constraints. Join/leave check event availability before membership/ca
 | Filter | Validation and behavior |
 | --- | --- |
 | search | 0–100 characters; case-insensitive substring of event title only |
-| city | 0–80 characters; case-insensitive exact match; empty means all |
+| city | 0–200 characters; trimmed case/diacritic-insensitive display-label match; empty means all |
+| country | Optional two-letter country code, normalized uppercase; filters selected-reference country or the legacy fixture's known country |
+| cityId | Optional positive PostgreSQL integer city ID; selected references match by ID; unresolved ME fixtures may use the explicit country-plus-canonical-label bridge described below |
 | gameId | Positive safe integer; exact match; unknown ID returns an empty list |
 | startsAfter | ISO timestamp with timezone; inclusive lower bound on event start |
 | startsBefore | ISO timestamp with timezone; inclusive upper bound; cannot precede startsAfter |
@@ -325,6 +363,17 @@ with title search using AND; `availableOnly: true` excludes full tables. An empt
 selector means no restriction. Future HTTP booleans/numbers are parsed
 from query strings before validation. Category discovery is handled by route composition:
 use the games catalog to choose matching game IDs; category is not a duplicated event field.
+
+Milestone 2B discovery URLs use `country`, `cityId` and the selected canonical `city` label,
+with optional display-only `region` context,
+alongside existing search/game/category/availability parameters. Country changes clear both
+city fields; reset clears all filters. Country-only filtering is valid. Browser navigation
+restores applied URL state. Old city-string URLs remain compatible. For a legacy fixture
+without a selected reference, city-ID filtering requires `country=ME` and a matching
+normalized label; no fake ID is assigned. New reference-backed events use exact city IDs.
+The fallback is a temporary demo bridge and cannot establish database identity or ownership.
+URL-restored references are filter display state, not confirmed form selections or trusted
+database identity. The event API does not receive `region` as an additional filter.
 
 Hooks: `useEvents`, `useEvent`, `useCreateEvent`, `useUpdateEvent`, `useRemoveEvent`,
 `useJoinEvent`, `useLeaveEvent`. Mutation variables contain the API input plus `actor` (and
@@ -393,7 +442,8 @@ Profile/game features are not imported into events.
 Updates validate the merged editable values before mutating state. `api/event-form-values.ts`
 adapts local `datetime-local` picker strings to the same NewEvent
 contract; it does not perform requests. Impossible dates/local times and missing, past, or
-reversed schedules are rejected. End time and venue are required by the existing contract.
+reversed schedules are rejected. End time remains required. Venue may be blank; provided
+values retain their length validation. Both form routes require a confirmed geographic selection.
 Capacity/age are integers; price is EUR with at most two decimals. The form validates capacity
 against known attendance, and the API rechecks latest attendance, returning a 409 with an
 inline `fields.capacity` message if a concurrent change makes the submitted capacity too low.

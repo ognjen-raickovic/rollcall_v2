@@ -1,4 +1,5 @@
 import type { EventTag } from './event-tags'
+import type { LocationReference } from '@/lib/location'
 
 export type EventStatus = 'scheduled' | 'cancelled'
 export type ExperienceLevel = 'all-levels' | 'beginner' | 'experienced'
@@ -11,6 +12,8 @@ export type Event = {
   gameId: number
   organizerId: number
   city: string
+  countryCode?: string
+  location?: LocationReference | null
   venue: string
   address: string
   startsAt: string
@@ -30,13 +33,15 @@ export type Event = {
 
 export type NewEvent = Omit<
   Event,
-  'id' | 'organizerId' | 'attendeeIds' | 'status' | 'createdAt' | 'updatedAt'
->
+  'id' | 'organizerId' | 'attendeeIds' | 'status' | 'createdAt' | 'updatedAt' | 'venue'
+> & { venue?: string }
 export type UpdateEvent = Partial<NewEvent & { status: EventStatus }>
 
 export type EventFilters = {
   search?: string
   city?: string
+  country?: string
+  cityId?: number
   gameId?: number
   startsAfter?: string
   startsBefore?: string

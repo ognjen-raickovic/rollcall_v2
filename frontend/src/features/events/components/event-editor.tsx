@@ -1,4 +1,5 @@
 import { Link } from 'react-router'
+import type { ReactNode } from 'react'
 
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -6,6 +7,7 @@ import { ApiError } from '@/lib/mock-db'
 
 import { useEvent } from '../api/use-events'
 import { EventForm } from './event-form'
+import type { EventLocationSlotProps } from './event-form'
 
 type EventEditorProps = {
   mode: 'create' | 'edit'
@@ -16,6 +18,7 @@ type EventEditorProps = {
   gamesPending: boolean
   gamesError: boolean
   retryGames: () => void
+  renderLocation: (props: EventLocationSlotProps) => ReactNode
 }
 
 export function EventEditor({
@@ -27,6 +30,7 @@ export function EventEditor({
   gamesPending,
   gamesError,
   retryGames,
+  renderLocation,
 }: EventEditorProps) {
   const editing = mode === 'edit'
   const id = Number(eventId)
@@ -128,6 +132,7 @@ export function EventEditor({
       currentUserId={currentUserId}
       hostName={hostName}
       games={games}
+      renderLocation={renderLocation}
     />
   )
 }

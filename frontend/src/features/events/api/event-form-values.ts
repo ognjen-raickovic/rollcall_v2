@@ -22,10 +22,17 @@ export function isoDateTime(local: string): string {
 
 export const eventFormSchema = eventFields
   .extend({
+    venue: z.string().optional(),
     startsAt: z.string().min(1, 'Choose a start date and time.').transform(isoDateTime),
     endsAt: z.string().min(1, 'Choose an end date and time.').transform(isoDateTime),
   })
   .pipe(newEventSchema)
+  .superRefine((values, context) => {
+    if (!values.location)
+      context.addIssue({ code: 'custom', path: ['location'], message: 'Choose a city from the suggestions.' })
+    if (!values.countryCode)
+      context.addIssue({ code: 'custom', path: ['countryCode'], message: 'Choose a country.' })
+  })
 
 export type EventFormValues = z.input<typeof eventFormSchema>
 
@@ -37,6 +44,8 @@ export function eventFormDefaults(event?: Event): EventFormValues {
         description: '',
         gameId: 0,
         city: '',
+        countryCode: 'ME',
+        location: null,
         venue: '',
         address: '',
         startsAt: '',
@@ -51,6 +60,8 @@ export function eventFormDefaults(event?: Event): EventFormValues {
       }
   return {
     ...values,
+    countryCode: event?.location?.countryIsoCode ?? event?.countryCode ?? 'ME',
+    location: event?.location ?? null,
     startsAt: localDateTime(values.startsAt),
     endsAt: localDateTime(values.endsAt),
     imageUrl: customEventCover(values.imageUrl),

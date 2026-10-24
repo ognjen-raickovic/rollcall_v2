@@ -5,12 +5,14 @@
 Workshop 3 is the completed React mock MVP. Backend Milestone 1 is a separate Node.js/
 TypeScript workspace package with Fastify, Zod, Supabase PostgreSQL migrations and a
 read-only geography API. Milestone 2A adds local GeoNames import tools, aliases and improved
-database search. No frontend component calls the backend yet. Demo login,
-numeric IDs, event images, create/edit and attendance remain on the existing mock APIs.
+database search. Milestone 2B connects React geography controls to those read endpoints.
+Demo login, numeric event/user IDs, images, create/edit and attendance remain on mock APIs.
 
 ```mermaid
 flowchart LR
-  Demo[React MVP] --> Mocks[Existing in-memory feature APIs]
+  Demo[React MVP] --> Mocks[Existing in-memory event/user/game APIs]
+  Demo --> GeoUI[Geography query hooks and controls]
+  GeoUI --> API
   Client[API client / future React integration] --> API[Fastify REST API]
   API --> Validation[Zod query validation]
   Validation --> Geography[Geography repository]
@@ -78,8 +80,9 @@ source record triggers a city deletion, and source aliases are additive.
 Apply the new versioned migration without resetting existing data. The development reset
 still provides only 13 sample cities; imports are never an automatic side effect of startup,
 build, or migration. [Geographic import](geographic-import.md) documents exact inclusion
-rules, provenance, reruns, limitations and query verification. React autocomplete remains
-Milestone 2B; no geographic dataset is shipped to the browser in 2A.
+rules, provenance, reruns, limitations and query verification. Milestone 2B consumes bounded
+suggestions rather than shipping the geographic dataset to the browser. See
+[frontend location integration](location-ui.md).
 
 The public Supabase URL and unprivileged key identify a project; they are not an
 authorization mechanism. A caller could reach any directly granted Data API route.

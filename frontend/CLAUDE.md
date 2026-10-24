@@ -5,7 +5,7 @@ Design is described in @DESIGN.md, entities in @../docs/entities.md.
 All paths below are relative to `frontend/`.
 
 ## Feature-first
-Every feature (users, games, events) lives in `src/features/<name>/` and has only the
+Every feature (users, games, events, geography) lives in `src/features/<name>/` and has only the
 subfolders it needs: `api/`, `components/`, `hooks/`, `types.ts`. Features do not import each
 other; a route in `src/app/routes/` combines them on one page. Shared code goes to
 `src/components/ui` or `src/lib`, and only once at least two features use it.
@@ -15,7 +15,7 @@ Dependency direction: shared code -> features -> app, never the other way around
 - `src/app/router.tsx`: all routes; `src/app/providers.tsx`: global providers (TanStack Query)
 - `src/app/routes/`: one file per route, only combines features and layout
 - `src/features/<name>/types.ts`: entity types of that feature
-- `src/features/<name>/api/<name>-api.ts`: the only place that fetches data (mock for now)
+- `src/features/<name>/api/<name>-api.ts`: the only place that fetches data (geography uses HTTP; other domains remain mocked)
 - `src/features/<name>/api/use-<name>.ts`: TanStack Query hooks around the API
 - `src/features/<name>/components/`: components of that feature (e.g. `events-list.tsx`)
 - `src/components/ui/`: shadcn/ui components, added with `pnpm dlx shadcn@latest add <name>` (run inside `frontend/`)
@@ -38,11 +38,20 @@ Dependency direction: shared code -> features -> app, never the other way around
 - No errors in the browser console
 
 ## RollCall scope
-- Backend Milestone 1 is independent of this app. Keep all current routes, forms, mock APIs,
-  numeric IDs and themes unchanged. Do not connect Supabase, change the city string contract,
-  make venue optional in the existing form, or replace demo sessions during this milestone.
-  The database's UUID profiles/events, city IDs and optional venue are documented separately
-  in `../docs/database-schema.md`; later integration will use deliberate API adapters.
+- Milestone 2B connects only geography to Fastify. Keep event CRUD/attendance, users, games,
+  demo sessions and their numeric IDs mocked. Never connect browser code directly to Supabase.
+  Read `../docs/location-ui.md` for the transition and local proxy setup.
+- Geography owns backend response types, query hooks and country/city controls. Compose
+  those controls into events at routes through render props; features never import each other.
+  `src/lib/location.ts` is the shared reference contract used by geography and events.
+- A selected city uses the actual positive integer database ID plus a display snapshot.
+  Do not invent IDs for legacy fixtures: preserve their city strings/country code until an
+  actual suggestion is confirmed. New forms reject unconfirmed free text. Clear selection
+  immediately when country or city text changes; query keys and abort signals isolate searches.
+- Venue is optional (blank string when omitted; 2–120 characters when provided). Keep
+  address required, but render the exact value only to the host/current participants.
+  Mock data remains in browser memory and is not a privacy boundary; real server enforcement
+  belongs to the future event API.
 - Read `../SPEC.md` for scope. Homepage, demo login, discovery/details, and shared create/edit
   forms, optional browser-side covers, curated tags, and light/dark themes are implemented.
   Recurring events, invitations, cloud uploads, and advanced administration remain out of scope.

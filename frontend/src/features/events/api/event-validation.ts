@@ -1,10 +1,20 @@
 import { z } from 'zod'
 
 import { mockReferences } from '@/lib/mock-db'
+import { locationReferenceSchema } from '@/lib/location'
 
 import type { Event, NewEvent } from '../types'
 import { EVENT_TAGS, tagMatchesExperience } from '../event-tags'
 import { validEventImageDataUrl } from './event-covers'
+
+const venueSchema = z
+  .string()
+  .trim()
+  .max(120)
+  .refine(
+    (value) => value === '' || value.length >= 2,
+    'Enter at least 2 characters, or leave the venue blank.',
+  )
 
 export const eventFields = z.strictObject({
   title: z
@@ -23,8 +33,13 @@ export const eventFields = z.strictObject({
     .positive('Choose a game.')
     .max(Number.MAX_SAFE_INTEGER)
     .refine((id) => mockReferences.gameIds.has(id), 'Choose an existing game.'),
-  city: z.string().trim().min(2, 'Enter a city with at least 2 characters.').max(80),
-  venue: z.string().trim().min(2, 'Enter a venue or meeting point.').max(120),
+  city: z.string().trim().min(1, 'Choose a city.').max(200),
+  countryCode: z
+    .string()
+    .regex(/^[A-Z]{2}$/, 'Choose a country.')
+    .optional(),
+  location: locationReferenceSchema.nullable().optional(),
+  venue: venueSchema.default(''),
   address: z.string().trim().min(3, 'Enter an address with at least 3 characters.').max(200),
   startsAt: z.iso.datetime({ offset: true, error: 'Choose a valid start date and time.' }),
   endsAt: z.iso.datetime({ offset: true, error: 'Choose a valid end date and time.' }),
@@ -69,6 +84,18 @@ export const eventFields = z.strictObject({
 })
 
 export const newEventSchema = eventFields.superRefine((input, context) => {
+  if (input.location && input.city !== input.location.cityName)
+    context.addIssue({
+      code: 'custom',
+      path: ['city'],
+      message: 'The city must match the selected location.',
+    })
+  if (input.location && input.countryCode && input.countryCode !== input.location.countryIsoCode)
+    context.addIssue({
+      code: 'custom',
+      path: ['countryCode'],
+      message: 'The country must match the selected city.',
+    })
   if (input.tags.some((tag) => !tagMatchesExperience(tag, input.experienceLevel)))
     context.addIssue({
       code: 'custom',
@@ -86,7 +113,7 @@ export const newEventSchema = eventFields.superRefine((input, context) => {
 })
 
 export const updateEventSchema = eventFields
-  .extend({ status: z.enum(['scheduled', 'cancelled']) })
+  .extend({ status: z.enum(['scheduled', 'cancelled']), venue: venueSchema })
   .partial()
   .refine((input) => Object.values(input).some((field) => field !== undefined), 'Supply at least one field.')
 
@@ -96,6 +123,8 @@ export function editableEventValues(event: Event): NewEvent {
     description: event.description,
     gameId: event.gameId,
     city: event.city,
+    countryCode: event.countryCode,
+    location: event.location,
     venue: event.venue,
     address: event.address,
     startsAt: event.startsAt,

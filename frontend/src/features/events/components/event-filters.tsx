@@ -1,5 +1,6 @@
-import { MapPin, Search, SlidersHorizontal, X } from 'lucide-react'
+import { Search, SlidersHorizontal, X } from 'lucide-react'
 import { Form, Link } from 'react-router'
+import type { ReactNode } from 'react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -7,11 +8,10 @@ import { Label } from '@/components/ui/label'
 
 type EventFiltersProps = {
   search: string
-  city: string
   gameId: string
   category: string
   availableOnly: boolean
-  cities: string[]
+  locationFilters: ReactNode
   games: { id: number; name: string }[]
   pending: boolean
   filterKey: string
@@ -19,11 +19,10 @@ type EventFiltersProps = {
 
 export function EventFilters({
   search,
-  city,
   gameId,
   category,
   availableOnly,
-  cities,
+  locationFilters,
   games,
   pending,
   filterKey,
@@ -37,7 +36,7 @@ export function EventFilters({
       method="get"
       role="search"
       aria-label="Filter gaming events"
-      className="space-y-4 rounded-xl border bg-card p-4 md:p-6"
+      className="space-y-4 rounded-xl border bg-card p-4 md:p-6 [&_label]:min-h-4"
     >
       <div className="flex flex-wrap items-center justify-between gap-4">
         <p className="flex items-center gap-2 text-sm font-semibold">
@@ -52,7 +51,7 @@ export function EventFilters({
         </Link>
       </div>
       {category && <input type="hidden" name="category" value={category} />}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1.3fr_1fr_auto] lg:items-end">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:items-start">
         <div className="min-w-0 space-y-2">
           <Label htmlFor="event-search">
             <Search className="size-4 text-primary" aria-hidden="true" /> Event title
@@ -66,29 +65,7 @@ export function EventFilters({
             className="h-11 bg-background"
           />
         </div>
-        <div className="min-w-0 space-y-2">
-          <Label htmlFor="event-city">
-            <MapPin className="size-4 text-primary" aria-hidden="true" /> City
-          </Label>
-          <select
-            key={`${pending}-${cities.length}-${city}`}
-            id="event-city"
-            name="city"
-            defaultValue={city}
-            className={selectStyle}
-            disabled={pending}
-          >
-            <option value="">All cities</option>
-            {city && !cities.some((item) => item.toLowerCase() === city.toLowerCase()) && (
-              <option value={city}>{city}</option>
-            )}
-            {cities.map((item) => (
-              <option key={item} value={item}>
-                {item}
-              </option>
-            ))}
-          </select>
-        </div>
+        {locationFilters}
         <div className="min-w-0 space-y-2">
           <Label htmlFor="event-game">Game</Label>
           <select
@@ -122,7 +99,7 @@ export function EventFilters({
             <option value="true">Open seats only</option>
           </select>
         </div>
-        <Button type="submit" className="h-11" disabled={pending}>
+        <Button type="submit" className="h-11 lg:mt-6" disabled={pending}>
           <Search aria-hidden="true" /> Search
         </Button>
       </div>
