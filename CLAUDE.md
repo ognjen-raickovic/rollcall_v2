@@ -4,7 +4,8 @@ RollCall helps tabletop players discover, organize, and join gaming events.
 
 This is a monorepo: one repository for the whole app.
 - `frontend/`: React app (Workshop 3). Details in @frontend/CLAUDE.md
-- `backend/`: API, database and auth (next workshop)
+- `backend/`: Fastify API foundation (Milestone 1); see @backend/AGENTS.md and @backend/README.md
+- `supabase/`: local configuration, SQL migrations, development seeds and database tests
 - `docs/entities.md`: entities and the API contract shared by frontend and backend
 
 ## Language
@@ -14,9 +15,17 @@ You may talk to me in any language.
 ## Commands (run from the repo root)
 - `pnpm install`: installs dependencies for every package in the workspace
 - `pnpm dev`: frontend dev server at http://localhost:5173
-- `pnpm typecheck`: TypeScript check
-- `pnpm lint`: oxlint and the boundary check between features
-- `pnpm build`: production build
+- `pnpm dev:backend`: backend dev server at http://127.0.0.1:3001
+- `pnpm typecheck`: TypeScript checks for frontend and backend
+- `pnpm lint`: oxlint for both packages and the frontend feature boundary check
+- `pnpm build`: production builds for both packages
+- `pnpm test:mock`: existing frontend mock API checks
+- `pnpm test:backend`: backend automated tests without a running database
+- `pnpm test:integration`: opt-in local Supabase geography integration checks
+- `pnpm db:start` / `pnpm db:stop`: local Supabase stack
+- `pnpm db:reset`: reset the local database and apply migrations/development seeds
+- `pnpm db:lint` / `pnpm db:test`: local SQL lint and database tests
+- `pnpm db:test:concurrency`: real local PostgreSQL final-seat/capacity race checks
 - `pnpm format`: Prettier formats `frontend/src/`
 
 ## Working in the monorepo
@@ -27,10 +36,13 @@ You may talk to me in any language.
 ## RollCall scope and shared workflow
 - Read @SPEC.md for scope, @frontend/DESIGN.md for visuals, and @docs/entities.md for contracts.
 - @AGENTS.md is Codex's entry point and references these same starter rules.
-- Workshop 3 is frontend only: no backend, database, durable event storage, or real authentication.
+- Workshop 3 remains a frontend-only demo. Backend Milestone 1 now adds schema/migrations,
+  local Supabase infrastructure and three read-only geography/health endpoints. The frontend
+  remains on mocks; real login, event APIs and storage uploads are later milestones.
 - Optional event covers are prepared in the browser and passed through mock APIs as bounded
-  data URLs. Do not persist images in browser storage or add a cloud integration. Decide
-  backend picture storage in the next workshop. Curated tags/experience rules live in events.
+  data URLs. Do not persist images in browser storage or connect cloud uploads in Milestone 1.
+  Supabase Storage is the planned backend provider; transport, ownership and lifecycle will
+  be implemented later. Curated tags/experience rules live in events.
 - Light/dark themes share semantic tokens. Dark is the default; only the theme preference
   persists in localStorage (`rollcall.theme`), independent of the tab-scoped demo session.
 - Domains are `users`, `games`, and `events`. User profiles/games are read-only catalogs; events
@@ -44,3 +56,17 @@ You may talk to me in any language.
 - Do not commit, push, or merge without explicit user approval. Run typecheck, lint, and
   build before handoff; use `/check` and the UI reviewer for page work before a commit.
 - On PowerShell with blocked `.ps1` shims, use `pnpm.cmd` for the same root commands.
+
+## Backend rules shared with Codex
+- Read @backend/AGENTS.md, @docs/backend-architecture.md and @docs/database-schema.md before
+  backend changes. Follow the same scope and authorization model as Codex.
+- Use a server-only unprivileged Supabase client for Milestone 1 geography reads. Combine
+  explicit grants with RLS; do not use a service-role key or trust frontend role checks.
+- Database profile IDs are Supabase Auth UUIDs; event IDs are UUIDs. Preserve existing
+  numeric frontend mock IDs until an explicit integration milestone introduces adapters.
+- Keep exact addresses, private age information, roles and future invitation secrets out
+  of public event/profile responses. Never assign roles from client-controlled metadata.
+- No remote Supabase creation, linking, migrations, resets or deployment without explicit
+  approval. Root reset/lint/test scripts target local development only.
+- Report executed backend/database checks and unavailable checks separately. Prepared SQL
+  and mocked repository tests are not proof that a migration or live endpoint succeeded.

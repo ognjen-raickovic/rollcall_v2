@@ -1,0 +1,163 @@
+# RollCall backend architecture
+
+## Current delivery boundary
+
+Workshop 3 is the completed React mock MVP. Backend Milestone 1 is a separate Node.js/
+TypeScript workspace package with Fastify, Zod, Supabase PostgreSQL migrations and a
+read-only geography API. No frontend component calls the backend yet. Demo login,
+numeric IDs, event images, create/edit and attendance remain on the existing mock APIs.
+
+```mermaid
+flowchart LR
+  Demo[React MVP] --> Mocks[Existing in-memory feature APIs]
+  Client[API client / future React integration] --> API[Fastify REST API]
+  API --> Validation[Zod query validation]
+  Validation --> Geography[Geography repository]
+  Geography --> DataAPI[Supabase Data API / PostgREST]
+  DataAPI --> RLS[Explicit grants + RLS]
+  RLS --> PG[(Supabase PostgreSQL)]
+  FutureAuth[Supabase Auth - future integration] -. verified identity .-> API
+  FutureStorage[Supabase Storage - future integration] -. protected cover objects .-> API
+```
+
+The intended application path is React → Fastify → Supabase PostgreSQL. The current
+database transport is Supabase's Data API, not a direct privileged SQL connection.
+This keeps the application role subject to grants/RLS and avoids adding a database
+password or service-role key to the API process.
+
+## Package responsibilities
+
+`backend/src/app.ts` assembles the Fastify application without opening a socket so
+tests can use injection. `server.ts` loads validated environment and starts/stops the
+server. `config/` owns environment validation, `db/` owns server-only Supabase setup,
+`modules/geography/` owns its routes, query/response validation and repository, and
+`shared/` owns common error handling. Only implemented modules are created; empty
+auth/events/users abstractions are unnecessary.
+
+The backend never imports frontend feature internals. SQL database rows use snake_case;
+the REST boundary uses explicit camelCase DTOs and keeps errors compatible with the
+existing `{ code, message, fields }` convention. A later integration must adapt API DTOs
+inside feature API layers rather than rewriting component data access.
+
+## Data access and least privilege
+
+Milestone 1 uses a server-only Supabase client with a publishable key (or the local
+legacy anon key). It has no user session, browser storage, automatic refresh or privileged
+role. Only enabled countries/cities can be read. City search calls the explicitly
+granted, security-invoker `public.search_cities` function, which remains subject to
+the caller's table grants and RLS. Names are normalized in PostgreSQL and searched by
+prefix with an index and bounded limit. An empty query returns a small stable set of
+suggestions. The current development seed has no population data, so alphabetical
+tie-breaking applies until imports provide it.
+
+All application tables have RLS enabled. Migrations revoke implicit/default access and
+grant only the geography reads/function execution needed now. Application writes, profile
+reads, event reads, private records and role records are not enabled for client roles.
+Absence of an event endpoint does not justify granting its tables broad access in advance.
+
+The public Supabase URL and unprivileged key identify a project; they are not an
+authorization mechanism. A caller could reach any directly granted Data API route.
+Therefore Fastify validation is supplemented by SQL constraints, function argument bounds,
+explicit grants and RLS. API-only authorization cannot be assumed while tables/functions
+are also reachable through the Data API.
+
+## Future authenticated access
+
+Authentication is not implemented in Milestone 1. Later, Fastify must verify Supabase
+access tokens against the configured project, expiry and issuer before using the subject
+as a profile UUID. Never trust a submitted user ID, demo actor, arbitrary JWT payload,
+client-supplied role or editable `user_metadata` for authorization.
+
+Use an isolated per-request Supabase client carrying the verified user's bearer token
+for ordinary operations. Do not mutate a shared client's session or install a global
+current user. Explicit grants plus operation-specific RLS must then enforce the same
+identity and ownership rules. A carefully scoped transactional database function may be
+used for operations such as joining, with its caller/authorization checked inside the
+transaction. Add those grants/functions only with the endpoint and allow/deny tests.
+
+There is no general service-role repository in Milestone 1. If a future maintenance or
+moderation operation requires privileged access, isolate it behind a separately reviewed
+server-only path with explicit authorization and minimal data returned. Do not turn off
+RLS or route ordinary requests through a bypass client.
+
+## Sensitive data and authorization design
+
+| Resource                        | Milestone 1 access           | Intended later authorization                                                                       |
+| ------------------------------- | ---------------------------- | -------------------------------------------------------------------------------------------------- |
+| Enabled countries/cities        | Anonymous/authenticated read | Public catalog and bounded search                                                                  |
+| Public-safe profiles/games      | No client grants yet         | Public-safe reads; self-only profile edits                                                         |
+| Private profile age information | No client grants             | Self-only read/write; no public DTO field                                                          |
+| Per-game experience             | No client grants             | Self-declared user-owned values; public display only by an explicit future contract                |
+| Public events                   | No client grants             | Public discoverability with addresses excluded by default                                          |
+| Unlisted events                 | No client grants             | Direct-link reads without public discovery; link access is not privacy                             |
+| Private events                  | No client grants             | Host/current participant or explicitly authorized moderator; later invitation workflow             |
+| Exact event locations           | No client grants             | Host/authorized participants; optional explicit public sharing, never implied by public visibility |
+| Account roles                   | No client grants             | Server-enforced authorization; only authorized superadmins manage admins                           |
+| Invitation secrets              | No table/workflow yet        | Separate server-managed encrypted storage and hash verification                                    |
+
+Age guidance uses an optional self-declared birth year, without collecting a birth date.
+It is approximate and unverified, not a proof of age. Event `minimum_age` remains guidance.
+Per-game `beginner`, `intermediate`, or `veteran` experience is also self-declared and does
+not replace each event's `all-levels`, `beginner`, or `experienced` expectation.
+
+Event capacity excludes the host. The attendance table's unique key prevents duplicate
+seats and database triggers serialize capacity changes on the event row. Future join/leave
+API functions must atomically authorize the actor, check future/scheduled availability,
+apply membership changes and return the visible DTO. Idempotent repeats must preserve
+the existing mock contract. They are not yet exposed through HTTP or the Data API.
+
+## Private room codes: later milestone
+
+Private events remain inaccessible before authorization. A future code-entry workflow
+must validate a code and join in one secure server transaction, with capacity/state and
+actor checks. Rate-limit by actor and network source, return neutral failure messages,
+and avoid placing codes in URLs or logs.
+
+Generate high-entropy codes with a cryptographically secure generator. Store a keyed
+hash for validation and, only because hosts/admins need retrieval, authenticated
+encryption ciphertext in a separate non-exposed table. Keep encryption/HMAC keys on the
+server, version keys, and audit access without logging code contents. Encrypting a secret
+does not make it suitable for a public event column.
+
+The future table should associate an event, encrypted code, verification digest, key
+version, creation time, rotation/revocation time and optional expiry. Rotation atomically
+invalidates the previous digest; revocation immediately blocks joining. Existing members
+must never receive a code through event or attendee responses. Only the host or an
+authorized admin/superadmin may retrieve/rotate/revoke it. No secrets table, code API,
+rate limiter or invitation interface is claimed as implemented now.
+
+## Runtime and failure behavior
+
+Configuration is validated before startup. Supabase credentials/configuration remain in
+`backend/.env`; no frontend environment is required. The API returns uniform validation,
+not-found, upstream-unavailable and unexpected-error responses without leaking database
+messages or credentials. Supabase requests are time-bounded. Logs must omit authorization
+headers, cookies, keys and private payloads.
+
+`GET /health` is process liveness, not a database readiness probe. Geography calls fail
+with a controlled 503 when the configured database/Data API cannot be reached or returns
+invalid data. No mock fallback silently substitutes fixture results. A valid country
+with no matching places returns `[]` rather than an error.
+
+The API defaults to loopback. CORS, real authentication, production rate limiting,
+deployment/TLS/proxy settings, operational monitoring and hosted project setup are later
+release requirements. This milestone does not deploy or modify a remote Supabase project.
+
+## Verification boundaries
+
+- Fastify injection tests verify routing, strict input validation, DTOs and sanitized errors.
+- Repository tests verify Data API queries against a controlled transport.
+- Local integration tests exercise a migrated/seeded local Supabase database when available.
+- SQL tests verify grants, RLS, constraints and search at the database layer.
+- A successful TypeScript build is not proof that migrations ran. Record unavailable local
+  Docker/Supabase checks explicitly in the delivery report.
+
+## Official references
+
+- [Fastify getting started](https://fastify.dev/docs/latest/Guides/Getting-Started/)
+- [Fastify testing and injection](https://fastify.dev/docs/latest/Guides/Testing/)
+- [Zod parsing and validation](https://zod.dev/basics)
+- [Supabase JavaScript initialization](https://supabase.com/docs/reference/javascript/initializing)
+- [Supabase API security, grants and RLS](https://supabase.com/docs/guides/api/securing-your-api)
+- [Supabase row level security](https://supabase.com/docs/guides/database/postgres/row-level-security)
+- [Supabase local CLI development](https://supabase.com/docs/guides/local-development/cli/getting-started)

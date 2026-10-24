@@ -7,6 +7,12 @@ Magic: The Gathering, Yu-Gi-Oh!, board game meetups, and social deduction games.
 Serve new and experienced players on phones and desktops. Brand the product **RollCall**,
 never "RollCall v2" in the UI.
 
+## Delivery stages
+
+Workshop 3 delivered the working frontend described below. Backend development is now
+incremental: Milestone 1 adds the separate foundation described in the final section of
+this specification. It does not connect the frontend to live data or real authentication.
+
 ## Workshop 3 scope
 
 Frontend only, preserving React 19, TypeScript, Vite, Tailwind CSS v4, shadcn/ui, React Router,
@@ -136,3 +142,54 @@ required markers remain without the former introductory paragraph.
 - Use separate GitHub feature branches and PRs; coordinate edits to shared files.
 - Run `pnpm typecheck`, `pnpm lint`, and `pnpm build` before handoff; report checks and limits.
 - Follow the existing UI review workflow for page work. No commits, pushes, or merges without approval.
+
+## Backend Milestone 1
+
+Use Node.js with TypeScript, Fastify, Zod, Supabase PostgreSQL and the existing pnpm
+workspace. Supabase Auth is the chosen future identity provider and Supabase Storage is
+the chosen future cover provider; real login, uploads and event endpoints are not part of
+this milestone. Preserve the complete Workshop 3 frontend, its numeric mock IDs and forms.
+
+The foundation includes:
+
+- A modular backend package, validated server configuration, consistent errors, automated
+  tests and root commands that also retain the existing frontend development workflow.
+- `GET /health` for API process liveness, `GET /api/countries` for enabled countries, and
+  `GET /api/cities?country=ME&q=...&limit=4` for bounded database-backed place suggestions.
+- Supabase CLI local configuration, version-controlled SQL migrations, explicit grants/RLS,
+  database tests and a small, explicitly incomplete development geography seed.
+- Relational countries, cities, profiles, games, per-game self-declared user experience,
+  events and attendance; separate protected storage for private profile details, event
+  addresses and authorization roles. Country derives from an event's selected city.
+
+Initial enabled countries are Montenegro (ME), Serbia (RS), Bosnia and Herzegovina (BA),
+and Croatia (HR). Countries are rows, not a frontend enum. Place storage supports many
+thousands of settlements, stable external source identifiers and indexed normalized-name
+search. Milestone 2 will add reproducible comprehensive imports from an appropriately
+licensed source such as GeoNames, attribution and frontend country/city autocomplete.
+The development seed must never be described as comprehensive.
+
+Database profiles use actual Supabase Auth UUIDs. Events also use UUIDs; catalog and
+geography keys are numeric. Real event models retain the existing validation rules with
+an optional venue, a required protected in-person address and a selected city ID.
+The host does not occupy a player seat; unique attendance and serialized capacity checks
+provide database foundations for later transactional join/leave endpoints. The current
+frontend's mock model and HTTP-shaped contracts remain separate until integration.
+
+For Milestone 1 the backend uses Supabase's Data API with an unprivileged publishable or
+legacy anon key, explicit grants and RLS. No service-role key is needed. Later endpoints
+must verify Supabase identity and use an isolated request-scoped user context; a client
+must never choose its own actor or role. Age is private, self-declared guidance, not a
+verified qualification. Game experience is independently self-declared per game.
+
+Public events are discoverable. Unlisted events will remain accessible by direct link
+without being treated as a privacy guarantee. Private events are hidden until authorized;
+future room-code validation/joining must be rate-limited, use cryptographic generation,
+hash verification and server-managed encrypted retrieval for authorized hosts/admins.
+Code rotation/revocation, role management, admin interfaces and invitation workflows are
+planned only. Only authorized superadmins may eventually promote/demote admins.
+
+See [backend architecture](docs/backend-architecture.md),
+[database schema](docs/database-schema.md), and [roadmap](docs/backend-roadmap.md) for the
+implemented foundations, access model and next milestones. No remote project changes,
+deployment, commits, pushes or merges are authorized by this milestone.
