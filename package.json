@@ -16,6 +16,8 @@
     "db:lint": "supabase db lint --local --level warning --fail-on warning",
     "db:test": "supabase test db",
     "db:test:concurrency": "node supabase/tests/check-concurrency.mjs",
+    "geography:import": "pnpm --filter backend geography:import",
+    "geography:benchmark": "pnpm --filter backend geography:benchmark",
     "test:mock": "pnpm --filter frontend test:mock",
     "format": "pnpm --filter frontend format"
   },

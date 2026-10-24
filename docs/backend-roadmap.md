@@ -26,24 +26,37 @@ Real Supabase Auth login, profile/event HTTP operations, private invitations, ro
 Storage uploads and frontend integration are not delivered by this milestone. Database
 execution/test status must be reported from actual local results, not inferred from SQL files.
 
-## Milestone 2: comprehensive geography and frontend selection
+## Milestone 2A: geographic data import and backend search
 
-1. Choose and document an established source, initially GeoNames under its attribution
-   license. Pin a download/version/checksum, feature-code selection and country scope.
-2. Build a reproducible importer for ME, RS, BA and HR that includes smaller towns and
-   settlements. Preserve stable source IDs, source attribution and administrative names;
-   distinguish external IDs from internal database IDs. Document update/removal policy.
-3. Populate normalization consistently, test diacritic/case handling, and measure actual
-   query plans/index use on many thousands of places. Evaluate alternative names without
-   losing uniqueness or collapsing distinct same-name places.
-4. Add frontend country selection and debounced city autocomplete through the feature API
-   layer. Empty search should show about 3–4 suggestions; typing updates bounded results.
-   Submit a selected city ID and clear it when a different country makes it incompatible.
-5. Explicitly adapt city strings and UI types during integration. Preserve themes, responsive
-   layouts and existing form behavior; avoid a scattered hardcoded frontend country enum.
+- GeoNames ME/RS/BA/HR country extracts, explicit current populated-place filters and
+  CC BY 4.0 attribution. No worldwide extract or population threshold is needed.
+- Validated, parameterized local imports with checksums, per-country transactions,
+  source identity, stable internal IDs, unambiguous seed adoption and safe reruns.
+- Canonical/ASCII/alternate names, administrative metadata, coordinates and source
+  population where available. Same-name places remain distinct geographic records.
+- Indexed case/accent/Serbian Latin-Cyrillic normalization, exact/prefix-before-substring
+  ranking, prominent default suggestions and the existing bounded city endpoint.
+- Tests and actual local import/search/query-plan verification, with counts and limitations
+  recorded separately from the code. See [geographic import](geographic-import.md).
 
-The current hand-curated development seed is intentionally incomplete and must not be
-presented as an import or authoritative production dataset.
+The seed remains an intentionally incomplete development sample; imported data is broader
+source coverage, not a claim of perfect completeness or verified administrative truth.
+
+## Milestone 2B: frontend country and city selection
+
+1. Add a geography feature API/hooks layer consuming the existing country/search endpoints.
+   Keep data access inside feature boundaries; do not download the entire place catalog.
+2. Add country selection and debounced city autocomplete. Empty input requests about four
+   prominent suggestions; typing requests new bounded results. Handle loading, errors,
+   empty results and stale requests, with accessible keyboard selection.
+3. Store/submit the selected city ID, show its name and administrative context, and clear
+   an incompatible city whenever country changes. Country choices come from the API.
+4. Deliberately adapt existing string-city form/mock contracts rather than coercing IDs or
+   replacing event/auth mocks as an accidental side effect. Preserve themes, layouts,
+   validation and all working journeys.
+
+No 2B UI integration is part of Milestone 2A. Real event persistence and authentication
+remain separate later milestones.
 
 ## Later: real identity and profiles
 

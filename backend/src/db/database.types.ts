@@ -11,9 +11,13 @@ export type CountryRow = {
 export type CityRow = {
   id: number
   country_id: number
+  country_iso_code: string
+  country_name: string
   name: string
   normalized_name: string
   administrative_division: string | null
+  admin1_code: string | null
+  admin2_code: string | null
   latitude: number | null
   longitude: number | null
   population: number | null

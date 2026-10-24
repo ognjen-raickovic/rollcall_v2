@@ -3,12 +3,14 @@
 ## Scope and reproducibility
 
 Supabase PostgreSQL 17 is configured locally in `supabase/config.toml`. Versioned SQL
-creates the application schema and the four-country catalog. `supabase/seed.sql` adds
-only a small development place/game dataset. There are no Auth users, profiles or events
+creates the application schema and the four-country catalog. Milestone 2A adds alias/search
+and source metadata in `20261024000300_balkan_geography.sql`. `supabase/seed.sql` still adds
+only a small development place/game dataset; geographic imports are explicit maintenance
+commands. There are no Auth users, profiles or events
 in the development seed; frontend demo users are not migrated into real accounts.
 
 This document describes schema foundations, not implemented event/profile HTTP routes.
-Only enabled geography has client grants in Milestone 1. All other application tables
+Only enabled geography has client grants in Milestones 1/2A. All other application tables
 have RLS enabled and no client grants/policies, so their current access is deny by default.
 The `private` schema is not exposed by the local Data API.
 
@@ -18,6 +20,7 @@ The `private` schema is not exposed by the local Data API.
 erDiagram
   AUTH_USERS ||--o| PROFILES : identity
   COUNTRIES ||--o{ CITIES : contains
+  CITIES ||--o{ CITY_ALIASES : searchable_names
   COUNTRIES o|--o{ PROFILES : selected_country
   CITIES o|--o{ PROFILES : selected_city
   PROFILES ||--o| PROFILE_PRIVATE : private_age
@@ -43,8 +46,21 @@ erDiagram
     integer country_id FK
     text name
     text normalized_name
+    text ascii_name
+    text administrative_division
+    text admin1_code
+    text admin2_code
+    text feature_code
+    date source_modified_at
     text external_source
     text external_source_id
+  }
+  CITY_ALIASES {
+    integer city_id PK,FK
+    integer country_id FK
+    text name
+    text normalized_name PK
+    text source
   }
   PROFILES {
     uuid id PK,FK
@@ -109,27 +125,51 @@ The migration inserts ME/Montenegro, RS/Serbia, BA/Bosnia and Herzegovina, HR/Cr
 There is no country CHECK limited to these four: future support is catalog data.
 
 `public.cities`: integer identity PK and required country FK; trimmed name of 1–200
-characters; required `normalized_name` maintained by a trigger using lowercasing and
-PostgreSQL `unaccent`. Optional `administrative_division` is 1–200 characters. Optional
+characters; required `normalized_name` maintained by a trigger using
+`public.normalize_place_name`. Optional `administrative_division` is 1–200 characters. Optional
 latitude/longitude use six decimal places, ranges −90..90 and −180..180 and must be
 provided together. Optional population is a nonnegative bigint. Optional `external_source`
 (1–50) and `external_source_id` (1–100) must be provided together. Creation time defaults
 now. A partial unique source/ID index preserves stable external identity across imports.
+Milestone 2A adds nullable `ascii_name` (1–200), `admin1_code` (1–20), `admin2_code` (1–80),
+`feature_code` (1–10) and `source_modified_at` (date). Administrative codes are source
+identifiers, not globally unique region IDs; interpret them within country/admin hierarchy.
 
 City names are deliberately not unique: separate settlements may share a name. The
 `(id, country_id)` unique key supports a composite profile FK, preventing a selected city
 from belonging to another selected country. A country/name `text_pattern_ops` index
 supports normalized prefix search; another country/population/normalized-name/ID index
-supports suggestions. Real query plans/load tests on a complete dataset belong to
-Milestone 2; an index definition alone is not proof of production performance.
+supports suggestions. Milestone 2A adds canonical-name and alias-name GIN `pg_trgm`
+indexes for substring matching. Actual query-plan/timing evidence must come from the loaded
+dataset; index definitions alone are not proof of production performance.
+
+`public.city_aliases`: city ID, matching country ID, trimmed source name (1–200), normalized
+name (1–400) and source label (1–50, default `geonames`). Its primary key is
+`(city_id, normalized_name)`; multiple place IDs may share a name. The composite foreign key
+`(city_id, country_id)` references `cities(id, country_id)` and cascades on city deletion.
+A trigger maintains normalization. Country/name-prefix and GIN trigram indexes support
+search without downloading aliases to the client.
+
+`public.normalize_place_name(text)` is STABLE, STRICT and security invoker with an empty
+search path. It trims/lowercases, applies explicit common Serbian Cyrillic and `Đ`/`Dj`
+transliteration, and calls schema-qualified `unaccent`. It is not declared immutable because
+the extension's dictionary can change. Triggers persist the result in indexed columns;
+changing normalization rules/dictionaries requires a deliberate backfill and plan review.
 
 `public.search_cities(country_code text, search_query text default '', result_limit integer
 default 4)` is stable and **security invoker**, with an empty search path and schema-qualified
 relations/functions. It validates an uppercase two-letter country, query ≤80 characters
 without controls, and limit 1–20. It normalizes the query, escapes SQL wildcard characters,
-filters enabled countries and matches a literal normalized prefix. Ordering is population
-descending/null last, then normalized name and ID. It is accent/case tolerant, not fuzzy
-search or Cyrillic/Latin transliteration. Fastify projects its result into a smaller city DTO.
+filters enabled ME/RS/BA/HR countries and searches canonical/alias normalized names. Exact
+matches rank first, prefixes second and substrings third. Substrings require at least three
+normalized characters to avoid broad short-query scans. Ties use population descending/null
+last, normalized name and ID; empty queries use only this prominence order. City IDs are
+deduplicated across aliases. Wildcards are literal, and static parameter-bound execution
+allows a query-specific prefix plan without interpolating user text.
+
+The RPC retains its original fields and adds country ISO/name plus admin1/admin2 codes.
+Fastify explicitly maps a smaller camelCase DTO. Search is not typo correction, general
+multilingual transliteration, or a guarantee that every source name variant is current.
 
 ## Profiles, roles and game experience
 
@@ -234,11 +274,13 @@ integration tests must remain part of delivering real attendance endpoints.
 
 ## RLS and grants
 
-All ten application tables, including those in `private`, have RLS enabled. Migrations
+All application tables, including those in `private` and the new city alias table, have RLS enabled. Migrations
 revoke implicit client grants on application tables/sequences/functions and PostgreSQL
 default function execution, then grant only geography SELECT and search execution to
 `anon` and `authenticated`. Countries expose enabled rows; city SELECT requires an enabled
-parent country. Search is security invoker so direct calls retain these restrictions.
+parent country. Aliases require an enabled matching country as well. Search is security
+invoker so direct calls retain these restrictions. Direct table reads remain catalog reads;
+the bounded RPC additionally restricts searches to the four supported countries.
 
 No application table has INSERT/UPDATE/DELETE grants to those roles. No non-geography
 SELECT grant/policy exists yet. The `private` schema has no client usage grants and is not
@@ -255,7 +297,7 @@ table must support verification hashes, authenticated encrypted retrieval, rotat
 revocation. Ordinary participants never receive the code. See
 [the authorization design](backend-architecture.md) for planned workflows.
 
-## Development seed and geography import plan
+## Development seed and geographic import
 
 The seed contains 13 real place names: ME Podgorica/Nikšić/Budva/Bar; RS Beograd/Novi Sad/
 Čačak; BA Sarajevo/Banja Luka/Mostar; HR Zagreb/Split/Rijeka. It is a manually curated,
@@ -263,16 +305,26 @@ incomplete development sample. Optional coordinates, divisions, population and s
 are left null rather than fabricated. Eight games mirror the existing frontend catalog
 for convenient development; matching seed numbers are not an identity-migration strategy.
 
-Milestone 2 should import an attributed, pinned GeoNames extract for all four countries,
-including smaller settlements. Record download date/version/checksum, feature-code filters,
-source identifiers and update handling. The `(external_source, external_source_id)` key
-supports reproducibility without making names unique. Display license attribution as required
-by the source. The current seed must never be described as a comprehensive GeoNames dataset.
+Milestone 2A's explicit importer reads the four GeoNames country extracts, selecting eligible
+populated places without a population minimum. SHA-256 inputs and per-country reports record
+provenance and outcomes. The `(external_source, external_source_id)` identity supports reruns
+without changing internal IDs. Only unambiguous recognized development seeds are adopted;
+manual/ambiguous records are preserved. Administrative labels are resolved from ADM1/ADM2
+records in the same country files. Imported aliases remain source-labeled and additive.
+
+Import metadata is source-owned; no city is removed because it is absent from a newer
+extract. This prevents destructive updates to referenced application locations but means
+source deletions/renames and alias retirement need an explicit reviewed reconciliation policy.
+See [geographic import](geographic-import.md) for exact inclusion codes, CC BY 4.0 attribution,
+commands, counts and limitations. Neither the sample seed nor the broader import is a claim
+of perfect geographic completeness.
 
 ## Local verification
 
 From the root, `pnpm db:start` initializes the local stack. `pnpm db:reset` destroys and
-rebuilds only the local database. `pnpm db:lint` performs local SQL analysis and
+rebuilds only the local database; inspect/preserve existing data before any reset. Use
+`pnpm exec supabase db push --local` to apply pending migrations without resetting data.
+`pnpm db:lint` performs local SQL analysis and
 `pnpm db:test` runs the committed SQL assertions. `pnpm db:test:concurrency` uses separate
 local PostgreSQL transactions to verify final-seat and capacity races. Run `pnpm test:integration` with the
 explicit local opt-in described in [backend setup](../backend/README.md) to exercise the

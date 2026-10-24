@@ -5,7 +5,7 @@ Feature types live in `frontend/src/features/<domain>/types.ts`; APIs and fixtur
 that feature's `api/`. Users and games are read-only in the frontend scope; mock events
 support CRUD plus attendance. The backend model intentionally differs where stated below.
 
-## Backend Milestone 1: implemented API
+## Backend Milestones 1 and 2A: implemented API
 
 Only the following HTTP endpoints are implemented. All other HTTP paths later in this
 document describe the Workshop 3 mock-shaped intended contract, not existing server routes.
@@ -18,16 +18,24 @@ document describe the Workshop 3 mock-shaped intended contract, not existing ser
 
 `CitySuggestion` contains `id: number`, `countryId: number`, `name: string`,
 `administrativeDivision: string | null`, `latitude: number | null`, and
-`longitude: number | null`. No address, private profile data or account role is returned.
+`longitude: number | null`. Milestone 2A adds `countryIsoCode: string`, `countryName: string`,
+`admin1Code: string | null`, and `admin2Code: string | null`; existing fields remain.
+No address, private profile data or account role is returned. The alias catalog is searched
+on the server rather than downloaded with every suggestion.
 Country/city IDs are database references, not frontend fixture IDs.
 
 City queries are strict: required trimmed two-letter country code, normalized to uppercase;
 optional trimmed `q` of 0–80 characters; optional integer `limit` between 1 and the
 configured maximum (hard cap 20; default result count 4). Repeated/unknown query parameters
 are rejected. Empty `q` returns suggestions. The database normalizes case/diacritics and
-performs indexed prefix matching; literal wildcard characters are not broad-match syntax.
-Disabled/unknown countries and no matches return `[]`. Ordering is population descending
-(null last), then normalized name and ID.
+uses canonical and source alternate names. Exact matches rank first, then prefixes, then
+substrings for queries of at least three normalized characters. One/two-character queries
+use prefixes only. Case/accents and common Serbian Latin/Cyrillic forms are normalized;
+literal wildcard characters are not broad-match syntax. Country search is restricted to
+enabled ME, RS, BA and HR rows. Disabled/unsupported/unknown countries and no matches return
+`[]`; malformed country codes still return 400. Within each match rank, ordering is population
+descending (null last), normalized name and ID. Empty input uses that prominence ordering
+without a match rank. Results contain each city ID at most once.
 
 Success returns arrays directly, without an envelope. Errors use
 `{ code, message, fields: Record<string, string[]> }`: `VALIDATION_ERROR` (400),
@@ -43,7 +51,8 @@ constraints, delete behavior and the ER diagram are in [database schema](databas
 | Entity | Database foundation | Difference from Workshop 3 |
 | --- | --- | --- |
 | Country | Numeric PK; unique ISO alpha-2 code, name, enabled, created timestamp | Relational country catalog; ME/RS/BA/HR seeded, no frontend enum |
-| City | Numeric PK; country FK, name, normalized name, optional administrative division/coordinates/population/source ID, created timestamp | Event/profile city is a selected ID; thousands of places supported |
+| City | Numeric PK; country FK, canonical/ASCII/normalized names, optional administrative names/codes, coordinates/population, feature code/source ID/source modification date, created timestamp | Event/profile city is a selected ID; source upserts preserve internal IDs |
+| City alias | Composite city/normalized-name PK; matching city/country FK, source name, normalized key and source label | Alternate names support server search without merging same-name places |
 | Profile | UUID PK/FK to `auth.users`; display name, optional country/city, biography, timestamps | Real Auth identity replaces numeric demo IDs later; no credentials/roles/age in public DTOs |
 | Private profile | Optional self-declared birth year and declaration timestamp in a protected table | Private, approximate age guidance; no birth date or verification |
 | Account role | Protected profile relationship with `user`, `admin`, or `superadmin` | No arbitrary client role assignment or management endpoint |
@@ -53,7 +62,7 @@ constraints, delete behavior and the ER diagram are in [database schema](databas
 | Event location | Required in-person address separated from public event fields, explicit public-sharing flag default false | Exact residential address is excluded from public reads by default |
 | Event participant | Composite event/profile PK, attendance timestamp; host excluded | Many-to-many attendance with serialized capacity protection rather than an embedded ID array |
 
-Only geography has Data API read grants in Milestone 1. Other application tables have RLS
+Only geography has Data API read grants in Milestones 1/2A. Other application tables have RLS
 enabled and no client access until their future endpoints/policies are implemented and
 tested. Auth/profile/event APIs are not available just because their tables exist.
 
@@ -76,6 +85,22 @@ authorization. Codes will require cryptographic generation, rate-limited validat
 rotation/revocation and separate server-managed encrypted retrieval plus verification hashes.
 Ordinary participants never receive a code. No invitation workflow or role-management
 endpoint is implemented now; see [authorization design](backend-architecture.md).
+
+## Geographic data ownership and import contract
+
+GeoNames country extracts provide eligible populated places for ME/RS/BA/HR. The importer
+stores `external_source = 'geonames'` and the stable GeoNames ID separately from RollCall's
+city ID. Source-backed rows retain their internal IDs on reruns. Only explicitly recognized,
+unambiguous development seeds may be adopted into source identity; ambiguous matches remain
+separate and are reported rather than merged automatically. Existing profile/event city
+references and city creation timestamps are preserved.
+
+Imports are local maintenance transactions, not public write endpoints. They validate all
+four inputs before writing, use parameterized batches, retain source checksums and report
+per-country counts. No city is removed because a new extract omits it. Aliases are additive;
+manual aliases are not overwritten. Source name variants are not verified current names or
+verified language labels. See [geographic import](geographic-import.md) for filters, exact
+rerun commands, attribution, limitations and execution evidence.
 
 ## Workshop 3 frontend mock contract
 

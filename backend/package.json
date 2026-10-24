@@ -10,10 +10,12 @@
     "dev": "node --env-file-if-exists=.env --import tsx --watch src/server.ts",
     "start": "node --env-file-if-exists=.env dist/server.js",
     "typecheck": "tsc --noEmit && tsc -p tsconfig.tests.json",
-    "lint": "oxlint --deny-warnings src tests",
+    "lint": "oxlint --deny-warnings src tests scripts",
     "build": "tsc",
     "test": "tsx --test tests/*.test.ts",
-    "test:integration": "node --env-file-if-exists=.env --import tsx --test tests/integration/*.test.ts"
+    "test:integration": "node --env-file-if-exists=.env --import tsx --test tests/integration/*.test.ts",
+    "geography:import": "node --env-file-if-exists=.env --import tsx scripts/geography/import.ts",
+    "geography:benchmark": "node --env-file-if-exists=.env --import tsx scripts/check-geography-performance.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.118.0",
@@ -22,7 +24,10 @@
   },
   "devDependencies": {
     "@types/node": "^24.19.2",
+    "@types/pg": "8.23.1",
+    "fflate": "0.8.3",
     "oxlint": "^1.81.0",
+    "pg": "8.23.1",
     "tsx": "4.23.15",
     "typescript": "~6.0.2"
   }
