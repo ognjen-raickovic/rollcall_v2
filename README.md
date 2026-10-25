@@ -11,17 +11,23 @@ with inline validation and host authorization.
 The final polish adds optional custom event covers, curated multi-select tags, and a
 matching light theme alongside the default dark theme.
 
-**Current frontend milestone: 4C-1.** The homepage, `/events` and UUID event details now
-read persistent events from Fastify/PostgreSQL, with real filters, cursor pagination and
-viewer-authorized addresses. Frontend event mutations await 4C-2 and show clear unavailable
-states. Numeric workflows are isolated at development-only `/demo/events/*`; public pages
-never fall back to fixtures. See [frontend integration verification](docs/event-frontend-verification.md).
+**Current frontend milestone: 4C-2.** Homepage/discovery/details and event creation,
+editing, deletion, joining and leaving use Fastify/PostgreSQL and real Supabase UUID
+accounts. Host-only forms use the real games/geography catalogs; participants gain and
+lose address access through verified membership. Numeric workflows remain isolated at
+development-only `/demo/events/*`; public pages never fall back to fixtures. Real event
+forms use default illustrations until Storage is implemented. See
+[event action verification](docs/event-actions-verification.md) and the historical
+[read integration verification](docs/event-frontend-verification.md).
+
+Earlier milestone sections below describe their delivery boundaries; the current real
+event behavior is the 4C-2 integration above.
 
 **Backend Milestone 1** adds an independent Fastify API, Supabase database schema and
 local development tools. Its original boundary was health and geography; the current
 Milestones 3A/3B implement real authentication and profiles, and 4A adds persistent event
-backend APIs. Milestone 4B adds real backend attendance. The 4C-1 frontend reads real events;
-frontend mutations and uploads remain later work.
+backend APIs. Milestone 4B adds real backend attendance. Milestones 4C-1/4C-2 connect real
+frontend reads and mutations; uploads remain later work.
 Start with [backend setup](backend/README.md),
 [architecture](docs/backend-architecture.md), [schema](docs/database-schema.md), and
 [roadmap](docs/backend-roadmap.md).
@@ -87,6 +93,7 @@ pnpm test:mock                   # mock API integration checks, no backend neede
 pnpm test:backend                # backend tests without a running database
 pnpm test:profiles               # focused frontend profile/account-isolation checks
 pnpm test:events                 # real event clients, pagination and viewer privacy
+pnpm test:event-actions          # mutation contracts, cache/privacy, form/date mapping
 pnpm format                     # Prettier on frontend/src
 pnpm --filter frontend preview  # preview the production build
 ```
@@ -149,11 +156,14 @@ covers entity references, validation, authorization, private access, capacity, c
 joins, response isolation, and demo sessions. Preview the production build, then review
 home, discovery, details, login, and create/edit at 375px and 1440px. Keep creation/editing
 demo journeys within one page runtime: reloading restores numeric fixtures. Real event
-reads use persistent PostgreSQL data. For real event browser checks, configure local Auth,
+reads and writes use persistent PostgreSQL data. For real event browser checks, configure local Auth,
 start the API/frontend, set `RUN_LOCAL_EVENT_READ_UI=true` and run
 `pnpm --filter frontend exec playwright test tests/events-read-ui.spec.mjs`. It creates
 isolated confirmed accounts/events through the local API and cleans them afterward, without
 resetting existing data. Traces are disabled to keep session credentials out of artifacts.
+For the real multi-user action workflow, set `RUN_LOCAL_EVENT_ACTIONS_UI=true` and run
+`pnpm --filter frontend exec playwright test tests/event-actions-ui.spec.mjs`. The main
+journey runs at 375px/1440px in light/dark; focused conflict/privacy cases run once.
 See [the final frontend review](docs/frontend-review.md) for executed checks and limitations.
 
 ## Architecture and scope
@@ -170,7 +180,7 @@ frontend/
   src/app/                   Providers, router, route composition
   src/features/users/        Real Auth, UUID profile/experience APIs/forms, separate numeric demo session
   src/features/games/        Real read-only profile game catalog plus unchanged event catalog mocks
-  src/features/events/       Real read DTOs/clients/hooks, shared views, isolated numeric demo CRUD
+  src/features/events/       Real read/write DTOs/clients/hooks, shared forms/views, isolated numeric demos
   src/features/geography/    HTTP geography API/hooks and reusable country/city controls
   src/components/ui/         Starter shadcn primitives
   src/components/layout/     Navigation and app layout
@@ -186,6 +196,7 @@ docs/events-api.md           Persistent backend event contracts and privacy mode
 docs/events-api-verification.md Executed Milestone 4A checks and remaining boundaries
 docs/attendance-verification.md Executed Milestone 4B lifecycle, privacy and concurrency checks
 docs/event-frontend-verification.md Executed 4C-1 read/cache/browser checks and 4C-2 boundary
+docs/event-actions-verification.md Executed 4C-2 write/cache/multi-user browser checks
 docs/geographic-import.md    GeoNames scope, attribution, safe reruns and search behavior
 .claude/                     Preserved rules, commands, design skill, reviewer, format hook
 ```
@@ -202,6 +213,10 @@ fields and only authorized details include addresses. Detail caches include the 
 are destroyed on account changes/logout, and reject late responses after identity changes.
 Discovery uses public cursor pages. Category filtering applies to loaded pages, with Load More
 available until exhaustion; the displayed number is loaded matches, not the total event count.
+Mutation hooks capture the acting UUID/session, abort on account changes, cancel stale detail
+reads and invalidate public lists/homepage. Successful writes use validated server responses;
+there are no optimistic attendance changes. Leave removes participant-only addresses immediately
+and private departure returns to discovery. Tokens never enter URLs, query keys or logs.
 
 Mock writes take an explicit numeric `{ userId }` actor and simulate event permissions.
 They are separate from real Supabase UUID identity. Demo data lives in memory and refresh
@@ -219,9 +234,10 @@ Routes: `/`, `/events`, `/events/:eventId`, `/events/new`, `/events/:eventId/edi
 Search/category links filter the upcoming public event list through URL parameters. Search
 matches event titles; country/city, game, and open-seat controls combine with it and can be reset.
 Event details show the host, game, schedule, tags, minimum age, visibility, and
-capacity and viewer-specific host/participant state. Public event action buttons are disabled
-honestly until 4C-2. `/events/new` and `/events/:eventId/edit` explain pending hosting rather
-than calling mock mutations. No UUID event is passed to a numeric fixture API.
+capacity and viewer-specific host/participant state. Real accounts can create at `/events/new`;
+only the verified host can edit or confirm deletion. Eligible visitors can join/leave;
+anonymous participation links to login with a return destination. Full/closed events and
+private outsiders cannot join. No UUID event is passed to a numeric fixture API.
 
 ### Isolated development demo
 

@@ -8,6 +8,7 @@ export function EventDetailsRoute() {
   const session = useApiSession()
   return (
     <EventDetails
+      key={`${eventId ?? 'invalid'}-${session.viewerId ?? 'guest'}`}
       eventId={eventId}
       viewerId={session.viewerId}
       getAccessToken={session.getAccessToken}

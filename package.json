@@ -22,6 +22,7 @@
     "test:geography": "pnpm --filter frontend test:geography",
     "test:profiles": "pnpm --filter frontend test:profiles",
     "test:events": "pnpm --filter frontend test:events",
+    "test:event-actions": "pnpm --filter frontend test:event-actions",
     "test:ui": "pnpm --filter frontend test:ui",
     "format": "pnpm --filter frontend format"
   },

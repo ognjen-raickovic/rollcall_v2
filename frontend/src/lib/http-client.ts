@@ -1,18 +1,41 @@
 import type { ZodType } from 'zod'
 
+const errorCodes: Record<number, string> = {
+  400: 'VALIDATION_ERROR',
+  401: 'UNAUTHENTICATED',
+  403: 'FORBIDDEN',
+  404: 'NOT_FOUND',
+  409: 'CONFLICT',
+  500: 'INTERNAL_ERROR',
+  503: 'DEPENDENCY_UNAVAILABLE',
+}
+const eventConflicts = new Set([
+  'This event is full.',
+  'Attendance is only available for scheduled events that have not started.',
+  'Hosts cannot join or leave their own event as a participant.',
+  'Capacity cannot be lower than current attendance.',
+])
+
 export class HttpError extends Error {
   readonly status: number
   readonly fields: Record<string, string[]>
-  constructor(status: number, message: string, fields: Record<string, string[]> = {}) {
+  readonly code: string
+  constructor(
+    status: number,
+    message: string,
+    fields: Record<string, string[]> = {},
+    code = errorCodes[status] ?? 'HTTP_ERROR',
+  ) {
     super(message)
     this.name = 'HttpError'
     this.status = status
     this.fields = fields
+    this.code = code
   }
 }
 
 type HttpOptions = {
-  method?: 'GET' | 'PATCH' | 'PUT' | 'DELETE'
+  method?: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE'
   body?: unknown
   token?: string
   signal?: AbortSignal
@@ -61,19 +84,36 @@ export async function httpRequest<T>(
   }
   if (!response.ok) {
     const fields: Record<string, string[]> = {}
-    if (response.status === 400) {
+    let code = errorCodes[response.status] ?? 'HTTP_ERROR'
+    let conflict: string | undefined
+    {
       try {
         const payload: unknown = await response.json()
-        if (
-          typeof payload === 'object' &&
-          payload !== null &&
-          'fields' in payload &&
-          typeof payload.fields === 'object' &&
-          payload.fields !== null
-        ) {
-          for (const [key, value] of Object.entries(payload.fields)) {
-            if (Array.isArray(value) && value.every((message) => typeof message === 'string'))
-              fields[key] = value
+        if (typeof payload === 'object' && payload !== null) {
+          if ('code' in payload && payload.code === errorCodes[response.status]) code = payload.code
+          if (
+            resource === 'event' &&
+            response.status === 409 &&
+            'message' in payload &&
+            typeof payload.message === 'string' &&
+            eventConflicts.has(payload.message)
+          )
+            conflict = payload.message
+          if (
+            [400, 409].includes(response.status) &&
+            'fields' in payload &&
+            typeof payload.fields === 'object' &&
+            payload.fields !== null
+          ) {
+            for (const [key, value] of Object.entries(payload.fields).slice(0, 50)) {
+              if (
+                /^(?:[A-Za-z][A-Za-z0-9_.]{0,79}|_form)$/.test(key) &&
+                Array.isArray(value) &&
+                value.length <= 10 &&
+                value.every((message) => typeof message === 'string' && message.length <= 500)
+              )
+                fields[key] = value
+            }
           }
         }
       } catch {
@@ -82,18 +122,22 @@ export async function httpRequest<T>(
     }
     throw new HttpError(
       response.status,
-      response.status === 401
-        ? 'Your session could not be verified. Log in again to continue.'
-        : response.status === 404
-          ? resource === 'event'
-            ? 'This event could not be found or is not available to this account.'
-            : 'This profile or game could not be found.'
-          : response.status === 400
-            ? 'Check the highlighted fields and try again.'
-            : response.status === 403 && resource === 'event'
-              ? 'This account does not have access to this event.'
-              : `The ${resource} service could not complete this request. Please try again.`,
+      conflict ??
+        (response.status === 401
+          ? 'Your session could not be verified. Log in again to continue.'
+          : response.status === 404
+            ? resource === 'event'
+              ? 'This event could not be found or is not available to this account.'
+              : 'This profile or game could not be found.'
+            : response.status === 400
+              ? 'Check the highlighted fields and try again.'
+              : response.status === 409
+                ? 'This event changed or is no longer available. Check the latest details and try again.'
+                : response.status === 403 && resource === 'event'
+                  ? 'This account does not have access to this event.'
+                  : `The ${resource} service could not complete this request. Please try again.`),
       fields,
+      code,
     )
   }
   try {

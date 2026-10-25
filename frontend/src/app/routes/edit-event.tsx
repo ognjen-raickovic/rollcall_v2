@@ -1,20 +1,19 @@
 import { useParams } from 'react-router'
 
-import { EventEditor } from '@/features/events/components/event-editor'
-import { useGames } from '@/features/games/api/use-games'
-import { useSession } from '@/features/users/api/use-session'
+import { PersistentEventEditor } from '@/features/events/components/persistent-event-editor'
+import { useCatalogGames } from '@/features/games/api/use-catalog'
+import { useApiSession } from '@/features/users/api/use-auth'
 import { LocationPicker } from '@/features/geography/components/location-picker'
 
 export function EditEvent() {
   const { eventId } = useParams()
-  const session = useSession()
-  const games = useGames()
+  const session = useApiSession()
+  const games = useCatalogGames()
   return (
-    <EventEditor
+    <PersistentEventEditor
       mode="edit"
       eventId={eventId}
-      currentUserId={session.data?.id ?? null}
-      hostName={session.data?.displayName}
+      session={session}
       games={games.data}
       gamesPending={games.isPending}
       gamesError={Boolean(games.error)}

@@ -126,15 +126,17 @@ applies to loaded chronological pages with Load More until exhaustion. Existing 
 themes, geography and profiles remain intact. Numeric workflows are isolated in opt-in
 development `/demo/events/*`. See [verification](event-frontend-verification.md).
 
-## Milestone 4C-2: frontend event mutations — planned
+## Milestone 4C-2: frontend event mutations — implemented
 
-Connect UUID create/edit/delete/join/leave through feature APIs/hooks using strict backend
-payloads, real verified sessions and explicit confirmation/feedback. Replace pending controls,
-invalidate viewer details/discovery and handle private leave losing access. Preserve
-idempotency/conflicts and form validation, with deliberate local-date conversion and existing
-game/city IDs. No numeric demo actor may authorize persistent writes. Default covers only
-until Storage; never claim browser data URLs were uploaded. Add focused mutation/cache/browser
-checks before replacing the isolated demo workflows.
+UUID create/edit/delete/join/leave use feature APIs/hooks, strict backend payloads, real
+verified sessions and explicit confirmation/feedback. Shared form presentation retains
+separate real/demo controllers; real games/city IDs and local-to-ISO conversion are validated.
+Public lists/homepage refresh, viewer-specific details update from acknowledged responses,
+and private leave safely loses access. Account changes abort requests and reject late cache
+effects/navigation; old detail reads cannot restore removed addresses. No optimism or numeric
+actor authorizes persistent writes. Default covers only until Storage; browser data URLs
+remain demo-only. Backend/schema/RLS are unchanged. Focused clients, real multi-user browser
+acceptance and database regressions are recorded in [action verification](event-actions-verification.md).
 
 ## Milestone 4D: event covers — planned
 

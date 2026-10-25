@@ -8,7 +8,7 @@ connects frontend country/city selection to that API. Milestone 3A adds real Sup
 and verified backend identity. Milestone 3B adds real editable UUID profiles and per-game
 experience. Milestones 4A/4B add persistent event backend APIs and transactional attendance; React event CRUD/attendance
 and their numeric demos remain separate. Milestone 4C-1 connects public homepage/discovery
-and UUID details to real reads; frontend mutations await 4C-2.
+and UUID details to real reads; 4C-2 connects real event mutations and participation.
 
 ## Shared rules
 
@@ -55,7 +55,7 @@ Keep foundation routes simple until finished pages are requested.
 - Milestone 3A implements registration/login/logout, confirmation, recovery and verified
   `GET /api/me`. Read `docs/authentication.md`. Only Auth uses a browser Supabase client
   with a publishable/anon key; never expose privileged keys. Production event reads use the
-  real API; frontend event mutations await 4C-2. Numeric mocks live under development-only
+  real API; 4C-2 frontend mutations use verified UUID sessions. Numeric mocks live under development-only
   `/demo/events` routes. Demo selection requires Vite development mode and explicit opt-in, and
   production builds cannot impersonate fixtures. Milestone 3B adds real profiles/experience;
   persistent UUID event APIs are Milestone 4A; attendance is 4B and frontend integration is 4C.
@@ -75,18 +75,21 @@ Keep foundation routes simple until finished pages are requested.
   Attendance locks the event and validates current visibility/state/time before changing
   the existing membership table. Preserve closed client tables, executor/trigger-role RLS,
   explicit ACLs and empty search paths. Private outsiders cannot join; no experience/age
-  eligibility or admin override. Frontend adapters (4C), Storage (4D) and private codes/role
-  authorization (5) remain separate work. The 4C-1 read integration is documented in
-  `docs/event-frontend-verification.md`; mutation integration is 4C-2.
+  eligibility or admin override. Storage (4D) and private codes/role authorization (5)
+  remain separate work. Read integration is documented in `docs/event-frontend-verification.md`;
+  real mutation integration and browser acceptance are in `docs/event-actions-verification.md`.
 - Real event reads use dedicated UUID DTOs and TanStack Query keys, never numeric adapters.
   Public pages never fall back to mocks. Detail keys include the verified viewer; destroy
   protected queries before auth transitions, consume abort signals and recheck session
   identity after HTTP. Addresses require the matching viewer and host/current membership.
-  Public summaries have no price/address fields; do not invent them. No real mutation hooks
-  or mock actions may be attached to UUID events in 4C-1.
+  Public summaries have no price/address fields; do not invent them. Real mutations capture
+  their initiating session, validate strict write DTOs and cancel stale detail reads before
+  applying acknowledged results. Recheck identity before cache effects/navigation; no optimism.
+  Leave hides protected addresses and removes private details on departure. Do not attach
+  mock actions to UUID events. Real forms use default illustrations, never data URL uploads.
 - Event forms require a confirmed city suggestion, clear it on country/text changes, and
   allow an empty venue. Exact addresses render only for the host/current participants;
-  this is a demo UI safeguard, not server-side privacy or authorization.
+  real API DTOs enforce this server-side; numeric demos only simulate the safeguard.
 - Frontend mock IDs remain numeric. Database profiles reference Supabase Auth UUIDs and
   database events use UUIDs; do not coerce IDs or silently migrate frontend models.
 - Run commands from the repository root: `pnpm install`, `pnpm dev`, `pnpm format`,
@@ -94,6 +97,7 @@ Keep foundation routes simple until finished pages are requested.
   `pnpm dev` still starts only the frontend, `pnpm dev:backend` starts the API.
   Run `pnpm test:mock`, `pnpm test:backend`, and available local database/integration checks.
   `pnpm test:events` covers real event clients and pagination/cache/privacy boundaries.
+  `pnpm test:event-actions` covers mutation contracts, session/cache privacy and real form/date mapping.
   On PowerShell with blocked `.ps1` shims,
   use `pnpm.cmd` with the same arguments.
 - Before handoff, typecheck, lint (including boundaries), and build must pass. For UI changes,

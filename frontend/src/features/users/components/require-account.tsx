@@ -20,7 +20,7 @@ export function RequireAccount({ children }: RequireAccountProps) {
       <section className="space-y-4 py-12">
         <h1 className="text-2xl font-bold">We couldn’t restore your account</h1>
         <p role="alert" className="text-muted-foreground">
-          Try again or log in to continue to your profile.
+          Try again or log in to continue.
         </p>
         <Button onClick={() => void auth.refetch()}>Retry account</Button>
         <Button asChild variant="outline">

@@ -34,7 +34,7 @@ export function HowItWorks() {
           {
             Icon: CalendarCheck,
             title: 'Get to know the table',
-            description: 'Explore the host, schedule and player guidance. Joining will be available soon.',
+            description: 'Explore the host, schedule and player guidance. Sign in to take an open seat.',
           },
           {
             Icon: Users,

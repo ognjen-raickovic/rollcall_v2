@@ -5,9 +5,13 @@ paths:
 
 # Data
 
-- RollCall 4C-1 production event reads use `persistent-events-api.ts` and dedicated UUID
-  DTOs/query hooks. The CRUD/join/leave mock guidance below applies only to numeric demo
-  APIs under development-only `/demo/events` routes. Real event mutations await 4C-2.
+- Production event reads use `persistent-events-api.ts`; real mutations use
+  `persistent-event-actions-api.ts` and `use-persistent-event-actions.ts` with strict UUID
+  write DTOs. Capture actor/session per mutation, abort on identity changes, cancel stale
+  detail reads and recheck ownership before cache effects. Use acknowledged state, no optimism.
+  The CRUD/join/leave mock guidance below applies only to numeric demo APIs under
+  development-only `/demo/events` routes. Never submit actors/country/counts/image data URLs
+  through real event writes. Real profiles and experience have their own authenticated APIs.
 - Real event detail keys use the shared `EVENT_DETAILS_QUERY_KEY` plus event/viewer UUIDs;
   auth transitions destroy sensitive queries and reads consume abort signals/recheck identity.
   Discovery has separate public cursor-page keys. Never mix public backend records with

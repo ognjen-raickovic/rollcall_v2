@@ -18,8 +18,42 @@ private optional age information and per-game experience, keeping event/demo moc
 Milestone 4A implements persistent backend event APIs; the frontend continues using mocks.
 Milestone 4B adds real transactional attendance and participant-aware backend details.
 Milestone 4C-1 connects the React homepage, discovery and details to real event reads.
+Milestone 4C-2 connects real event creation/editing/deletion and participation below.
 
-## Current Milestone 4C-1: real frontend event reads
+## Current Milestone 4C-2: real frontend event actions
+
+`/events/new` requires a verified real account; `/events/:eventId/edit` additionally requires
+the returned viewer to be the UUID event host. Both reuse the shared form presentation,
+real games catalog and country/city picker. Strict write DTOs send title, description,
+gameId, selected cityId, optional venue, private address, ISO schedule, capacity, minimumAge,
+experienceLevel, EUR price, curated tags and visibility. Ownership, country and attendance
+are server-derived. Default category illustrations replace upload controls on real forms;
+custom browser covers remain demo-only until Milestone 4D.
+
+Local picker times convert to ISO instants; invalid calendar/DST-gap values are rejected.
+Unchanged edit timestamps preserve the original instant and precision. Inline errors cover
+required fields and backend 400/409 fields; failed saves retain drafts. Refetches never
+overwrite an entered draft. Successful creates/updates navigate to validated UUID details.
+Private/unlisted creations remain accessible by the host's direct link and absent from discovery.
+
+Hosts can delete through a keyboard-accessible confirmation explaining participation removal.
+Failure keeps the dialog open; acknowledged 204 removes cached details, refreshes discovery
+and navigates there with confirmation. Real eligible accounts join/leave using authenticated
+attendance mutations; anonymous visitors are sent to login. Counts/membership come from
+server responses, with no optimism, age/experience gates or private-code admission.
+
+Viewer-specific mutation controllers capture the initiating account and abort on identity
+changes. Cache effects/navigation recheck identity, cancel stale reads and refresh public
+discovery/homepage. Leave hides the address during the request and after acknowledgement;
+ambiguous failures hide it until retry or page reload. Private departures navigate safely
+to discovery. Account changes/logout discard protected query and inactive mutation data.
+Numeric demo controllers/caches remain separate under explicit development opt-in.
+
+The existing backend, grants/RLS and schema remain unchanged. No Storage, codes, admin
+features, migrations, remote operations or deployment are part of this milestone. See
+[action verification](docs/event-actions-verification.md) for executed checks and limitations.
+
+## Milestone 4C-1: real frontend event reads (historical delivery)
 
 Homepage featured events and `/events` read persistent public events, with title, actual
 country/city/game IDs, category and open-seat filters. Discovery uses bounded backend cursor
@@ -38,7 +72,7 @@ queries before new account state; abort/post-response checks prevent stale prote
 
 The existing layout, default illustrations and light/dark tokens are preserved. Summary
 cards omit price because the discovery contract does not contain it. Detail actions and
-hosting/editing routes explain that frontend mutations await 4C-2; they never call mock
+hosting/editing routes originally explained that mutations awaited 4C-2; they never called mock
 mutations for UUID records. Numeric fixtures/forms/attendance remain explicitly isolated at
 development-only `/demo/events/*` with opt-in and clear nonpersistent labels. Public routes
 never merge them with real records. No Storage, codes, admin controls or backend changes

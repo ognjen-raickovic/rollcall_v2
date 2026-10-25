@@ -26,6 +26,7 @@ You may talk to me in any language.
 - `pnpm test:backend`: backend automated tests without a running database
 - `pnpm test:profiles`: frontend profile client account-isolation/public-projection checks
 - `pnpm test:events`: real event read client, pagination and viewer-privacy checks
+- `pnpm test:event-actions`: real event mutation/cache/session and form/date mapping checks
 - `pnpm test:integration`: opt-in local Supabase geography integration checks
 - `pnpm db:start` / `pnpm db:stop`: local Supabase stack
 - `pnpm db:reset`: reset the local database and apply migrations/development seeds
@@ -51,7 +52,7 @@ You may talk to me in any language.
   Milestone 3B adds real profiles and per-game experience with a read-only database game catalog.
   Milestones 4A/4B add persistent event backend APIs and transactional attendance. React event CRUD/attendance and numeric
   demo catalogs remain separate. 4C-1 connects homepage/discovery/UUID details to real reads;
-  frontend mutations await 4C-2. Numeric demo screens are development-only `/demo/events` paths.
+  4C-2 connects real frontend CRUD/participation. Numeric demos are development-only `/demo/events` paths.
 - Optional event covers are prepared in the browser and passed through mock APIs as bounded
   data URLs. Do not persist images in browser storage or connect cloud uploads during geography work.
   Supabase Storage is the planned backend provider; transport, ownership and lifecycle will
@@ -61,7 +62,7 @@ You may talk to me in any language.
   and the SDK-managed real Auth session.
 - Domains are `users`, `games`, `events`, and `geography`. Users owns real UUID profiles and
   per-game experience. Games provides a real read-only profile catalog alongside existing
-  event mocks; event writes receive an explicit numeric mock actor through route composition.
+  event mocks; only demo writes receive an explicit numeric actor through route composition.
   Users also own real Supabase Auth UUID identity and a separate explicitly enabled
   development-only demo session. A real account must never become a numeric fixture actor.
 - Keep foundation routes simple until finished pages are requested. Preserve `.claude/`.
@@ -103,14 +104,19 @@ You may talk to me in any language.
   Attendance uses verified subjects, event row locks and the existing membership/counter
   infrastructure; private outsiders cannot join. Raw tables stay closed to API roles; use
   checked RPCs, non-bypass executor/trigger roles, explicit ACLs/RLS and empty search paths.
-  No self-declared eligibility checks, uploads, codes or admin override. Keep React events
-  isolated from real UUID records. See @docs/attendance-verification.md for backend checks
-  and @docs/event-frontend-verification.md for 4C-1 reads/browser verification.
+  No self-declared eligibility checks, uploads, codes or admin override. Keep numeric demo
+  controllers isolated from real UUID records. See @docs/attendance-verification.md for
+  backend checks, @docs/event-frontend-verification.md for 4C-1 and
+  @docs/event-actions-verification.md for 4C-2 mutation/browser verification.
 - Real event clients validate dedicated backend DTOs; summary cards contain no invented
   price or protected address. Viewer keys include event/account UUIDs; remove sensitive
   queries before auth transitions, abort old reads and recheck identity after HTTP. Keep
   tokens out of keys/URLs/logs, constrain request origins and reject redirects. No mock
-  fallback or mutation controls on real UUID events. Public filters use bounded cursor pages;
+  fallback. Real mutation hooks capture the initiating UUID/session, abort on account changes,
+  cancel stale reads and recheck identity before cache effects/navigation. Use acknowledged
+  server state, no optimistic attendance. Leave hides addresses and removes private details;
+  inactive mutation data is discarded. Real forms use default covers, no data URLs or Storage.
+  Public filters use bounded cursor pages;
   category filters apply to loaded pages with Load More until exhausted.
 - Follow @docs/location-ui.md for shared location references, route-composed geography controls,
   required suggestion selection, legacy compatibility and the optional venue/address boundary.

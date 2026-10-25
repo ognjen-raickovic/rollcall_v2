@@ -1,8 +1,8 @@
 # Persistent event backend: Milestones 4A and 4B
 
-This milestone adds database-backed event HTTP operations. React event CRUD/attendance
-continues using its existing numeric mocks; frontend integration is Milestone 4C.
-Milestone 4B adds persistent join/leave and participant-aware details. Uploads, private
+Milestone 4A adds database-backed event HTTP operations; Milestone 4B adds persistent
+join/leave and participant-aware details. React reads/actions consume these endpoints in
+4C-1/4C-2, with numeric mocks isolated under development-only demo routes. Uploads, private
 codes and administration remain deferred.
 
 ## HTTP contract
@@ -213,8 +213,8 @@ migrations with `pnpm exec supabase db push --local`, preserving existing data; 
 or rerun the geography import. Start Fastify with `pnpm dev:backend`. The database seed has
 no real events/accounts; register and confirm a real local account before creating events.
 
-React production reads now call the real API in 4C-1. Numeric demo actors/events remain
-isolated under opt-in development `/demo/events/*`; real frontend mutations await 4C-2.
+React production reads and writes call the real API in 4C-1/4C-2. Numeric demo actors/events
+remain isolated under opt-in development `/demo/events/*`.
 Real join/leave and participant address access are implemented in 4B; custom covers/Storage are
 4D; private codes and role-authorized access are 5. Account roles and claimed experience
 do not grant extra event access in 4A. No deployment or hosted migration has been performed.
@@ -240,8 +240,26 @@ cursor, and filter changes start at the first page. Category is not a backend qu
 it filters loaded pages without changing chronological order, and Load More remains available
 while the backend has further pages. Empty/error/retry states never substitute mocks.
 
-The frontend currently has no real event mutation methods. Read-only participation and host
-controls explain pending actions. Production create/edit paths show a pending-hosting page;
-numeric forms/attendance remain solely in development demo routes. Backend endpoints and
-database permissions are unchanged. See [frontend verification](event-frontend-verification.md)
-for executed checks and 4C-2 requirements.
+## Frontend mutations: Milestone 4C-2
+
+Real `/events/new`, `/events/:eventId/edit` and detail action controls use the existing five
+write endpoints through validated feature APIs and TanStack Query hooks. Create/update send
+only allowed fields (selected cityId, no derived country or owner); blank venue becomes null.
+Local picker times become ISO instants; unchanged edit times retain exact original precision.
+Backend 400/409 `{ code, message, fields }` errors map to inline feedback and preserve drafts.
+Generic network/dependency errors remain safe; writes never fall back to mocks or auto-retry.
+
+The host-only editor uses viewer-specific details and the deletion dialog requires explicit
+confirmation. Joining reads back actual authorized details; leaving immediately hides protected
+addresses and uses the acknowledged safe counter result. Losing private membership navigates
+to discovery. Closed/full/private access rules remain server-authoritative, and age/experience
+remain guidance. Public lists/homepage and affected UUID details refresh after mutations.
+
+Mutation envelopes retain the initiating UUID/session; auth changes abort requests and discard
+late cache effects, feedback and navigation. Old detail reads are canceled before effects;
+inactive mutation data is discarded. There are no optimistic updates. Data URLs and arbitrary
+storage references are rejected: real forms show default illustrations until 4D. Numeric demo
+forms retain their existing custom-cover behavior under isolated development routes.
+Backend endpoints, migrations and database permissions are unchanged. See
+[action verification](event-actions-verification.md) and historical
+[read verification](event-frontend-verification.md).

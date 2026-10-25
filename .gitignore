@@ -31,6 +31,24 @@ presentation
 !.env.example
 !.env.*.example
 
+# Private keys and personal assistant configuration
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+/.codex/auth.json
+/.codex/config.toml
+/.claude/settings.local.json
+/.mcp.local.json
+
+# Local database exports (keep migrations, seeds and SQL tests version-controlled)
+/backups/
+*.dump
+*.sql.gz
+/.tmp/
+
 # Supabase local runtime state
 supabase/.temp/
 supabase/.branches/
@@ -43,3 +61,4 @@ backend/.geography/
 # Browser verification artifacts
 frontend/test-results/
 frontend/playwright-report/
+frontend/.tmp/
