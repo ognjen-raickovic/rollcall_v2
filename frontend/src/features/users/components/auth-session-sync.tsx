@@ -12,6 +12,13 @@ export function AuthSessionSync() {
   useEffect(() => {
     if (authConfigurationError()) return
     const { data } = authClient().auth.onAuthStateChange((event, session) => {
+      const previous = client.getQueryData<{ id: string } | null>(authKey)
+      if (previous?.id !== session?.user.id || event === 'SIGNED_OUT') {
+        // Destroying queries aborts their consumed signals before a new account can render them.
+        client.removeQueries({ queryKey: ['own-profile'] })
+        client.removeQueries({ queryKey: ['profile-experience'] })
+        client.removeQueries({ queryKey: ['public-profile'] })
+      }
       client.setQueryData(authKey, sessionAccount(session))
       if (session) client.setQueryData(['session'], null)
       if (event === 'PASSWORD_RECOVERY') {

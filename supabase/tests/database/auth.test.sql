@@ -53,14 +53,14 @@ select is((select display_name from public.profiles
 
 select ok((select relrowsecurity from pg_class where oid = 'public.profiles'::regclass),
   'profile RLS remains enabled');
-select ok(not has_table_privilege('anon', 'public.profiles', 'select'),
-  'profiles are not exposed anonymously');
-select ok(not has_table_privilege('authenticated', 'public.profiles', 'select'),
-  'registration does not prematurely expose profile reads');
+select ok(has_table_privilege('anon', 'public.profiles', 'select'),
+  'Milestone 3B exposes only the safe public profile table');
+select ok(has_table_privilege('authenticated', 'public.profiles', 'select'),
+  'authenticated callers can read safe profiles');
 select ok(not has_table_privilege('authenticated', 'public.profiles', 'insert'),
   'clients cannot choose a profile identity');
 select ok(not has_table_privilege('authenticated', 'public.profiles', 'update'),
-  'profile editing remains deferred');
+  'profile editing has column grants rather than unrestricted table UPDATE');
 select ok(not has_table_privilege('authenticated', 'private.account_roles', 'update'),
   'role-management restrictions remain intact');
 

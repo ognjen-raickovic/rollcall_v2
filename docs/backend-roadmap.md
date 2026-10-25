@@ -76,13 +76,16 @@ explicit development-only demo mode, which is unavailable in production builds. 
 attendance and public catalogs remain mocked; a real account cannot impersonate fixtures.
 See [authentication](authentication.md) for exact local setup and limitations.
 
-## Milestone 3B: profiles and onboarding
+## Milestone 3B: profiles and per-game experience
 
-Add profile editing/onboarding with self-only permissions, validated country/city and safe
-public DTOs. Keep self-declared age private and add independently self-declared game experience.
-Design account deletion/retention and completion requirements. Add focused grants/RLS and
-allow/deny tests with each operation; no broad table access as a shortcut. Role administration
-and superadmin bootstrap remain separately controlled later work.
+Implemented: owner-only profile editing, validated optional country/city, safe public UUID
+profiles, private optional self-declared birth year, and independent per-game experience.
+The existing database game catalog is exposed read-only. Focused grants/RLS and transactional
+profile/private-age writes preserve authorization through the Data API as well as Fastify.
+Registration keeps its existing minimal initializer. See [profiles](profiles.md).
+
+Account deletion/retention, broader completion requirements and profile pictures remain future
+work. Role administration and superadmin bootstrap remain separately controlled later work.
 
 ## Milestone 4: real event and attendance APIs
 

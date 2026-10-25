@@ -24,6 +24,7 @@ You may talk to me in any language.
 - `pnpm build`: production builds for both packages
 - `pnpm test:mock`: existing frontend mock API checks
 - `pnpm test:backend`: backend automated tests without a running database
+- `pnpm test:profiles`: frontend profile client account-isolation/public-projection checks
 - `pnpm test:integration`: opt-in local Supabase geography integration checks
 - `pnpm db:start` / `pnpm db:stop`: local Supabase stack
 - `pnpm db:reset`: reset the local database and apply migrations/development seeds
@@ -46,15 +47,18 @@ You may talk to me in any language.
   local Supabase infrastructure and three read-only geography/health endpoints. Milestone 2A
   adds GeoNames imports and backend search; Milestone 2B integrates country/city selection.
   Milestone 3A adds real Supabase Auth and verified `GET /api/me`. Event CRUD/attendance and
-  public user/game catalogs remain mocked; profile editing and event APIs are later work.
+  Milestone 3B adds real profiles and per-game experience with a read-only database game catalog.
+  Numeric event/demo catalogs remain separate; persistent event APIs are later work.
 - Optional event covers are prepared in the browser and passed through mock APIs as bounded
   data URLs. Do not persist images in browser storage or connect cloud uploads during geography work.
   Supabase Storage is the planned backend provider; transport, ownership and lifecycle will
   be implemented later. Curated tags/experience rules live in events.
-- Light/dark themes share semantic tokens. Dark is the default; only the theme preference
-  persists in localStorage (`rollcall.theme`), independent of the tab-scoped demo session.
-- Domains are `users`, `games`, `events`, and `geography`. User profiles/games remain read-only
-  mock catalogs; event writes receive an explicit numeric mock actor through route composition.
+- Light/dark themes share semantic tokens. Dark is the default; the theme preference
+  persists in localStorage (`rollcall.theme`), independent of the tab-scoped demo session
+  and the SDK-managed real Auth session.
+- Domains are `users`, `games`, `events`, and `geography`. Users owns real UUID profiles and
+  per-game experience. Games provides a real read-only profile catalog alongside existing
+  event mocks; event writes receive an explicit numeric mock actor through route composition.
   Users also own real Supabase Auth UUID identity and a separate explicitly enabled
   development-only demo session. A real account must never become a numeric fixture actor.
 - Keep foundation routes simple until finished pages are requested. Preserve `.claude/`.
@@ -85,8 +89,11 @@ You may talk to me in any language.
   persistent refreshed sessions and verified `GET /api/me`. Read @docs/authentication.md.
   Browser Auth may use only a publishable/anon key; privileged credentials stay server-side.
   Demo selection requires Vite development mode plus explicit opt-in and is unavailable in
-  production builds. Preserve numeric event/catalog mocks and themes. Defer profile editing/
-  game experience to 3B and persisted UUID events to Milestone 4; no room codes or administration.
+  production builds. Preserve numeric event/catalog mocks and themes. Milestone 3B implements
+  real profiles/experience; persisted UUID events remain Milestone 4. No room codes or administration.
+- Follow @docs/profiles.md for owner-only profile writes, private birth-year handling, public-safe
+  profile DTOs and the real game catalog. Identity comes from verified tokens, never submitted
+  actors. RLS/grants must also block cross-user/role/private-data access through the Data API.
 - Follow @docs/location-ui.md for shared location references, route-composed geography controls,
   required suggestion selection, legacy compatibility and the optional venue/address boundary.
 - Report executed backend/database checks and unavailable checks separately. Prepared SQL

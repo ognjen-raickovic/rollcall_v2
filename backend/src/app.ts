@@ -8,10 +8,18 @@ import type { GeographyRepository } from './modules/geography/types.js'
 import { registerAuthRoutes } from './modules/auth/auth-routes.js'
 import { createTokenVerifier } from './modules/auth/token-verifier.js'
 import type { TokenVerifier } from './modules/auth/types.js'
+import { registerProfileRoutes } from './modules/profiles/profile-routes.js'
+import { createProfileRepository } from './modules/profiles/profile-repository.js'
+import type { ProfileRepository } from './modules/profiles/types.js'
 
 export function buildApp(
   env: Environment,
-  options: { geography?: GeographyRepository; verifyToken?: TokenVerifier; logger?: boolean } = {},
+  options: {
+    geography?: GeographyRepository
+    verifyToken?: TokenVerifier
+    profiles?: (accessToken?: string) => ProfileRepository
+    logger?: boolean
+  } = {},
 ) {
   const app = Fastify({
     logger:
@@ -34,7 +42,13 @@ export function buildApp(
     trustProxy: false,
   })
   installErrorHandler(app)
-  registerAuthRoutes(app, options.verifyToken ?? createTokenVerifier(env))
+  const verify = options.verifyToken ?? createTokenVerifier(env)
+  registerAuthRoutes(app, verify)
+  registerProfileRoutes(app, {
+    verify,
+    repository:
+      options.profiles ?? ((token) => createProfileRepository(createDatabaseClient(env, fetch, token))),
+  })
   app.get('/health', async () => ({ status: 'ok', service: 'rollcall-api' }))
   const repository = options.geography ?? createGeographyRepository(createDatabaseClient(env))
   registerGeographyRoutes(app, repository, {

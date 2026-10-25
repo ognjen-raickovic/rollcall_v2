@@ -2,22 +2,30 @@
 
 Shared contract for Workshop 3 mocks, Milestone 2B location integration and the backend foundation.
 Feature types live in `frontend/src/features/<domain>/types.ts`; APIs and fixtures live in
-that feature's `api/`. Users and games are read-only in the frontend scope; mock events
-support CRUD plus attendance in explicit development demo mode. Geography and account identity
-use real HTTP; users also integrates with Supabase Auth. The backend model intentionally
+that feature's `api/`. Real profiles and per-game experience use owner-scoped APIs; the
+database game catalog is read-only. Separate numeric demo catalogs and mock events remain
+available in explicit development demo mode. Geography/profiles/catalog use real HTTP;
+users also integrates with Supabase Auth. The backend model intentionally
 differs where stated below.
 
-## Backend Milestones 1 through 3A: implemented API
+## Backend Milestones 1 through 3B: implemented API
 
 Only the following HTTP endpoints are implemented. All other HTTP paths later in this
 document describe the Workshop 3 mock-shaped intended contract, not existing server routes.
 
-| Method/path                                | Result                                                                  | Access                                   |
-| ------------------------------------------ | ----------------------------------------------------------------------- | ---------------------------------------- |
-| `GET /health`                              | Process liveness response, independent of the database                  | Public                                   |
-| `GET /api/countries`                       | `{ id: number, isoCode: string, name: string }[]` for enabled countries | Public, geography-only RLS/grants        |
-| `GET /api/cities?country=ME&q=pod&limit=4` | `CitySuggestion[]`                                                      | Public, geography-only RLS/grants        |
-| `GET /api/me`                              | `{ id: string (UUID), email: string \| null }`                          | Verified Supabase bearer token; no-store |
+| Method/path                                | Result                                                                  | Access                                       |
+| ------------------------------------------ | ----------------------------------------------------------------------- | -------------------------------------------- |
+| `GET /health`                              | Process liveness response, independent of the database                  | Public                                       |
+| `GET /api/countries`                       | `{ id: number, isoCode: string, name: string }[]` for enabled countries | Public, geography-only RLS/grants            |
+| `GET /api/cities?country=ME&q=pod&limit=4` | `CitySuggestion[]`                                                      | Public, geography-only RLS/grants            |
+| `GET /api/me`                              | `{ id: string (UUID), email: string \| null }`                          | Verified Supabase bearer token; no-store     |
+| `GET /api/me/profile`                      | `OwnProfile`                                                            | Verified owner; no-store                     |
+| `PATCH /api/me/profile`                    | Updated `OwnProfile`                                                    | Verified owner; atomic public/private update |
+| `GET /api/me/game-experience`              | `GameExperience[]`                                                      | Verified owner; no-store                     |
+| `PUT /api/me/game-experience/:gameId`      | Saved `GameExperience`                                                  | Verified owner; idempotent upsert            |
+| `DELETE /api/me/game-experience/:gameId`   | 204, no body                                                            | Verified owner; idempotent removal           |
+| `GET /api/users/:userId`                   | `PublicProfile`                                                         | Public; UUID path                            |
+| `GET /api/games`                           | `Game[]` from the database catalog                                      | Public; read-only                            |
 
 `/api/me` returns no password, token, role, profile metadata, address or private age. Its
 identity comes from cryptographically verified claims and explicit issuer/audience/expiry/
@@ -76,10 +84,10 @@ constraints, delete behavior and the ER diagram are in [database schema](databas
 | Event location       | Required in-person address separated from public event fields, explicit public-sharing flag default false                                                                                 | Exact residential address is excluded from public reads by default                                                               |
 | Event participant    | Composite event/profile PK, attendance timestamp; host excluded                                                                                                                           | Many-to-many attendance with serialized capacity protection rather than an embedded ID array                                     |
 
-Only geography has Data API read grants through Milestone 3A. Other application tables have RLS
-enabled and no client access until their future endpoints/policies are implemented and
-tested. `/api/me` reads verified Auth identity, not an application table. Profile/event APIs
-are not available just because their tables exist. The additive 3A migration creates a
+Only geography had Data API read grants through Milestone 3A. Milestone 3B adds public-safe
+profile/game/experience reads, mutable-column owner updates and owner-only private age access
+through invoker functions. Event and role data remain denied; RLS stays enabled.
+`/api/me` reads verified Auth identity, not an application table. The additive 3A migration creates a
 minimal profile on Auth registration and backfills missing rows with `RollCall player`.
 It copies no email/editable metadata/role and preserves existing profiles and table grants.
 
@@ -102,6 +110,45 @@ authorization. Codes will require cryptographic generation, rate-limited validat
 rotation/revocation and separate server-managed encrypted retrieval plus verification hashes.
 Ordinary participants never receive a code. No invitation workflow or role-management
 endpoint is implemented now; see [authorization design](backend-architecture.md).
+
+## Real profiles and per-game experience: Milestone 3B
+
+`PublicProfile` has UUID `id`, trimmed `displayName` (2–80 characters, no controls), nullable
+`biography` (up to 500 characters), nullable `country`/`city`, read-only `createdAt`/`updatedAt`
+timestamps and `gameExperience`. Country is `{ id, isoCode, name }`; city is
+`{ id, countryId, name, administrativeDivision, admin1Code, admin2Code }`, with nullable
+administrative fields. These IDs are actual database integers. It has no email, birth year,
+declaration timestamp, account role or editable Auth metadata.
+
+`OwnProfile` extends this public contract with nullable private `birthYear` (integer 1900
+through the current year) and `ageDeclaredAt`. This approximate age information is optional,
+self-declared and unverified. A full birth date is never collected. Clearing birth year
+clears its declaration; setting one records a server timestamp. Roles are separate protected
+data and cannot be edited through these APIs.
+
+PATCH is a strict, nonempty object containing any of `displayName`, `biography`, `countryId`,
+`cityId`, `birthYear`. Biography, country, city and birth year may be null; blank biography
+normalizes to null. Unknown fields, including account UUID, email, roles and timestamps,
+are rejected. The merged country/city must be consistent: city requires its selected enabled
+country. A country alone is valid. Profile and private-age changes commit or fail together.
+The caller never supplies an ownership actor; verification and `auth.uid()` establish it.
+
+`GameExperience` is `{ gameId, gameName, experience }`, where experience is exactly
+`beginner`, `intermediate` or `veteran`. GET returns an array; PUT accepts only `{ experience }`
+and upserts the caller/game pair; DELETE returns 204 even if that valid catalog association
+was already absent. Unknown games return 404, malformed IDs/values return 400. The existing
+database composite PK prevents duplicates. Public profiles include the selected games and
+levels, labeled self-declared. Experience does not authorize or prohibit event attendance.
+
+`GET /api/games` returns actual database catalog `Game[]` with the existing camelCase fields
+`id`, `name`, `category`, `description`, `minPlayers`, `maxPlayers`. Profile UI uses that API;
+numeric mock event catalogs keep their independent existing APIs. Matching numeric values
+must not be interpreted as an account/event identity migration.
+
+Own endpoints require verified bearer authentication and use no-store responses. Public
+profile IDs must be UUIDs; missing profiles return 404 with a useful UI recovery path.
+Registration retains the 3A initializer, so a new confirmed user sees a minimal incomplete
+profile rather than a missing record. See [profiles](profiles.md) for database access and UI.
 
 ## Geographic data ownership and import contract
 
@@ -504,5 +551,5 @@ if an image fails. IDs in shared references must match users/games fixtures.
 A later frontend/backend integration should preserve working journeys and compatible error
 semantics while explicitly adapting the changed UUID/city/address model described above.
 No HTTP server was implemented in Workshop 3. Backend Milestone 1 adds only the health/
-geography server routes; Milestone 3A adds real Supabase Auth and `/api/me`. Profile editing
-and persistent event routes remain planned for 3B and 4 respectively.
+geography server routes; Milestone 3A adds real Supabase Auth and `/api/me`. Milestone 3B
+implements profile/experience routes; persistent events remain Milestone 4.

@@ -13,9 +13,34 @@ Workshop 3 delivered the working frontend described below. Backend development i
 incremental: Milestone 1 adds the separate foundation; Milestone 2A adds geographic import
 and backend search. Milestone 2B connects country/city selection to the frontend while
 event CRUD, participation, users, games and authentication remained mocked. Milestone 3A
-now adds real Supabase Auth and verified backend identity, keeping event/catalog mocks separate.
+now adds real Supabase Auth and verified backend identity. Milestone 3B adds real profiles,
+private optional age information and per-game experience, keeping event/demo mocks separate.
 
-## Current Milestone 3A: real authentication
+## Current Milestone 3B: profiles and per-game experience
+
+Registered accounts have one Auth-linked UUID profile. Users can edit their own display name,
+optional biography, country/city and optional private self-declared birth year. Creation date
+and UUID are read-only. Country/city selection reuses the real geography catalog and requires
+an actual suggestion for a chosen city; a country without a city is valid. New accounts start
+with the existing safe placeholder and a friendly incomplete-profile experience.
+
+Profiles expose selected games from the existing database catalog, with independently
+self-declared beginner/intermediate/veteran experience. Users can add/change/remove their own
+associations, one row per account/game. Changes persist in PostgreSQL. Claimed experience is
+not verified and never gates attendance in this milestone. Event experience/tag rules stay intact.
+
+Own-profile endpoints derive ownership from verified Supabase tokens. Public profile responses
+contain only display name, biography, location, account dates and selected games/experience;
+they never expose email, birth year, age-declaration timestamps, roles or privileged metadata.
+Focused grants/RLS enforce the same ownership and field restrictions through the Data API.
+Public profiles are `/users/:userId`; own view/edit are `/profile` and `/profile/edit`.
+
+Real profile/game APIs remain separate from numeric demo identities/catalogs. Event CRUD and
+attendance still use mock data and require explicit development demo mode. No persistent
+events, profile-picture uploads, private codes, invitations or administration are added.
+See [profile implementation](docs/profiles.md) for contracts, setup and verification.
+
+## Milestone 3A: real authentication
 
 The users feature owns email/password registration, login/logout, email confirmation/resend,
 password recovery/reset and supported Supabase PKCE session persistence/automatic refresh.
@@ -35,7 +60,7 @@ preserves legacy mock event demonstrations at `/demo/login`; production builds c
 fixture profiles. A real account cannot become a mock host or participant. Event changes are
 not persisted, and the UI must state that limitation rather than claiming real event participation.
 
-Milestone 3B owns profile editing/onboarding and per-game experience. Milestone 4 replaces
+Milestone 3B above implements profile editing and per-game experience. Milestone 4 replaces
 numeric event/actor dependencies with explicit UUID adapters and persistent authorized APIs.
 Private codes, uploads, administration and deployment remain outside this milestone.
 See [authentication](docs/authentication.md) for local setup and identity/security boundaries.
@@ -56,12 +81,12 @@ validation, access, and future HTTP contracts; local types/APIs implement them.
 
 ## Feature ownership
 
-| Domain    | Responsibility                                                                                    |
-| --------- | ------------------------------------------------------------------------------------------------- |
-| users     | Real Auth and safe UUID identity, plus separate read-only mock profiles/development demo sessions |
-| games     | Read-only game catalog and categories                                                             |
-| events    | Discovery, details, creation, editing, removal, joining, and leaving                              |
-| geography | Real read-only countries/city search, query caching and accessible selection controls             |
+| Domain    | Responsibility                                                                                          |
+| --------- | ------------------------------------------------------------------------------------------------------- |
+| users     | Real Auth, UUID profiles/private age/game experience, plus separate numeric mock profiles/demo sessions |
+| games     | Read-only database profile catalog alongside the unchanged mock event catalog and categories            |
+| events    | Discovery, details, creation, editing, removal, joining, and leaving                                    |
+| geography | Real read-only countries/city search, query caching and accessible selection controls                   |
 
 An event references one organizer and one game by numeric ID. A user can organize many events
 and attend many other events. Attendee IDs represent players: the organizer is separate and

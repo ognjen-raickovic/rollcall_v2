@@ -38,9 +38,8 @@ export function AccountSummary() {
           </p>
         )}
         <p className="text-sm leading-relaxed text-muted-foreground">
-          Registration and login are active. Profile editing and personal game experience are coming in the
-          next milestone. Events and attendance still use demo data; this account cannot host or join those
-          demo events.
+          Your account, profile and self-declared game experience are saved. Events and attendance still use
+          demo data; this account cannot host or join those demo events.
         </p>
         {demoModeEnabled && (
           <p className="text-sm text-muted-foreground">
@@ -48,6 +47,9 @@ export function AccountSummary() {
           </p>
         )}
         <div className="flex flex-wrap gap-4">
+          <Button asChild>
+            <Link to="/profile">Your profile</Link>
+          </Button>
           <Button asChild variant="outline">
             <Link to="/events">Browse events</Link>
           </Button>

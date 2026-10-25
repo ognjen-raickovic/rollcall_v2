@@ -1,5 +1,5 @@
-// Deliberately narrow, hand-maintained geography contract, not a generated full DB schema.
-// Replace with reviewed CLI-generated types when authenticated modules are integrated.
+// Reviewed, narrow application contract; not a generated copy of private database tables.
+type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 export type CountryRow = {
   id: number
   iso_code: string
@@ -33,6 +33,19 @@ export type Database = {
         Update: never
         Relationships: []
       }
+      games: {
+        Row: {
+          id: number
+          name: string
+          category: string
+          description: string
+          min_players: number
+          max_players: number
+        }
+        Insert: never
+        Update: never
+        Relationships: []
+      }
     }
     Views: Record<string, never>
     Functions: {
@@ -40,6 +53,11 @@ export type Database = {
         Args: { country_code: string; search_query: string; result_limit: number }
         Returns: CityRow[]
       }
+      public_profile: { Args: { p_user_id: string }; Returns: Json }
+      get_my_profile: { Args: Record<string, never>; Returns: Json }
+      update_my_profile: { Args: { p_patch: Json }; Returns: Json }
+      set_my_game_experience: { Args: { p_game_id: number; p_experience: string }; Returns: Json }
+      remove_my_game_experience: { Args: { p_game_id: number }; Returns: undefined }
     }
     Enums: Record<string, never>
     CompositeTypes: Record<string, never>

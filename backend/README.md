@@ -1,10 +1,11 @@
-# RollCall backend: geography and verified authentication
+# RollCall backend: geography, authentication and profiles
 
 Fastify REST API with TypeScript and Zod, backed by local Supabase PostgreSQL through
 Supabase's Data API. Health, countries, city search and authenticated `GET /api/me` are
-implemented. React uses real geography and Supabase Auth; event CRUD/attendance and public
-user/game catalogs remain mocked. Milestone 2A supplies GeoNames import tools/search;
-Milestone 3A adds verified UUID identity without implementing profile editing or event APIs.
+implemented. Milestone 3B adds owner-editable UUID profiles, private birth year, public-safe
+profiles and per-game experience, plus the real read-only game catalog. React uses Fastify
+and Supabase Auth; event CRUD/attendance and numeric demo catalogs remain mocked. No event API
+or profile-picture upload is implemented. See [profile contracts/setup](../docs/profiles.md).
 
 ## Prerequisites
 
@@ -80,12 +81,17 @@ do not reuse maintenance privileges for ordinary HTTP requests.
 Successful reads return JSON directly without an envelope. No authentication is required
 for these public geography endpoints.
 
-| Method/path                                | Behavior                                                                                        |
-| ------------------------------------------ | ----------------------------------------------------------------------------------------------- |
-| `GET /health`                              | `{ "status": "ok", "service": "rollcall-api" }`; 200 without a database probe                   |
-| `GET /api/countries`                       | Enabled countries as `{ id, isoCode, name }[]`                                                  |
-| `GET /api/cities?country=ME&q=pod&limit=4` | Selected-country place suggestions as city DTO array                                            |
-| `GET /api/me`                              | Verified bearer identity as `{ id: UUID, email: string \| null }`; authenticated only, no-store |
+| Method/path                                      | Behavior                                                                                        |
+| ------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
+| `GET /health`                                    | `{ "status": "ok", "service": "rollcall-api" }`; 200 without a database probe                   |
+| `GET /api/countries`                             | Enabled countries as `{ id, isoCode, name }[]`                                                  |
+| `GET /api/cities?country=ME&q=pod&limit=4`       | Selected-country place suggestions as city DTO array                                            |
+| `GET /api/me`                                    | Verified bearer identity as `{ id: UUID, email: string \| null }`; authenticated only, no-store |
+| `GET` / `PATCH /api/me/profile`                  | Read/update the verified account's profile and optional private birth year                      |
+| `GET /api/me/game-experience`                    | Read the verified account's selected games/levels                                               |
+| `PUT` / `DELETE /api/me/game-experience/:gameId` | Owner-only experience upsert/removal                                                            |
+| `GET /api/users/:userId`                         | Public-safe UUID profile, excluding email/age/roles                                             |
+| `GET /api/games`                                 | Real read-only database game catalog                                                            |
 
 City DTO:
 
@@ -238,10 +244,11 @@ Run `pnpm build` first. No script deploys or modifies a remote project.
 
 ## Safety and later milestones
 
-The Supabase client uses only unprivileged geography grants/RLS. All non-geography tables
-have RLS and remain inaccessible to Data API client roles through Milestone 3A. Real login
-and verified account identity are implemented; no service-role repository, event write route,
-profile editing, storage bucket/upload, invitation interface or admin dashboard is implemented.
+The Supabase clients use unprivileged keys and focused geography/profile grants/RLS.
+Real login, verified identity, profiles and per-game experience are implemented. Each
+authenticated operation uses a fresh bearer-scoped client; public catalog calls remain
+anonymous. No service-role repository, event write route, storage bucket/upload, invitation
+interface or admin dashboard is implemented.
 Server-side authorization and tests must accompany each
 future grant/API. Roles cannot be assigned through client input.
 

@@ -9,6 +9,7 @@
     "typecheck": "tsc -b",
     "test:mock": "node --test scripts/check-mock-api.mjs",
     "test:geography": "node --test scripts/check-geography-api.mjs",
+    "test:profiles": "node --test scripts/check-profiles-api.mjs",
     "test:ui": "playwright test",
     "lint": "oxlint && node scripts/check-boundaries.mjs",
     "format": "prettier --write src",

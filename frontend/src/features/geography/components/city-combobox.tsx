@@ -24,6 +24,7 @@ type CityComboboxProps = {
   inputRef?: Ref<HTMLInputElement>
   required?: boolean
   onBlur?: () => void
+  onQueryChange?: (query: string) => void
 }
 
 export function CityCombobox(props: CityComboboxProps) {
@@ -42,6 +43,7 @@ function CityComboboxInput({
   inputRef,
   required = false,
   onBlur,
+  onQueryChange,
 }: CityComboboxProps) {
   const container = useRef<HTMLDivElement>(null)
   const input = useRef<HTMLInputElement>(null)
@@ -76,6 +78,7 @@ function CityComboboxInput({
     setDraft({ cityId: reference.cityId, text: reference.cityName })
     setQuery('')
     onChange(reference)
+    onQueryChange?.('')
     setOpen(false)
     setActive(-1)
     input.current?.focus()
@@ -125,6 +128,7 @@ function CityComboboxInput({
             setQuery(next)
             setActive(-1)
             onChange(null)
+            onQueryChange?.(next)
             openList()
           }}
           onKeyDown={(event) => {
@@ -172,6 +176,7 @@ function CityComboboxInput({
             className="shrink-0 rounded-sm text-primary focus-visible:outline-2 focus-visible:outline-ring"
             onClick={() => {
               onChange(null)
+              onQueryChange?.('')
               setDraft({ cityId: null, text: '' })
               setQuery('')
               input.current?.focus()
