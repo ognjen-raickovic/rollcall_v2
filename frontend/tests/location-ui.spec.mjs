@@ -1,6 +1,10 @@
 import { test, expect } from '@playwright/test'
 
 async function signIn(page, user = '1') {
+  // Legacy event journeys explicitly enter development-only demo mode.
+  if (!new URL(page.url()).pathname.startsWith('/demo/login')) {
+    await page.getByRole('link', { name: 'Development demo players' }).click()
+  }
   await page.locator(`label:has(input[name="demo-user"][value="${user}"])`).click()
   await page.locator('button[type="submit"]').click()
   await expect(page.locator('input[name="demo-user"]')).toHaveCount(0)

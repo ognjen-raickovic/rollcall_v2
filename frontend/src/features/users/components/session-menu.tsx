@@ -7,16 +7,46 @@ import { loginPath } from '@/lib/auth-navigation'
 
 import { useLogout, useSession } from '../api/use-session'
 import { UserAvatar } from './user-avatar'
+import { useAuth, useAuthLogout } from '../api/use-auth'
 
 export function SessionMenu() {
   const session = useSession()
   const logout = useLogout()
   const location = useLocation()
+  const auth = useAuth()
+  const realLogout = useAuthLogout()
 
-  if (session.isPending)
+  if (session.isPending || auth.isPending)
     return (
       <div role="status" aria-label="Checking your session">
         <Skeleton className="h-9 w-28" />
+      </div>
+    )
+  if (auth.data)
+    return (
+      <div className="flex items-center gap-2">
+        <Link
+          to="/account"
+          className="max-w-28 truncate text-sm font-medium hover:text-primary focus-visible:outline-2 focus-visible:outline-ring"
+          title={auth.data.email ?? 'Your account'}
+        >
+          Account
+        </Link>
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label="Log out"
+          title="Log out"
+          disabled={realLogout.isPending}
+          onClick={() => realLogout.mutate()}
+        >
+          <LogOut aria-hidden="true" />
+        </Button>
+        {realLogout.error && (
+          <p role="alert" className="text-sm text-destructive">
+            Logout failed. Try again.
+          </p>
+        )}
       </div>
     )
   if (session.error)
@@ -48,6 +78,7 @@ export function SessionMenu() {
       <span className="max-w-20 truncate text-sm font-medium sm:max-w-32" title={session.data.displayName}>
         {session.data.displayName}
       </span>
+      <span className="text-xs text-muted-foreground">Demo</span>
       <Button
         variant="ghost"
         size="icon"

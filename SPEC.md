@@ -12,15 +12,42 @@ never "RollCall v2" in the UI.
 Workshop 3 delivered the working frontend described below. Backend development is now
 incremental: Milestone 1 adds the separate foundation; Milestone 2A adds geographic import
 and backend search. Milestone 2B connects country/city selection to the frontend while
-event CRUD, participation, users, games and authentication remain mocked.
+event CRUD, participation, users, games and authentication remained mocked. Milestone 3A
+now adds real Supabase Auth and verified backend identity, keeping event/catalog mocks separate.
 
-## Workshop 3 scope
+## Current Milestone 3A: real authentication
+
+The users feature owns email/password registration, login/logout, email confirmation/resend,
+password recovery/reset and supported Supabase PKCE session persistence/automatic refresh.
+Routes are `/login`, `/register`, `/forgot-password`, `/reset-password` and `/auth/callback`.
+Forms validate email and password confirmation, display safe errors/status and preserve the
+existing responsive dark/light design. Passwords are sent only to Supabase Auth, never logged
+or stored in application tables.
+
+Fastify verifies Supabase access tokens through the supported `getClaims` mechanism plus
+issuer/audience/expiration/UUID checks. Protected `GET /api/me` returns only safe UUID/email
+identity; missing, expired or invalid tokens return 401. Geography stays publicly accessible.
+Registration initializes only a minimal UUID-linked profile with a fixed placeholder name,
+without metadata-derived roles, private age or geographic onboarding. Existing RLS/grants remain.
+
+Real accounts are independent of numeric demo users. Explicit development-only demo mode
+preserves legacy mock event demonstrations at `/demo/login`; production builds cannot select
+fixture profiles. A real account cannot become a mock host or participant. Event changes are
+not persisted, and the UI must state that limitation rather than claiming real event participation.
+
+Milestone 3B owns profile editing/onboarding and per-game experience. Milestone 4 replaces
+numeric event/actor dependencies with explicit UUID adapters and persistent authorized APIs.
+Private codes, uploads, administration and deployment remain outside this milestone.
+See [authentication](docs/authentication.md) for local setup and identity/security boundaries.
+
+## Workshop 3 scope (historical frontend delivery)
 
 Frontend only, preserving React 19, TypeScript, Vite, Tailwind CSS v4, shadcn/ui, React Router,
 and TanStack Query. Mock data lives in memory and resets on reload. No backend, database,
 real authentication, payments, messaging, notifications, maps, or waitlists.
 
-The foundation, discovery homepage, and frontend-only demo login/session are implemented.
+The original foundation, discovery homepage and demo login/session were delivered in Workshop 3.
+The demo remains available only through explicit development opt-in; real login is described above.
 Discovery and participation include Montenegro mock events, filters, illustrated cards,
 complete details, and mutation feedback. Event creation/editing now use one reusable validated
 form, with host-only edits and public/private visibility. Advanced administration, invitations,
@@ -29,19 +56,19 @@ validation, access, and future HTTP contracts; local types/APIs implement them.
 
 ## Feature ownership
 
-| Domain | Responsibility |
-| --- | --- |
-| users | Public profiles and demo session selection; no credentials or private email |
-| games | Read-only game catalog and categories |
-| events | Discovery, details, creation, editing, removal, joining, and leaving |
-| geography | Real read-only countries/city search, query caching and accessible selection controls |
+| Domain    | Responsibility                                                                                    |
+| --------- | ------------------------------------------------------------------------------------------------- |
+| users     | Real Auth and safe UUID identity, plus separate read-only mock profiles/development demo sessions |
+| games     | Read-only game catalog and categories                                                             |
+| events    | Discovery, details, creation, editing, removal, joining, and leaving                              |
+| geography | Real read-only countries/city search, query caching and accessible selection controls             |
 
 An event references one organizer and one game by numeric ID. A user can organize many events
 and attend many other events. Attendee IDs represent players: the organizer is separate and
 does not consume a seat. Features never import each other, including types. Routes compose
 features. Shared mock reference IDs validate relationships without cross-feature imports.
 
-APIs return Promises of entities, arrays, or void and reject with common typed errors.
+Mock APIs return Promises of entities, arrays, or void and reject with common typed errors.
 TanStack Query wraps reads; mutations invalidate event list/detail caches. Explicit mock
 actors simulate permissions and provide no authentication or security. Current-user state is
 cached with TanStack Query and the selected demo user ID is stored in sessionStorage for this tab.
@@ -55,27 +82,34 @@ cached with TanStack Query and the selected demo user ID is stored in sessionSto
 - Organize: create valid events, then edit only events you organize. Host-only removal is
   available in the mock API; no removal action is exposed in this frontend MVP.
 - Participate: join upcoming scheduled events with space; leave before they start.
-- Sign in: choose one of eight demo profiles, return to the intended page, and log out via
+- Demo sign in: in explicitly enabled development mode, choose one of eight mock profiles,
+  return to the intended page, and log out via
   navigation. No credentials are collected. Reload restores the selection in the current tab;
   blocked storage falls back to memory. This does not provide real authentication.
 
 ## Routes
 
-| Path | Current behavior |
-| --- | --- |
-| `/` | Hero, search, category navigation, featured upcoming events, how it works |
-| `/events` | Upcoming public mock events; card grid, title/country/city/game/availability controls, category URLs, reset |
-| `/events/:eventId` | Complete details, host/game queries, session-aware join/leave, success/error feedback and missing-event recovery |
-| `/events/new` | Signed-in creation form; success navigates to the new event |
-| `/events/:eventId/edit` | Host-only prefilled editor using the same form; success returns to updated details |
-| `/login` | Demo profile selection with loading, empty, error, and pending states |
-| `*` | Not-found fallback |
+| Path                    | Current behavior                                                                                                 |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `/`                     | Hero, search, category navigation, featured upcoming events, how it works                                        |
+| `/events`               | Upcoming public mock events; card grid, title/country/city/game/availability controls, category URLs, reset      |
+| `/events/:eventId`      | Complete details, host/game queries, session-aware join/leave, success/error feedback and missing-event recovery |
+| `/events/new`           | Signed-in creation form; success navigates to the new event                                                      |
+| `/events/:eventId/edit` | Host-only prefilled editor using the same form; success returns to updated details                               |
+| `/login`                | Real Supabase email/password login; links to recovery, registration and optional development demo                |
+| `/register`             | Email/password/confirmation registration and email-confirmation guidance                                         |
+| `/forgot-password`      | Neutral recovery-email request feedback                                                                          |
+| `/reset-password`       | Recovery-session password/confirmation form                                                                      |
+| `/auth/callback`        | PKCE email-confirmation callback and account verification feedback                                               |
+| `/demo/login`           | Explicit development-only numeric demo selection; unavailable in production builds                               |
+| `*`                     | Not-found fallback                                                                                               |
 
-All routes share responsive RollCall navigation and current login state. Anonymous visits to
-create/edit redirect to login, as does joining an event. Login accepts only safe internal
-`returnTo` paths and returns there; users explicitly retry joining after login. Logout updates
-all session consumers and a protected page redirects to login. Route guards simulate a signed-in
-session only; API organizer/capacity/access rules remain authoritative within the mock.
+All routes share responsive RollCall navigation and current real/demo login state. Anonymous
+protected actions lead to login. A real account sees the current mock-event limitation;
+only explicit development demo identity supplies a numeric event actor. Safe internal
+`returnTo` paths preserve the intended destination; users explicitly retry joining after
+demo login. Logout updates session consumers. Mock route guards and organizer/capacity/access
+rules simulate permissions; they do not authorize real persisted event data.
 
 Events may be public, private, or unlisted. Private events are absent from discovery and
 readable only by their host and existing participants. No new players can join private events;
@@ -257,9 +291,11 @@ Homepage location search uses the same controls and does not advertise foreign f
 that do not exist. Users may create events in any enabled supported country during the
 current page runtime; refresh still resets all mock event changes.
 
-Vite development/preview proxies `/api` to the configured Fastify origin. Browser code has
-no Supabase credentials. The frontend builds without a running backend; location failures
+Vite development/preview proxies `/api` to the configured Fastify origin. Milestone 2B
+required no browser Supabase configuration; 3A adds only public Auth URL/key configuration.
+The frontend builds without a running backend; location failures
 show errors/retry and never masquerade as loaded catalog data. Keep themes and existing
-journeys intact. Real accounts, persistent events, invitations and uploads remain out of scope.
+journeys intact. Real accounts were outside 2B and are implemented in 3A above; persistent
+events, invitations and uploads remain outside the current scope.
 
 See [location UI](docs/location-ui.md) for contracts, setup and migration considerations.

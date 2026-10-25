@@ -16,7 +16,12 @@ relative to this file.
 The discovery homepage now uses a two-column hero, search panel, four category tiles,
 three upcoming event cards, and a simple how-it-works section. Use typography and a
 code-native tabletop illustration with lucide icons; external photography is not required.
-The login page pairs a short introduction with clearly selectable demo-player profiles.
+Authentication pages use focused labeled email/password fields, password confirmation for
+registration/reset, inline errors and visible pending/status feedback. Use appropriate
+autocomplete values and keep long email addresses/messages inside the 375px viewport.
+Login links to registration and recovery; confirmation has clear next steps and resend.
+The explicitly enabled development-only demo page retains selectable mock-player profiles,
+with a visible demo label. Real login never implies access to persistent event participation.
 Creation/editing share a focused form with grouped sections for basics, location/schedule,
 players, and tags/visibility. Use existing input/textarea/button primitives and labeled native
 selects/date-time pickers. Keep hosting tips secondary in a desktop sidebar and below the form
@@ -78,25 +83,25 @@ starts. Without storage, switching works for the current page runtime. Both pale
 the same layout, typography, radius, and illustrations; the bundled cover artwork keeps
 its original gaming palette in both themes. Never invert uploaded photographs.
 
-| Token | Dark | Light | Purpose |
-| --- | --- | --- | --- |
-| background | `#10141f` | `#f5f6fa` | Canvas |
-| foreground | `#f1f3f9` | `#1b2233` | Main text |
-| card / popover | `#191f2e` | `#ffffff` | Raised surfaces |
-| card-foreground / popover-foreground | `#f1f3f9` | `#1b2233` | Raised-surface text |
-| primary | `#b6a0ff` | `#6545b5` | Actions, links, brand |
-| primary-foreground | `#171126` | `#ffffff` | Text on purple actions |
-| secondary / muted | `#252c3d` | `#e9ecf4` | Secondary controls and quiet surfaces |
-| secondary-foreground | `#f1f3f9` | `#252c3d` | Secondary-control text |
-| muted-foreground | `#aab4c9` | `#536079` | Supporting text |
-| accent | `#34294d` | `#eee8fc` | Purple hover surface |
-| accent-foreground | `#e6ddff` | `#493077` | Text on accent |
-| destructive | `#ff9b9b` | `#b42335` | Error text and destructive actions |
-| destructive-foreground | `#301018` | `#ffffff` | Text on destructive controls |
-| border / input | `#59657d` | `#7b879d` | Borders and field boundaries |
-| ring | `#b6a0ff` | `#6545b5` | Keyboard focus |
-| font-heading / font-body | system sans-serif | system sans-serif | No remote font requests |
-| radius | `0.75rem` | `0.75rem` | sm/md/lg/xl derive from it |
+| Token                                | Dark              | Light             | Purpose                               |
+| ------------------------------------ | ----------------- | ----------------- | ------------------------------------- |
+| background                           | `#10141f`         | `#f5f6fa`         | Canvas                                |
+| foreground                           | `#f1f3f9`         | `#1b2233`         | Main text                             |
+| card / popover                       | `#191f2e`         | `#ffffff`         | Raised surfaces                       |
+| card-foreground / popover-foreground | `#f1f3f9`         | `#1b2233`         | Raised-surface text                   |
+| primary                              | `#b6a0ff`         | `#6545b5`         | Actions, links, brand                 |
+| primary-foreground                   | `#171126`         | `#ffffff`         | Text on purple actions                |
+| secondary / muted                    | `#252c3d`         | `#e9ecf4`         | Secondary controls and quiet surfaces |
+| secondary-foreground                 | `#f1f3f9`         | `#252c3d`         | Secondary-control text                |
+| muted-foreground                     | `#aab4c9`         | `#536079`         | Supporting text                       |
+| accent                               | `#34294d`         | `#eee8fc`         | Purple hover surface                  |
+| accent-foreground                    | `#e6ddff`         | `#493077`         | Text on accent                        |
+| destructive                          | `#ff9b9b`         | `#b42335`         | Error text and destructive actions    |
+| destructive-foreground               | `#301018`         | `#ffffff`         | Text on destructive controls          |
+| border / input                       | `#59657d`         | `#7b879d`         | Borders and field boundaries          |
+| ring                                 | `#b6a0ff`         | `#6545b5`         | Keyboard focus                        |
+| font-heading / font-body             | system sans-serif | system sans-serif | No remote font requests               |
+| radius                               | `0.75rem`         | `0.75rem`         | sm/md/lg/xl derive from it            |
 
 ## Layout and interaction
 

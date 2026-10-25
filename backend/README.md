@@ -1,9 +1,10 @@
-# RollCall backend: foundation and Balkan geography
+# RollCall backend: geography and verified authentication
 
 Fastify REST API with TypeScript and Zod, backed by local Supabase PostgreSQL through
-Supabase's Data API. Only health, countries and city search are implemented. The React
-app uses these geography reads in Milestone 2B while event/user/game APIs and demo login
-remain mocked. Milestone 2A supplies GeoNames import tools and database search.
+Supabase's Data API. Health, countries, city search and authenticated `GET /api/me` are
+implemented. React uses real geography and Supabase Auth; event CRUD/attendance and public
+user/game catalogs remain mocked. Milestone 2A supplies GeoNames import tools/search;
+Milestone 3A adds verified UUID identity without implementing profile editing or event APIs.
 
 ## Prerequisites
 
@@ -29,7 +30,7 @@ configuration material and do not paste it into public issues, screenshots or co
 
 ```bash
 pnpm dev:backend
-# Separate terminal; geography uses Fastify, event/auth operations remain mocked:
+# Separate terminal; configure frontend/.env from its example for real Auth:
 pnpm dev
 ```
 
@@ -62,9 +63,11 @@ read `supabase/config.toml` and CLI status rather than assuming Supabase's defau
 | `CITY_SEARCH_MAX_LIMIT`     | Configurable result ceiling, hard-bounded at `20`; default `20`                           |
 
 Environment is validated before listening. The runtime API needs no database password,
-service-role key or Supabase access token. `.env` is ignored. The browser needs no
-Supabase environment variables. The frontend calls Fastify geography through a same-origin
-Vite proxy in development/preview, not through a browser Supabase client. See
+service-role key or management access token. `.env` is ignored. The browser uses
+`VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` for Auth only; use the same local
+project's public URL/key, never privileged credentials. Geography and `/api/me` go through
+Fastify using the Vite proxy; application tables are not queried by browser Auth code.
+See [authentication setup](../docs/authentication.md) and
 [location UI setup](../docs/location-ui.md) for frontend origin configuration.
 
 The separate importer uses `GEOGRAPHY_DATABASE_URL` in ignored `backend/.env`, containing
@@ -77,11 +80,12 @@ do not reuse maintenance privileges for ordinary HTTP requests.
 Successful reads return JSON directly without an envelope. No authentication is required
 for these public geography endpoints.
 
-| Method/path                                | Behavior                                                                      |
-| ------------------------------------------ | ----------------------------------------------------------------------------- |
-| `GET /health`                              | `{ "status": "ok", "service": "rollcall-api" }`; 200 without a database probe |
-| `GET /api/countries`                       | Enabled countries as `{ id, isoCode, name }[]`                                |
-| `GET /api/cities?country=ME&q=pod&limit=4` | Selected-country place suggestions as city DTO array                          |
+| Method/path                                | Behavior                                                                                        |
+| ------------------------------------------ | ----------------------------------------------------------------------------------------------- |
+| `GET /health`                              | `{ "status": "ok", "service": "rollcall-api" }`; 200 without a database probe                   |
+| `GET /api/countries`                       | Enabled countries as `{ id, isoCode, name }[]`                                                  |
+| `GET /api/cities?country=ME&q=pod&limit=4` | Selected-country place suggestions as city DTO array                                            |
+| `GET /api/me`                              | Verified bearer identity as `{ id: UUID, email: string \| null }`; authenticated only, no-store |
 
 City DTO:
 
@@ -132,6 +136,20 @@ Messages are illustrative; rely on status/code/field keys. Invalid requests retu
 unmatched routes 404, database/Data API failures 503 (`DEPENDENCY_UNAVAILABLE`), and
 unexpected failures 500. Raw upstream details are never returned. Health success alone
 does not imply the configured database is available; verify a geography endpoint too.
+
+`/api/me` uses the reusable authentication guard: Supabase verifies the token signature
+with `getClaims` (JWKS for asymmetric keys, Auth verification for symmetric local keys),
+and the server checks configured issuer, authenticated audience, expiry and UUID subject.
+Missing, malformed, invalid and expired tokens return 401 `UNAUTHENTICATED`. UUID/email
+identity is request-local; user-controlled actor IDs and metadata grant no permissions.
+Geography endpoints remain anonymous. Profile/event tables retain their existing deny-by-default
+grants/RLS. Logout revokes refresh capability; already-issued access JWTs remain valid until
+expiry, so local UI logout is not an instantaneous server-side JWT revocation mechanism.
+
+Local email confirmation is enabled. The email UI is `http://127.0.0.1:55324`; registration
+and recovery links use the exact loopback callback/reset allowlist in `supabase/config.toml`.
+Open links in the initiating browser/origin for PKCE. Apply pending migrations with
+`pnpm exec supabase db push --local`; do not reset the populated place database.
 
 ## Development dataset
 
@@ -221,9 +239,10 @@ Run `pnpm build` first. No script deploys or modifies a remote project.
 ## Safety and later milestones
 
 The Supabase client uses only unprivileged geography grants/RLS. All non-geography tables
-have RLS and remain inaccessible to Data API client roles through Milestone 2B. No service-role
-repository, real login, event write route, storage bucket/upload, invitation interface or
-admin dashboard is implemented. Server-side authorization and tests must accompany each
+have RLS and remain inaccessible to Data API client roles through Milestone 3A. Real login
+and verified account identity are implemented; no service-role repository, event write route,
+profile editing, storage bucket/upload, invitation interface or admin dashboard is implemented.
+Server-side authorization and tests must accompany each
 future grant/API. Roles cannot be assigned through client input.
 
 See [architecture](../docs/backend-architecture.md), [schema](../docs/database-schema.md),

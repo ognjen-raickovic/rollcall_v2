@@ -3,16 +3,19 @@
 RollCall helps tabletop players discover, organize, and join gaming events.
 
 This is a monorepo: one repository for the whole app.
+
 - `frontend/`: React app (Workshop 3). Details in @frontend/CLAUDE.md
 - `backend/`: Fastify API and geography maintenance tools; see @backend/AGENTS.md and @backend/README.md
 - `supabase/`: local configuration, SQL migrations, development seeds and database tests
 - `docs/entities.md`: entities and the API contract shared by frontend and backend
 
 ## Language
+
 All code, identifiers, comments, commit messages, docs and UI copy are in English.
 You may talk to me in any language.
 
 ## Commands (run from the repo root)
+
 - `pnpm install`: installs dependencies for every package in the workspace
 - `pnpm dev`: frontend dev server at http://localhost:5173
 - `pnpm dev:backend`: backend dev server at http://127.0.0.1:3001
@@ -30,26 +33,30 @@ You may talk to me in any language.
 - `pnpm format`: Prettier formats `frontend/src/`
 
 ## Working in the monorepo
+
 - One change that touches frontend and backend goes in one commit or pull request
 - When an entity changes, update `docs/entities.md` in the same change
 - Run commands from the root; scripts are forwarded with `pnpm --filter <package>`
 
 ## RollCall scope and shared workflow
+
 - Read @SPEC.md for scope, @frontend/DESIGN.md for visuals, and @docs/entities.md for contracts.
 - @AGENTS.md is Codex's entry point and references these same starter rules.
 - Workshop 3 remains a frontend-only demo. Backend Milestone 1 adds schema/migrations,
   local Supabase infrastructure and three read-only geography/health endpoints. Milestone 2A
   adds GeoNames imports and backend search; Milestone 2B integrates country/city selection.
-  Events, users, games and demo login remain mocked; real login, event APIs and uploads are later work.
+  Milestone 3A adds real Supabase Auth and verified `GET /api/me`. Event CRUD/attendance and
+  public user/game catalogs remain mocked; profile editing and event APIs are later work.
 - Optional event covers are prepared in the browser and passed through mock APIs as bounded
   data URLs. Do not persist images in browser storage or connect cloud uploads during geography work.
   Supabase Storage is the planned backend provider; transport, ownership and lifecycle will
   be implemented later. Curated tags/experience rules live in events.
 - Light/dark themes share semantic tokens. Dark is the default; only the theme preference
   persists in localStorage (`rollcall.theme`), independent of the tab-scoped demo session.
-- Domains are `users`, `games`, `events`, and `geography`. User profiles/games are read-only catalogs; events
-  support CRUD and join/leave. Writes receive an explicit mock actor; the users domain now
-  owns a frontend-only demo session that supplies this actor through route composition.
+- Domains are `users`, `games`, `events`, and `geography`. User profiles/games remain read-only
+  mock catalogs; event writes receive an explicit numeric mock actor through route composition.
+  Users also own real Supabase Auth UUID identity and a separate explicitly enabled
+  development-only demo session. A real account must never become a numeric fixture actor.
 - Keep foundation routes simple until finished pages are requested. Preserve `.claude/`.
 - Share a concrete plan before edits. Explicit task authorization takes precedence over
   generic template interviews, approval steps, and visual variants.
@@ -60,6 +67,7 @@ You may talk to me in any language.
 - On PowerShell with blocked `.ps1` shims, use `pnpm.cmd` for the same root commands.
 
 ## Backend rules shared with Codex
+
 - Read @backend/AGENTS.md, @docs/backend-architecture.md and @docs/database-schema.md before
   backend changes. Follow the same scope and authorization model as Codex.
 - Use a server-only unprivileged Supabase client for runtime geography reads. Combine
@@ -73,8 +81,12 @@ You may talk to me in any language.
 - Geographic imports use a separate loopback-only maintenance connection, never the runtime
   client. Follow @docs/geographic-import.md, preserve city IDs/references and source identity,
   and keep downloaded files out of Git. Check local data before considering any reset.
-- Milestone 2B integrates only geographic reads into React. Preserve event/session/attendance
-  mocks, themes and working routes. Do not add real authentication, room codes or administration.
+- Milestone 3A adds Supabase email/password registration, login/logout, confirmation/recovery,
+  persistent refreshed sessions and verified `GET /api/me`. Read @docs/authentication.md.
+  Browser Auth may use only a publishable/anon key; privileged credentials stay server-side.
+  Demo selection requires Vite development mode plus explicit opt-in and is unavailable in
+  production builds. Preserve numeric event/catalog mocks and themes. Defer profile editing/
+  game experience to 3B and persisted UUID events to Milestone 4; no room codes or administration.
 - Follow @docs/location-ui.md for shared location references, route-composed geography controls,
   required suggestion selection, legacy compatibility and the optional venue/address boundary.
 - Report executed backend/database checks and unavailable checks separately. Prepared SQL

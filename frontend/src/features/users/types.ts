@@ -7,3 +7,6 @@ export type User = {
 }
 
 export type UserFilters = { search?: string; city?: string }
+
+// Real Auth identities never become numeric demo profile IDs.
+export type Account = { id: string; email: string | null }
