@@ -5,8 +5,9 @@ Supabase's Data API. Health, countries, city search and authenticated `GET /api/
 implemented. Milestone 3B adds owner-editable UUID profiles, private birth year, public-safe
 profiles and per-game experience, plus the real read-only game catalog. React uses Fastify
 and Supabase Auth. Milestone 4A adds persistent event discovery/details and host-only CRUD.
-React event CRUD/attendance and numeric demo catalogs remain mocked until 4C. Real attendance,
-Storage uploads and private codes remain deferred. See [profiles](../docs/profiles.md) and
+Milestone 4B adds persistent transactional attendance and participant-aware details.
+React event CRUD/attendance and numeric demo catalogs remain mocked until 4C. Storage uploads
+and private codes remain deferred. See [profiles](../docs/profiles.md) and
 [event contracts/setup](../docs/events-api.md).
 
 ## Prerequisites
@@ -95,10 +96,12 @@ for these public geography endpoints.
 | `GET /api/users/:userId`                         | Public-safe UUID profile, excluding email/age/roles                                             |
 | `GET /api/games`                                 | Real read-only database game catalog                                                            |
 | `GET /api/events`                               | Public scheduled discovery; bounded cursor page of safe summaries                               |
-| `GET /api/events/:eventId`                      | Public/unlisted details or host-only private details; address only for the host                  |
+| `GET /api/events/:eventId`                      | Public/unlisted details or private host/participant; viewer state and authorized address          |
 | `POST /api/events`                             | Verified account creates UUID event plus protected address; 201 host DTO                         |
 | `PATCH /api/events/:eventId`                    | Host-only atomic update; preserve identity and attendance                                       |
 | `DELETE /api/events/:eventId`                   | Host-only hard delete; cascades location/memberships; 204                                         |
+| `POST /api/events/:eventId/attendees/me`         | Verified account joins its own seat; 200 safe attendance summary                                  |
+| `DELETE /api/events/:eventId/attendees/me`       | Verified account leaves its own seat; 200 safe attendance summary                                 |
 
 City DTO:
 
@@ -232,18 +235,21 @@ With the local stack running and `backend/.env` configured (including
 RUN_LOCAL_INTEGRATION=true pnpm test:integration
 ```
 
-For Milestone 4A, run focused auth/profile/geography/event integrations without the separate
+For Milestones 4A/4B, run focused auth/profile/geography/event/attendance integrations without the separate
 importer fixture suite (no geographic import or reset is required):
 
 ```powershell
 $env:RUN_LOCAL_INTEGRATION = 'true'
-pnpm.cmd --filter backend exec node --env-file-if-exists=.env --import tsx --test tests/integration/events.test.ts tests/integration/auth.test.ts tests/integration/profiles.test.ts tests/integration/geography.test.ts
+pnpm.cmd --filter backend exec node --env-file-if-exists=.env --import tsx --test tests/integration/attendance.test.ts tests/integration/events.test.ts tests/integration/auth.test.ts tests/integration/profiles.test.ts tests/integration/geography.test.ts
 Remove-Item Env:RUN_LOCAL_INTEGRATION
 ```
 
 The event test starts a real loopback HTTP listener, registers/confirms isolated local accounts,
 checks lifecycle/persistence/visibility and direct Data API restrictions, then removes its own
 fixtures. SQL tests roll back. See [Milestone 4A verification](../docs/events-api-verification.md).
+The attendance suite also opens genuinely concurrent PostgreSQL transactions, confirms lock
+waits and checks final-seat, duplicate, join/leave, capacity and start-time races. See
+[Milestone 4B verification](../docs/attendance-verification.md).
 
 PowerShell:
 
@@ -266,10 +272,11 @@ Run `pnpm build` first. No script deploys or modifies a remote project.
 ## Safety and later milestones
 
 The Supabase clients use unprivileged keys and focused geography/profile grants/RLS plus
-checked event RPCs backed by a non-bypass executor and host policies.
+checked event/attendance RPCs backed by non-bypass executor/trigger roles and explicit policies.
 Real login, verified identity, profiles and per-game experience are implemented. Each
 authenticated operation uses a fresh bearer-scoped client; public catalog calls remain
-anonymous. No service-role repository, real attendance endpoint, storage bucket/upload, invitation
+anonymous. Attendance and participant-aware details are implemented; no service-role repository,
+storage bucket/upload, invitation
 interface or admin dashboard is implemented.
 Server-side authorization and tests must accompany each
 future grant/API. Roles cannot be assigned through client input.

@@ -16,8 +16,36 @@ event CRUD, participation, users, games and authentication remained mocked. Mile
 now adds real Supabase Auth and verified backend identity. Milestone 3B adds real profiles,
 private optional age information and per-game experience, keeping event/demo mocks separate.
 Milestone 4A implements persistent backend event APIs; the frontend continues using mocks.
+Milestone 4B adds real transactional attendance and participant-aware backend details.
 
-## Current Milestone 4A: persistent event backend API
+## Current Milestone 4B: persistent attendance and capacity
+
+Verified Supabase UUID accounts join/leave through POST/DELETE
+`/api/events/:eventId/attendees/me`. Both return safe JSON attendance summaries with
+eventId, hasJoined, capacity, participantCount and availableSlots. Actors are never accepted
+from client data. Public/unlisted scheduled future events permit participation; hosts cannot
+occupy seats. Current private participants can repeat join or leave, but outsiders cannot
+join private events. Claimed experience and minimum age remain guidance, without eligibility
+checks. No codes, invitations or role overrides are introduced.
+
+PostgreSQL locks the event, checks current time/state, then changes the existing membership
+table using its unique key and counter triggers. Concurrent joins cannot overbook; duplicate
+join/no-member public leave are no-ops and preserve timestamps. Timing/status restrictions
+apply before no-op checks. Private leave removes detail/address access; subsequent requests
+return 404, including repeat leave. Capacity edits serialize with attendance on the event row.
+Counter and required-location triggers run with narrowly scoped non-bypass privileges; raw
+client membership/event/location table access remains closed.
+
+All event details now include viewer userId/isHost/hasJoined. Only hosts/current participants
+receive the address; private details require one of those relationships. Anonymous/unrelated
+viewers never receive addresses or participant-private fields. Viewer responses are no-store
+and vary on Authorization. Discovery stays public, scheduled and viewer-independent.
+
+React attendance/events remain numeric mocks until 4C. No frontend API switch, Storage,
+administration or private admission is included. See [event contracts](docs/events-api.md)
+and [attendance verification](docs/attendance-verification.md).
+
+## Milestone 4A: persistent event backend API
 
 Fastify provides PostgreSQL-backed `GET /api/events`, `GET /api/events/:eventId`,
 `POST /api/events`, `PATCH /api/events/:eventId` and `DELETE /api/events/:eventId`.

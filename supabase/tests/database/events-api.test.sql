@@ -23,8 +23,8 @@ select ok(not has_schema_privilege('rollcall_events_executor','private','create'
 select ok(not has_table_privilege('anon','public.events','select,insert,update,delete'), 'anon has no raw event privileges');
 select ok(not has_table_privilege('authenticated','public.events','select,insert,update,delete'), 'authenticated has no raw event privileges');
 select ok(not has_table_privilege('authenticated','private.event_locations','select,insert,update,delete'), 'ordinary users have no direct location privileges');
-select ok(not has_table_privilege('authenticated','public.event_participants','select,insert,update,delete'), 'attendance grants remain deferred');
-select ok(not has_table_privilege('rollcall_events_executor','public.event_participants','insert,update'), 'executor cannot create attendance');
+select ok(not has_table_privilege('authenticated','public.event_participants','select,insert,update,delete'), 'raw attendance table remains closed to clients');
+select ok(not has_table_privilege('rollcall_events_executor','public.event_participants','update'), 'executor cannot rewrite membership identities');
 select ok(not has_column_privilege('rollcall_events_executor','public.events','host_id','update'), 'executor cannot reassign a host');
 select ok(not has_column_privilege('rollcall_events_executor','public.events','participant_count','update'), 'executor cannot forge attendance counts');
 select ok(not (select prosecdef from pg_proc where oid='public.get_event(uuid)'::regprocedure), 'exposed detail wrapper is invoker');

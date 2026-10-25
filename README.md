@@ -14,7 +14,8 @@ matching light theme alongside the default dark theme.
 **Backend Milestone 1** adds an independent Fastify API, Supabase database schema and
 local development tools. Its original boundary was health and geography; the current
 Milestones 3A/3B implement real authentication and profiles, and 4A adds persistent event
-backend APIs. React events still use mocks; real attendance and uploads remain future work.
+backend APIs. Milestone 4B adds real backend attendance; React events still use mocks and
+uploads remain future work.
 Start with [backend setup](backend/README.md),
 [architecture](docs/backend-architecture.md), [schema](docs/database-schema.md), and
 [roadmap](docs/backend-roadmap.md).
@@ -54,6 +55,15 @@ codes or admin privileges are added. See [event API contracts](docs/events-api.m
 [executed verification](docs/events-api-verification.md). Apply the two additive migrations
 with `pnpm exec supabase db push --local`; no new environment variables or dependencies
 are needed, and existing local data must be preserved.
+
+**Milestone 4B** adds authenticated persistent join/leave, serialized capacity management,
+idempotent attendance and viewer-aware event details. Hosts/current participants receive
+protected addresses; private outsiders remain concealed and cannot join by UUID. React
+events/participation stay mocked until 4C. Apply the additive attendance migration with
+`pnpm exec supabase db push --local`, preserving local data. See
+[attendance contracts](docs/events-api.md#attendance-requests-state-and-idempotency) and
+[verification](docs/attendance-verification.md). No new dependencies or environment variables
+are required; uploads, private codes and administration remain deferred.
 
 ## Setup
 
@@ -162,6 +172,7 @@ docs/database-schema.md      Relational model, privacy, constraints and ER diagr
 docs/backend-roadmap.md      Milestone boundaries and future integration
 docs/events-api.md           Persistent backend event contracts and privacy model
 docs/events-api-verification.md Executed Milestone 4A checks and remaining boundaries
+docs/attendance-verification.md Executed Milestone 4B lifecycle, privacy and concurrency checks
 docs/geographic-import.md    GeoNames scope, attribution, safe reruns and search behavior
 .claude/                     Preserved rules, commands, design skill, reviewer, format hook
 ```

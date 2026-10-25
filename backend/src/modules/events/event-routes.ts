@@ -4,6 +4,7 @@ import type { TokenVerifier } from '../auth/types.js'
 import { unauthenticated } from '../auth/token-verifier.js'
 import { parseInput } from '../../shared/api-error.js'
 import {
+  attendanceBodySchema,
   eventDiscoverySchema,
   eventIdSchema,
   newEventSchema,
@@ -68,5 +69,17 @@ export function registerEventRoutes(
     const { eventId } = parseInput(eventIdSchema, request.params)
     await authenticated(request).repository.remove(eventId)
     return reply.code(204).send()
+  })
+  app.post('/api/events/:eventId/attendees/me', { preHandler: guard }, async (request) => {
+    parseInput(noQuerySchema, request.query)
+    parseInput(attendanceBodySchema, request.body)
+    const { eventId } = parseInput(eventIdSchema, request.params)
+    return authenticated(request).repository.join(eventId)
+  })
+  app.delete('/api/events/:eventId/attendees/me', { preHandler: guard }, async (request) => {
+    parseInput(noQuerySchema, request.query)
+    parseInput(attendanceBodySchema, request.body)
+    const { eventId } = parseInput(eventIdSchema, request.params)
+    return authenticated(request).repository.leave(eventId)
   })
 }
