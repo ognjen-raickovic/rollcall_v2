@@ -91,7 +91,7 @@ export function AppLayout({ account, showDemoEvents = false }: AppLayoutProps) {
           <p>
             <span className="font-semibold text-foreground">RollCall</span> · Made for good company.
           </p>
-          <p className="text-xs">Community preview · Event actions coming soon</p>
+          <p className="text-xs">Community preview · Find your next table</p>
         </div>
       </footer>
     </div>

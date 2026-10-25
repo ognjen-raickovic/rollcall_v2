@@ -1,11 +1,11 @@
 ﻿# RollCall entities and API contract
 
-Shared contract for Workshop 3 mocks, backend milestones through 4B and frontend 4C-1 reads.
+Shared contract for Workshop 3 mocks, backend milestones through 4B and frontend 4C-1/4C-2.
 Feature types live in `frontend/src/features/<domain>/types.ts`; APIs and fixtures live in
 that feature's `api/`. Real profiles and per-game experience use owner-scoped APIs; the
 database game catalog is read-only. Separate numeric demo catalogs and mock events remain
 available in explicit development demo mode. Geography/profiles/catalog use real HTTP;
-Production event reads also use real HTTP; users integrates with Supabase Auth. The backend model intentionally
+production event reads/writes also use real HTTP; users integrates with Supabase Auth. The backend model intentionally
 differs where stated below.
 
 ## Backend Milestones 1 through 4B: implemented API
@@ -214,10 +214,33 @@ host/current participant. Auth transitions remove protected queries before accou
 changes; session/refetch errors suppress protected cached data. Tokens never enter query
 keys, URLs or logs. HTTP paths stay on the configured API origin and redirects are rejected.
 
-Production create/edit/join/leave/delete frontend controls await 4C-2 and never call mock
-APIs. Numeric fixtures/forms/attendance are isolated at opt-in development `/demo/events/*`;
-there is no mixed list or fallback. Backend mutation endpoints are unchanged and can be
-used by local test fixtures. See [frontend verification](event-frontend-verification.md).
+Numeric fixtures/forms/attendance are isolated at opt-in development `/demo/events/*`;
+there is no mixed list or fallback. See [read verification](event-frontend-verification.md).
+
+## Frontend persistent event actions: Milestone 4C-2
+
+`event-write-dtos.ts` validates strict create/partial-update payloads, host detail results
+and `{ eventId, hasJoined, capacity, participantCount, availableSlots }` attendance results.
+`persistent-event-actions-api.ts` implements create/update/remove/join/leave through the
+shared origin-restricted HTTP client. UUID actors derive only from verified tokens; request
+bodies never include actor/host IDs, country, counts, attendees, arbitrary covers or images.
+The form mapper sends confirmed `location.cityId`, normalizes blank venue to null, converts
+local times to ISO and preserves unchanged timestamp precision/instant when editing.
+
+`use-persistent-event-actions.ts` captures session context per mutation. It aborts writes
+on account changes, validates the same actor before/after HTTP and suppresses late cache
+effects. Public `persistent-events` list/homepage keys are invalidated after writes; old
+detail reads are canceled before applying acknowledged results. Create/update cache only
+validated host details under the actor's key. Join fetches actual authorized details;
+leave replaces public/unlisted details with an address-free confirmed DTO or removes private
+details and navigates to discovery. Delete removes all event detail keys. Failed ambiguous
+writes refetch server truth without claiming success; inactive mutation retention is zero.
+
+The shared `EventFormView` presents both isolated controllers. Real create/edit require
+real Auth; edit requires matching `viewer.isHost`, host UUID and an authorized host DTO.
+The backend remains authoritative for access, current capacity, schedule and status. Inline
+400/409 messages preserve drafts. Default illustrations are shown without a file picker;
+no Storage or schema change is introduced. See [action verification](event-actions-verification.md).
 
 ## Real profiles and per-game experience: Milestone 3B
 

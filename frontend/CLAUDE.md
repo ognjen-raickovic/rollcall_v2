@@ -47,7 +47,7 @@ Dependency direction: shared code -> features -> app, never the other way around
   the configured public URL/publishable key, PKCE and supported session persistence/refresh.
   Do not query application tables directly from the browser. Read `../docs/authentication.md`.
   Milestone 3B adds real UUID profiles, private birth year and per-game experience. Milestone
-  4C-1 connects production event reads; mutations await 4C-2. Keep numeric demos separate
+  4C-1 connects production reads; 4C-2 connects real CRUD/attendance. Keep numeric demos separate
   under development-only `/demo/events` routes. Real UUID accounts and numeric
   demo identities remain separate; neither identity may be coerced into the other.
   Explicit demo mode requires `import.meta.env.DEV` and `VITE_ENABLE_DEMO_MODE=true`;
@@ -82,7 +82,8 @@ Dependency direction: shared code -> features -> app, never the other way around
   Supabase callbacks must not await other Auth SDK calls inside `onAuthStateChange`.
   Profile editing/onboarding and per-game experience are implemented in Milestone 3B.
   Milestones 4A/4B implement UUID event backend APIs and real attendance; 4C-1 implements
-  React reads only. See `../docs/events-api.md` for DTOs and 4C-2 mutation requirements.
+  React reads and 4C-2 adds mutations. See `../docs/events-api.md` for DTOs and
+  `../docs/event-actions-verification.md` for mutation/browser verification.
 - `api/event-dtos.ts`, `persistent-events-api.ts` and `use-persistent-events.ts` own real
   event read schemas/HTTP/query hooks. Do not coerce UUIDs into `types.ts` numeric mocks.
   Details receive the route-composed `useApiSession` getter, verify viewer identity before
@@ -94,9 +95,17 @@ Dependency direction: shared code -> features -> app, never the other way around
   keeps Load More available until exhaustion. Use real catalog IDs. Public cards have no
   price/address because summaries omit them. `EventDetailsView` shares presentation between
   real and explicit demo controllers, while action controls remain separate.
-- `/events/new` and `/events/:eventId/edit` explain pending hosting; real detail mutation
-  buttons are disabled honestly. Demo forms/actions stay under `/demo/events/*`, are
-  development-only with opt-in, and never receive UUID actors/events. Keep useful mock tests.
+- `event-write-dtos.ts`, `persistent-event-actions-api.ts` and `use-persistent-event-actions.ts`
+  own real write contracts/HTTP/mutations. Capture actor/session per operation; abort when
+  accounts change, cancel stale reads and recheck identity before cache effects/navigation.
+  No optimistic updates. Leave hides protected addresses immediately and private departure
+  navigates to discovery. Zero inactive mutation retention avoids retaining addresses/drafts.
+- `/events/new` requires real Auth and `/events/:eventId/edit` verifies the host DTO/UUID.
+  Share `EventFormView`, keeping real/demo controllers separate. Send selected cityId and
+  allowed fields only; never actor/country/counts/images. Preserve drafts on errors/refetch
+  and unchanged ISO timestamps when editing. Default covers only on real forms until 4D.
+  Deletion requires an accessible confirmation. Demo actions remain development-only under
+  `/demo/events/*` with opt-in and never receive UUID actors/events. Keep useful mock tests.
 - Read `../docs/profiles.md`. Public profiles exclude email/private birth year/roles. Compose
   the existing geography picker and real game catalog into profile forms at routes; never
   import geography/games from users. Clear private profile caches on logout/account changes.
@@ -105,11 +114,12 @@ Dependency direction: shared code -> features -> app, never the other way around
   an account slot; events get a user ID through props. Never import users into events or shared code.
 - Event host/game query components are passed into detail render slots from the route.
   Discovery uses API filters for upcoming/public events; mock records are never read by UI components.
-- Reuse the event schema in `api/event-validation.ts` for form/API validation. Form conversion
-  lives in `api/event-form-values.ts`; `EventForm` and `useEventForm` serve both routes.
+- Demo `EventForm`/`useEventForm` reuse `api/event-validation.ts` and `event-form-values.ts`.
+  Real controllers use `event-write-dtos.ts` and `persistent-event-form-values.ts`, sharing
+  `EventFormView` presentation and `event-date-time.ts` conversion without numeric adapters.
 - Use `event-tags.ts` for the canonical EventTag values and experience compatibility. Native
   checkboxes in the Radix popover provide multi-selection; no arbitrary tags are accepted.
-- `api/event-covers.ts` validates/prepares JPG/PNG/WebP files up to 3 MiB, resizing to a maximum
+- Demo-only `api/event-covers.ts` validates/prepares JPG/PNG/WebP files up to 3 MiB, resizing to a maximum
   1600px edge and encoding a bounded data URL. Preserve custom covers across game changes;
   removing a custom cover restores the selected game's default. Never store cover data in
   localStorage/sessionStorage. No object URLs or backend storage providers are needed.

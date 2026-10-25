@@ -37,6 +37,12 @@ const CreateEvent = lazy(() =>
 const EditEvent = lazy(() =>
   import('@/app/routes/edit-event').then((module) => ({ default: module.EditEvent })),
 )
+const DemoCreateEvent = lazy(() =>
+  import('@/app/routes/demo-create-event').then((module) => ({ default: module.DemoCreateEvent })),
+)
+const DemoEditEvent = lazy(() =>
+  import('@/app/routes/demo-edit-event').then((module) => ({ default: module.DemoEditEvent })),
+)
 const EventDetailsRoute = lazy(() =>
   import('@/app/routes/event-details').then((module) => ({ default: module.EventDetailsRoute })),
 )
@@ -45,9 +51,6 @@ const DemoEventsRoute = lazy(() =>
 )
 const DemoEventDetailsRoute = lazy(() =>
   import('@/app/routes/demo-event-details').then((module) => ({ default: module.DemoEventDetailsRoute })),
-)
-const EventActionsPending = lazy(() =>
-  import('@/app/routes/event-actions-pending').then((module) => ({ default: module.EventActionsPending })),
 )
 
 export const router = createBrowserRouter([
@@ -58,12 +61,20 @@ export const router = createBrowserRouter([
       { path: '/events', element: <Events /> },
       {
         path: '/events/new',
-        element: <EventActionsPending />,
+        element: (
+          <RequireAccount>
+            <CreateEvent />
+          </RequireAccount>
+        ),
       },
       { path: '/events/:eventId', element: <EventDetailsRoute /> },
       {
         path: '/events/:eventId/edit',
-        element: <EventActionsPending />,
+        element: (
+          <RequireAccount>
+            <EditEvent />
+          </RequireAccount>
+        ),
       },
       { path: '/login', element: <Login /> },
       { path: '/register', element: <Register /> },
@@ -96,7 +107,7 @@ export const router = createBrowserRouter([
               path: '/demo/events/new',
               element: (
                 <RequireSession>
-                  <CreateEvent />
+                  <DemoCreateEvent />
                 </RequireSession>
               ),
             },
@@ -105,7 +116,7 @@ export const router = createBrowserRouter([
               path: '/demo/events/:eventId/edit',
               element: (
                 <RequireSession>
-                  <EditEvent />
+                  <DemoEditEvent />
                 </RequireSession>
               ),
             },

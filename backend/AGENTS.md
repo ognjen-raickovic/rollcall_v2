@@ -11,10 +11,10 @@ for both assistants. Read `../SPEC.md`, `../docs/entities.md`,
   and `GET /api/me`. Milestone 3B adds UUID profile reads/owner writes, private optional birth
   year, real catalog reads and per-game experience. Milestone 4A adds persistent event
   discovery/details and host-only create/update/delete. Milestone 4B adds persistent
-  transactional join/leave and participant-aware details. Frontend integration (4C), Storage
-  (4D) and private codes/role authorization (5) remain deferred.
+  transactional join/leave and participant-aware details. Frontend reads/actions are
+  integrated in 4C-1/4C-2. Storage (4D) and private codes/role authorization (5) remain deferred.
 - Preserve the frontend's mocks, numeric IDs, routes and styling. Do not import frontend
-  feature types into this package. Database UUIDs require an explicit future integration.
+  feature types into this package. Real frontend UUID DTOs stay separate from numeric demos.
 - Keep routes, Zod validation and data access within the owning module; common errors and
   server-only Supabase initialization may live in shared/config/db code. Add folders only
   when they contain working code; avoid generic repository/service frameworks.
@@ -45,7 +45,7 @@ for both assistants. Read `../SPEC.md`, `../docs/entities.md`,
   cannot join; claimed experience/age does not gate attendance. Event and counter-trigger
   executors are NOLOGIN/NOBYPASSRLS with separate minimal privileges. Harden search paths
   and ACLs; trigger-only counter privileges must not become client grants. The argument-free
-  Auth subject helper reads no tables. Keep frontend mocks intact until 4C.
+  Auth subject helper reads no tables. Keep development-only frontend mocks isolated from real APIs.
 - Version schema changes under `../supabase/migrations/`. Add explicit grants/RLS, indexes,
   delete behavior, constraints and tests with each schema change. Keep private age, roles,
   exact addresses and future invitation secrets outside public DTOs.

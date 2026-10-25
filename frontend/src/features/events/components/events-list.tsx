@@ -9,6 +9,7 @@ import { eventDiscoveryFiltersSchema } from '../api/event-dtos'
 import { usePersistentEvents } from '../api/use-persistent-events'
 import { EventCard } from './event-card'
 import { EventFilters } from './event-filters'
+import { EventNotice } from './event-notice'
 
 type EventsListProps = {
   games?: { id: number; name: string; category: string }[]
@@ -77,6 +78,7 @@ export function EventsList({
   }
   return (
     <div className="mt-8 space-y-6">
+      <EventNotice />
       <EventFilters
         search={search}
         gameId={rawGameId}

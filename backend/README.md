@@ -6,7 +6,8 @@ implemented. Milestone 3B adds owner-editable UUID profiles, private birth year,
 profiles and per-game experience, plus the real read-only game catalog. React uses Fastify
 and Supabase Auth. Milestone 4A adds persistent event discovery/details and host-only CRUD.
 Milestone 4B adds persistent transactional attendance and participant-aware details.
-React event CRUD/attendance and numeric demo catalogs remain mocked until 4C. Storage uploads
+React event reads and CRUD/attendance use the real API in 4C-1/4C-2; numeric catalogs/events
+remain isolated development demos. See [frontend action verification](../docs/event-actions-verification.md). Storage uploads
 and private codes remain deferred. See [profiles](../docs/profiles.md) and
 [event contracts/setup](../docs/events-api.md).
 

@@ -137,6 +137,12 @@ its original gaming palette in both themes. Never invert uploaded photographs.
 - Favor borders/spacing over shadows. Use existing shadcn components before adding primitives.
 - Semantic links/buttons, labeled inputs, visible focus, skip link, and text contrast at least 4.5:1.
 - Data views include loading, empty, error, and not-found states. Inspect at 375 px and 1440 px.
+- Real event forms share the existing two-column form/sidebar layout and use default game
+  illustrations; the custom-cover picker remains demo-only until Storage. Keep drafts on failed
+  saves, label the private address clearly and place validation feedback beside its field.
+- Host deletion uses a modal confirmation with a descriptive heading, participation-removal
+  explanation, initially focused Cancel and keyboard dismissal. Pending writes disable repeated
+  actions; success/error feedback uses status/alert semantics in both themes.
 
 ## Don't
 

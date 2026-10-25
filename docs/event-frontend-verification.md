@@ -1,5 +1,9 @@
 # Milestone 4C-1 frontend event read verification
 
+Historical 4C-1 report. Milestone 4C-2 now connects the real actions that this delivery left
+pending; see [event action verification](event-actions-verification.md). Results below describe
+the original read-only milestone and are retained as executed evidence.
+
 Verified locally on 25 October 2026 on `feat/event-frontend-integration`. This milestone
 connects event reads only. No branch change, staging, commit, push, merge, deployment,
 remote Supabase operation, database reset, migration or GeoNames import was performed.

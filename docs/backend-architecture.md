@@ -9,9 +9,11 @@ database search. Milestone 2B connects React geography controls to those read en
 Milestone 3A adds real Supabase Auth and verified Fastify identity. Milestone 3B adds real
 UUID profiles, private age and per-game experience with a read-only database game catalog.
 Milestone 4A adds persistent backend event discovery/details and host-only CRUD. Milestone
-4B adds transactional persistent attendance and participant-aware details. React
-event/demo catalog IDs, images, create/edit and attendance remain mocked. Demo selection is explicitly
-enabled only during Vite development and is separate from real UUID accounts.
+4B adds transactional persistent attendance and participant-aware details. React real event
+reads and actions are connected in 4C-1/4C-2 through separate UUID DTOs, validated mutation
+clients and viewer-specific queries. Numeric catalogs/events and custom browser covers remain
+explicit development demos, separate from real UUID accounts. See
+[frontend action verification](event-actions-verification.md).
 
 ```mermaid
 flowchart LR
