@@ -8,7 +8,8 @@ read-only geography API. Milestone 2A adds local GeoNames import tools, aliases 
 database search. Milestone 2B connects React geography controls to those read endpoints.
 Milestone 3A adds real Supabase Auth and verified Fastify identity. Milestone 3B adds real
 UUID profiles, private age and per-game experience with a read-only database game catalog.
-Numeric event/demo catalog IDs, images, create/edit and attendance remain mocked. Demo selection is explicitly
+Milestone 4A adds persistent backend event discovery/details and host-only CRUD. React
+event/demo catalog IDs, images, create/edit and attendance remain mocked. Demo selection is explicitly
 enabled only during Vite development and is separate from real UUID accounts.
 
 ```mermaid
@@ -42,7 +43,9 @@ server. `config/` owns environment validation, `db/` owns server-only Supabase s
 maintenance importer; it is not imported by the API or bundled into the application build.
 `modules/auth/` owns token verification, request-local identity and the reusable guard
 used by `/api/me` and private profile operations. `modules/profiles/` owns profile/catalog
-routes, strict validation and user-scoped data access. Only implemented modules are created.
+routes, strict validation and user-scoped data access. `modules/events/` owns event routes,
+Zod payload/DTO schemas, cursor encoding, curated tags and the checked-RPC repository.
+Only implemented modules are created.
 
 The backend never imports frontend feature internals. SQL database rows use snake_case;
 the REST boundary uses explicit camelCase DTOs and keeps errors compatible with the
@@ -64,10 +67,10 @@ Empty input favors population, then normalized name and ID. The reset seed has n
 metadata; the explicit import supplies source population values.
 
 All application tables have RLS enabled. Migrations revoke implicit/default access and
-grant only the current geography/profile/catalog operations. Profile writes use owner RLS
+grant only the current geography/profile/catalog operations and checked event RPCs. Profile writes use owner RLS
 and mutable-column privileges; private birth year is owner-only. Events, protected event
-addresses and role records remain unavailable to client roles.
-Absence of an event endpoint does not justify granting its tables broad access in advance.
+addresses and role records remain unavailable as raw tables to client roles. Event APIs use
+the bounded functions described below; broad event table grants are unnecessary.
 
 ## Geographic import maintenance boundary
 
@@ -147,6 +150,36 @@ moderation operation requires privileged access, isolate it behind a separately 
 server-only path with explicit authorization and minimal data returned. Do not turn off
 RLS or route ordinary requests through a bypass client.
 
+## Milestone 4A event boundary
+
+Event discovery always constructs an anonymous repository. Optional authenticated details
+verify a supplied bearer before using a fresh token-scoped client; writes require the same
+guard. No host/actor ID is accepted from payloads. Zod projects public versus host DTOs and
+rejects malformed upstream responses. Discovery returns bounded chronological keyset pages,
+with original PostgreSQL microsecond precision retained in cursors. No raw rows or protected
+address keys appear in public JSON. Private and missing records share the same HTTP 404.
+
+Public SECURITY INVOKER wrappers call hardened private entry points owned by
+`rollcall_events_executor`, a NOLOGIN/NOBYPASSRLS role with limited columns and explicit RLS.
+API roles are not members, cannot SET ROLE, and receive no event/location/attendance table
+grants. Only checked discovery/details are executable anonymously; writes require authenticated
+execution and derive the subject internally. The private argument-free `event_api_actor()`
+is owned by the migration role solely to call `auth.uid()` across Supabase's separately owned
+Auth schema; it reads no tables and is executable only by the executor. All paths are empty,
+objects qualified and ACLs explicit. Private schema USAGE permits function naming, not table
+access; PostgREST still does not expose that schema.
+
+RLS and explicit host checks restrict private details, writes and exact addresses to the host,
+including when a sharing flag, existing participation or an admin role exists. Create/update
+validate SQL inputs and final relationships/schedules/tags inside one transaction. Updates
+lock the event before checking capacity against attendance. Deferred location invariants are
+flushed while the authorized executor context is active. Hard delete cascades locations and
+memberships, including past/cancelled records, while referenced catalog/profile data remains.
+See [event contracts](events-api.md) and [executed checks](events-api-verification.md).
+
+Real attendance authorization/participant addresses (4B), React adapters (4C), Storage (4D)
+and private-code/role access (5) require separate implementation and review.
+
 ## Sensitive data and authorization design
 
 | Resource                        | Current access                      | Intended authorization                                                                             |
@@ -155,10 +188,10 @@ RLS or route ordinary requests through a bypass client.
 | Public-safe profiles/games      | Public reads; owner profile updates | Public-safe reads; self-only profile edits                                                         |
 | Private profile age information | Owner-only RLS/invoker RPC          | Self-only read/write; no public DTO field                                                          |
 | Per-game experience             | Public reads; owner writes          | Self-declared user-owned values; no attendance eligibility inference                               |
-| Public events                   | No client grants                    | Public discoverability with addresses excluded by default                                          |
-| Unlisted events                 | No client grants                    | Direct-link reads without public discovery; link access is not privacy                             |
-| Private events                  | No client grants                    | Host/current participant or explicitly authorized moderator; later invitation workflow             |
-| Exact event locations           | No client grants                    | Host/authorized participants; optional explicit public sharing, never implied by public visibility |
+| Public events                   | Checked discovery/detail RPCs       | No address in public DTOs; host-only writes                                                        |
+| Unlisted events                 | Checked direct detail RPC           | Hidden from discovery; link never grants address access                                            |
+| Private events                  | Verified host-only detail           | Participant/role-authorized access deferred to later reviewed milestones                           |
+| Exact event locations           | Verified host-only DTO              | Participant access deferred to 4B; sharing flag grants no access in 4A                              |
 | Account roles                   | No client grants                    | Server-enforced authorization; only authorized superadmins manage admins                           |
 | Invitation secrets              | No table/workflow yet               | Separate server-managed encrypted storage and hash verification                                    |
 

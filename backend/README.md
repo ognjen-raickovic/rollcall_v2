@@ -1,11 +1,13 @@
-# RollCall backend: geography, authentication and profiles
+# RollCall backend: geography, authentication, profiles and events
 
 Fastify REST API with TypeScript and Zod, backed by local Supabase PostgreSQL through
 Supabase's Data API. Health, countries, city search and authenticated `GET /api/me` are
 implemented. Milestone 3B adds owner-editable UUID profiles, private birth year, public-safe
 profiles and per-game experience, plus the real read-only game catalog. React uses Fastify
-and Supabase Auth; event CRUD/attendance and numeric demo catalogs remain mocked. No event API
-or profile-picture upload is implemented. See [profile contracts/setup](../docs/profiles.md).
+and Supabase Auth. Milestone 4A adds persistent event discovery/details and host-only CRUD.
+React event CRUD/attendance and numeric demo catalogs remain mocked until 4C. Real attendance,
+Storage uploads and private codes remain deferred. See [profiles](../docs/profiles.md) and
+[event contracts/setup](../docs/events-api.md).
 
 ## Prerequisites
 
@@ -92,6 +94,11 @@ for these public geography endpoints.
 | `PUT` / `DELETE /api/me/game-experience/:gameId` | Owner-only experience upsert/removal                                                            |
 | `GET /api/users/:userId`                         | Public-safe UUID profile, excluding email/age/roles                                             |
 | `GET /api/games`                                 | Real read-only database game catalog                                                            |
+| `GET /api/events`                               | Public scheduled discovery; bounded cursor page of safe summaries                               |
+| `GET /api/events/:eventId`                      | Public/unlisted details or host-only private details; address only for the host                  |
+| `POST /api/events`                             | Verified account creates UUID event plus protected address; 201 host DTO                         |
+| `PATCH /api/events/:eventId`                    | Host-only atomic update; preserve identity and attendance                                       |
+| `DELETE /api/events/:eventId`                   | Host-only hard delete; cascades location/memberships; 204                                         |
 
 City DTO:
 
@@ -148,8 +155,9 @@ with `getClaims` (JWKS for asymmetric keys, Auth verification for symmetric loca
 and the server checks configured issuer, authenticated audience, expiry and UUID subject.
 Missing, malformed, invalid and expired tokens return 401 `UNAUTHENTICATED`. UUID/email
 identity is request-local; user-controlled actor IDs and metadata grant no permissions.
-Geography endpoints remain anonymous. Profile/event tables retain their existing deny-by-default
-grants/RLS. Logout revokes refresh capability; already-issued access JWTs remain valid until
+Geography endpoints remain anonymous. Profile writes use focused owner grants/RLS; raw event
+tables stay closed and event endpoints call checked RPCs. Logout revokes refresh capability;
+already-issued access JWTs remain valid until
 expiry, so local UI logout is not an instantaneous server-side JWT revocation mechanism.
 
 Local email confirmation is enabled. The email UI is `http://127.0.0.1:55324`; registration
@@ -224,6 +232,19 @@ With the local stack running and `backend/.env` configured (including
 RUN_LOCAL_INTEGRATION=true pnpm test:integration
 ```
 
+For Milestone 4A, run focused auth/profile/geography/event integrations without the separate
+importer fixture suite (no geographic import or reset is required):
+
+```powershell
+$env:RUN_LOCAL_INTEGRATION = 'true'
+pnpm.cmd --filter backend exec node --env-file-if-exists=.env --import tsx --test tests/integration/events.test.ts tests/integration/auth.test.ts tests/integration/profiles.test.ts tests/integration/geography.test.ts
+Remove-Item Env:RUN_LOCAL_INTEGRATION
+```
+
+The event test starts a real loopback HTTP listener, registers/confirms isolated local accounts,
+checks lifecycle/persistence/visibility and direct Data API restrictions, then removes its own
+fixtures. SQL tests roll back. See [Milestone 4A verification](../docs/events-api-verification.md).
+
 PowerShell:
 
 ```powershell
@@ -244,10 +265,11 @@ Run `pnpm build` first. No script deploys or modifies a remote project.
 
 ## Safety and later milestones
 
-The Supabase clients use unprivileged keys and focused geography/profile grants/RLS.
+The Supabase clients use unprivileged keys and focused geography/profile grants/RLS plus
+checked event RPCs backed by a non-bypass executor and host policies.
 Real login, verified identity, profiles and per-game experience are implemented. Each
 authenticated operation uses a fresh bearer-scoped client; public catalog calls remain
-anonymous. No service-role repository, event write route, storage bucket/upload, invitation
+anonymous. No service-role repository, real attendance endpoint, storage bucket/upload, invitation
 interface or admin dashboard is implemented.
 Server-side authorization and tests must accompany each
 future grant/API. Roles cannot be assigned through client input.

@@ -87,16 +87,34 @@ Registration keeps its existing minimal initializer. See [profiles](profiles.md)
 Account deletion/retention, broader completion requirements and profile pictures remain future
 work. Role administration and superadmin bootstrap remain separately controlled later work.
 
-## Milestone 4: real event and attendance APIs
+## Milestone 4A: persistent event backend API — implemented
 
-Introduce authenticated create/update/remove and safe event read/discovery DTOs. Adopt
-UUID user/event IDs deliberately in frontend feature API adapters. Preserve the optional venue
-and require a protected in-person address; exclude exact addresses from public results
-by default. Preserve tag/experience, schedule, capacity, host ownership and idempotent
-join/leave semantics. Implement verified-actor transactional RPCs and concurrent final-seat
-tests against PostgreSQL before switching the frontend from mocks.
+Public scheduled discovery with country/city/game/title/date/availability filters and bounded
+chronological cursor pagination; public/unlisted details; verified-host-only private details,
+exact addresses and create/update/delete. Checked RPCs use strict payloads, explicit public/
+host DTOs, non-bypass executor RLS and closed raw event tables. Event/address changes are
+atomic; updates preserve attendance and hard delete cascades memberships/locations only.
+Default local illustrations are supported; custom cover payloads are rejected.
+See [contracts](events-api.md) and [verification](events-api-verification.md).
 
-## Later: event covers
+React numeric event CRUD/attendance remains mocked. No attendance API, Storage, private
+codes, participant address access or admin override is included.
+
+## Milestone 4B: real attendance — planned
+
+Implement verified-actor transactional join/leave, idempotent repeats, duplicate prevention
+and concurrent final-seat/capacity tests. Reuse UUID events/subjects and existing row locking,
+counter triggers and participant key. Separately review private-event eligibility, minimum-age/
+self-declared experience policy and authorized participant address access. Never infer permission
+from a submitted actor or an unlisted URL. Extend DTO/RLS/grant tests before enabling access.
+
+## Milestone 4C: frontend event integration — planned
+
+Replace mock event API adapters deliberately, adopting UUID actors/events and paginated DTOs.
+Preserve feature boundaries, forms, filters, feedback, themes and geography. Do not coerce
+numeric demos into real accounts or claim browser-only custom images were uploaded.
+
+## Milestone 4D: event covers — planned
 
 Implement Supabase Storage with ownership-aware bucket policies, validated image content,
 bounded files and a clear public/private delivery model. Define object references, signed
@@ -104,7 +122,7 @@ URL behavior, replacement/deletion lifecycle and orphan cleanup. Keep service cr
 server-side. Existing mock data URLs are not a production storage format; no uploads or
 buckets are created during Milestone 1.
 
-## Later: private invitations and authorized administration
+## Milestone 5: private invitations and role-authorized access — planned
 
 Add rate-limited secure code generation/validation/joining, server-managed encrypted code
 retrieval, hash verification, rotation/revocation, expiry and secret-free responses/logs.

@@ -46,9 +46,10 @@ You may talk to me in any language.
 - Workshop 3 remains a frontend-only demo. Backend Milestone 1 adds schema/migrations,
   local Supabase infrastructure and three read-only geography/health endpoints. Milestone 2A
   adds GeoNames imports and backend search; Milestone 2B integrates country/city selection.
-  Milestone 3A adds real Supabase Auth and verified `GET /api/me`. Event CRUD/attendance and
+  Milestone 3A adds real Supabase Auth and verified `GET /api/me`.
   Milestone 3B adds real profiles and per-game experience with a read-only database game catalog.
-  Numeric event/demo catalogs remain separate; persistent event APIs are later work.
+  Milestone 4A adds persistent event backend APIs. React event CRUD/attendance and numeric
+  demo catalogs remain separate mocks until frontend integration in 4C.
 - Optional event covers are prepared in the browser and passed through mock APIs as bounded
   data URLs. Do not persist images in browser storage or connect cloud uploads during geography work.
   Supabase Storage is the planned backend provider; transport, ownership and lifecycle will
@@ -90,10 +91,15 @@ You may talk to me in any language.
   Browser Auth may use only a publishable/anon key; privileged credentials stay server-side.
   Demo selection requires Vite development mode plus explicit opt-in and is unavailable in
   production builds. Preserve numeric event/catalog mocks and themes. Milestone 3B implements
-  real profiles/experience; persisted UUID events remain Milestone 4. No room codes or administration.
+  real profiles/experience; 4A implements persistent UUID event APIs. Attendance is 4B,
+  frontend integration 4C, Storage 4D and private codes/role authorization 5.
 - Follow @docs/profiles.md for owner-only profile writes, private birth-year handling, public-safe
   profile DTOs and the real game catalog. Identity comes from verified tokens, never submitted
   actors. RLS/grants must also block cross-user/role/private-data access through the Data API.
+- Follow @docs/events-api.md for bounded public/scheduled discovery and verified host-only
+  writes, private details and exact addresses. Event tables stay closed to API roles; use
+  checked RPCs, the non-bypass executor, explicit ACLs/RLS and empty search paths. No real
+  attendance, uploads, codes or admin privileges are included in 4A. Keep React events mocked.
 - Follow @docs/location-ui.md for shared location references, route-composed geography controls,
   required suggestion selection, legacy compatibility and the optional venue/address boundary.
 - Report executed backend/database checks and unavailable checks separately. Prepared SQL

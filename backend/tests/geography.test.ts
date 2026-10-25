@@ -127,7 +127,7 @@ test('configured result limits, missing routes and unexpected failures use consi
   await app.inject('/api/cities?country=HR')
   assert.equal(inputs[0]?.limit, 2)
   assert.equal((await app.inject('/api/cities?country=HR&limit=4')).statusCode, 400)
-  const missing = await app.inject('/api/events')
+  const missing = await app.inject('/api/not-a-route')
   assert.equal(missing.statusCode, 404)
   assert.equal(missing.json().code, 'NOT_FOUND')
   const failure = await app.inject('/api/countries')

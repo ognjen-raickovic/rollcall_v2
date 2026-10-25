@@ -61,7 +61,8 @@ Dependency direction: shared code -> features -> app, never the other way around
 - Venue is optional (blank string when omitted; 2–120 characters when provided). Keep
   address required, but render the exact value only to the host/current participants.
   Mock data remains in browser memory and is not a privacy boundary; real server enforcement
-  belongs to the future event API.
+  is enforced by the separate Milestone 4A event API, which React does not consume yet.
+  Its private details/addresses are host-only; do not copy mock participant privileges to it.
 - Read `../SPEC.md` for scope. Homepage, demo login, discovery/details, and shared create/edit
   forms, optional browser-side covers, curated tags, and light/dark themes are implemented.
   Recurring events, invitations, cloud uploads, and advanced administration remain out of scope.
@@ -77,7 +78,9 @@ Dependency direction: shared code -> features -> app, never the other way around
   the separate legacy `session-api.ts` numeric demo API/hooks and demo route guard.
   The demo selection is tab-scoped; real Auth uses the SDK's persisted/refreshable session.
   Supabase callbacks must not await other Auth SDK calls inside `onAuthStateChange`.
-  Profile editing/onboarding and per-game experience are implemented in Milestone 3B; UUID event APIs are 4.
+  Profile editing/onboarding and per-game experience are implemented in Milestone 3B.
+  Milestone 4A implements UUID event backend APIs; React migration is 4C. Do not switch
+  event mocks without that explicit task. See `../docs/events-api.md` for the separate DTOs.
 - Read `../docs/profiles.md`. Public profiles exclude email/private birth year/roles. Compose
   the existing geography picker and real game catalog into profile forms at routes; never
   import geography/games from users. Clear private profile caches on logout/account changes.

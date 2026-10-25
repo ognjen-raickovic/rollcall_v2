@@ -9,7 +9,9 @@ for both assistants. Read `../SPEC.md`, `../docs/entities.md`,
   `../docs/geographic-import.md` before imports/search changes. Milestone 2B frontend
   integration is delivered. Milestone 3A adds reusable verified Supabase bearer identity
   and `GET /api/me`. Milestone 3B adds UUID profile reads/owner writes, private optional birth
-  year, real catalog reads and per-game experience. Event endpoints/uploads/codes/admin remain deferred.
+  year, real catalog reads and per-game experience. Milestone 4A adds persistent event
+  discovery/details and host-only create/update/delete. Attendance (4B), frontend integration
+  (4C), Storage (4D) and private codes/role authorization (5) remain deferred.
 - Preserve the frontend's mocks, numeric IDs, routes and styling. Do not import frontend
   feature types into this package. Database UUIDs require an explicit future integration.
 - Keep routes, Zod validation and data access within the owning module; common errors and
@@ -28,12 +30,17 @@ for both assistants. Read `../SPEC.md`, `../docs/entities.md`,
   Verify signatures through supported Supabase `getClaims`, plus issuer/audience/expiry
   and UUID subject checks. Never trust client actors/roles or mutate a shared client's session.
   Read `../docs/authentication.md`; `/api/me` returns only safe UUID/email identity.
-  Preserve public geography and focused profile/catalog grants/RLS; events and roles remain denied.
+  Preserve public geography and focused profile/catalog grants/RLS; raw event tables and roles remain denied.
   No service-role key. Read `../docs/profiles.md` for atomic profile/age writes and private DTO rules.
 - Profile and experience mutations use the verified account UUID and an isolated bearer-scoped
   unprivileged client. Enforce owner checks, immutable identity/timestamps, geographic consistency
   and valid game/experience values in SQL as well as API validation. Public responses contain no
   email, private age/declaration or role information. Keep the registration initializer unchanged.
+- Read `../docs/events-api.md` for event contracts. Use bounded checked RPCs, not broad table
+  grants. Private event details and exact addresses are verified-host-only in 4A, even for
+  existing participants/admins or an old sharing flag. The event executor is NOLOGIN and
+  NOBYPASSRLS with focused column privileges and owner policies. Harden function search paths
+  and ACLs; the argument-free Auth subject helper reads no tables. Keep frontend mocks intact.
 - Version schema changes under `../supabase/migrations/`. Add explicit grants/RLS, indexes,
   delete behavior, constraints and tests with each schema change. Keep private age, roles,
   exact addresses and future invitation secrets outside public DTOs.
