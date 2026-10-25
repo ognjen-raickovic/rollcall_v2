@@ -32,6 +32,14 @@ controls through route composition. Use initials rather than adding picture uplo
 views contain no email, age or roles. Preserve semantic tokens, keyboard focus and readable
 wrapping at 375px and 1440px in both themes.
 
+Milestone 4C-1 keeps this layout while connecting event reads. Public cards use only real
+summary fields and omit price because summaries do not contain it. Discovery shows loaded
+matches and a clear Load More action, with retry/empty guidance; it never invents counts or
+substitutes fixture cards. Details show confirmed viewer state and authorized addresses only.
+Pending join/leave/edit controls are visibly disabled with short explanatory copy. Numeric
+development demos have separate routes and labels. Seat progress uses primary/secondary
+tokens in both themes, including native progress fill. No new palette or redesign is introduced.
+
 Creation/editing share a focused form with grouped sections for basics, location/schedule,
 players, and tags/visibility. Use existing input/textarea/button primitives and labeled native
 selects/date-time pickers. Keep hosting tips secondary in a desktop sidebar and below the form

@@ -7,7 +7,8 @@ foundation; Milestone 2A adds GeoNames imports and backend place search. Milesto
 connects frontend country/city selection to that API. Milestone 3A adds real Supabase Auth
 and verified backend identity. Milestone 3B adds real editable UUID profiles and per-game
 experience. Milestones 4A/4B add persistent event backend APIs and transactional attendance; React event CRUD/attendance
-and their numeric demo catalogs remain separate mocks until Milestone 4C.
+and their numeric demos remain separate. Milestone 4C-1 connects public homepage/discovery
+and UUID details to real reads; frontend mutations await 4C-2.
 
 ## Shared rules
 
@@ -53,8 +54,9 @@ Keep foundation routes simple until finished pages are requested.
   database without checking what must be preserved. Keep downloaded datasets out of Git.
 - Milestone 3A implements registration/login/logout, confirmation, recovery and verified
   `GET /api/me`. Read `docs/authentication.md`. Only Auth uses a browser Supabase client
-  with a publishable/anon key; never expose privileged keys. Keep frontend event CRUD/attendance
-  mocked. Demo selection requires both Vite development mode and explicit opt-in, and
+  with a publishable/anon key; never expose privileged keys. Production event reads use the
+  real API; frontend event mutations await 4C-2. Numeric mocks live under development-only
+  `/demo/events` routes. Demo selection requires Vite development mode and explicit opt-in, and
   production builds cannot impersonate fixtures. Milestone 3B adds real profiles/experience;
   persistent UUID event APIs are Milestone 4A; attendance is 4B and frontend integration is 4C.
   No invitations or administration.
@@ -74,7 +76,14 @@ Keep foundation routes simple until finished pages are requested.
   the existing membership table. Preserve closed client tables, executor/trigger-role RLS,
   explicit ACLs and empty search paths. Private outsiders cannot join; no experience/age
   eligibility or admin override. Frontend adapters (4C), Storage (4D) and private codes/role
-  authorization (5) remain separate work. See `docs/attendance-verification.md` for checks.
+  authorization (5) remain separate work. The 4C-1 read integration is documented in
+  `docs/event-frontend-verification.md`; mutation integration is 4C-2.
+- Real event reads use dedicated UUID DTOs and TanStack Query keys, never numeric adapters.
+  Public pages never fall back to mocks. Detail keys include the verified viewer; destroy
+  protected queries before auth transitions, consume abort signals and recheck session
+  identity after HTTP. Addresses require the matching viewer and host/current membership.
+  Public summaries have no price/address fields; do not invent them. No real mutation hooks
+  or mock actions may be attached to UUID events in 4C-1.
 - Event forms require a confirmed city suggestion, clear it on country/text changes, and
   allow an empty venue. Exact addresses render only for the host/current participants;
   this is a demo UI safeguard, not server-side privacy or authorization.
@@ -84,6 +93,7 @@ Keep foundation routes simple until finished pages are requested.
   `pnpm typecheck`, `pnpm lint`, `pnpm build`. Typecheck/lint/build cover both packages;
   `pnpm dev` still starts only the frontend, `pnpm dev:backend` starts the API.
   Run `pnpm test:mock`, `pnpm test:backend`, and available local database/integration checks.
+  `pnpm test:events` covers real event clients and pagination/cache/privacy boundaries.
   On PowerShell with blocked `.ps1` shims,
   use `pnpm.cmd` with the same arguments.
 - Before handoff, typecheck, lint (including boundaries), and build must pass. For UI changes,

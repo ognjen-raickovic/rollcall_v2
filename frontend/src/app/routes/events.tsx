@@ -2,11 +2,11 @@ import { Link } from 'react-router'
 
 import { Button } from '@/components/ui/button'
 import { EventsList } from '@/features/events/components/events-list'
-import { useGames } from '@/features/games/api/use-games'
+import { useCatalogGames } from '@/features/games/api/use-catalog'
 import { LocationFilterFields } from '@/features/geography/components/location-filter-fields'
 
 export function Events() {
-  const games = useGames()
+  const games = useCatalogGames()
   return (
     <section>
       <div className="flex flex-wrap items-center justify-between gap-4">

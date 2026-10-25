@@ -40,6 +40,15 @@ const EditEvent = lazy(() =>
 const EventDetailsRoute = lazy(() =>
   import('@/app/routes/event-details').then((module) => ({ default: module.EventDetailsRoute })),
 )
+const DemoEventsRoute = lazy(() =>
+  import('@/app/routes/demo-events').then((module) => ({ default: module.DemoEventsRoute })),
+)
+const DemoEventDetailsRoute = lazy(() =>
+  import('@/app/routes/demo-event-details').then((module) => ({ default: module.DemoEventDetailsRoute })),
+)
+const EventActionsPending = lazy(() =>
+  import('@/app/routes/event-actions-pending').then((module) => ({ default: module.EventActionsPending })),
+)
 
 export const router = createBrowserRouter([
   {
@@ -49,20 +58,12 @@ export const router = createBrowserRouter([
       { path: '/events', element: <Events /> },
       {
         path: '/events/new',
-        element: (
-          <RequireSession>
-            <CreateEvent />
-          </RequireSession>
-        ),
+        element: <EventActionsPending />,
       },
       { path: '/events/:eventId', element: <EventDetailsRoute /> },
       {
         path: '/events/:eventId/edit',
-        element: (
-          <RequireSession>
-            <EditEvent />
-          </RequireSession>
-        ),
+        element: <EventActionsPending />,
       },
       { path: '/login', element: <Login /> },
       { path: '/register', element: <Register /> },
@@ -87,7 +88,29 @@ export const router = createBrowserRouter([
         ),
       },
       { path: '/users/:userId', element: <PublicProfileRoute /> },
-      ...(demoModeEnabled ? [{ path: '/demo/login', element: <DemoLogin /> }] : []),
+      ...(demoModeEnabled
+        ? [
+            { path: '/demo/login', element: <DemoLogin /> },
+            { path: '/demo/events', element: <DemoEventsRoute /> },
+            {
+              path: '/demo/events/new',
+              element: (
+                <RequireSession>
+                  <CreateEvent />
+                </RequireSession>
+              ),
+            },
+            { path: '/demo/events/:eventId', element: <DemoEventDetailsRoute /> },
+            {
+              path: '/demo/events/:eventId/edit',
+              element: (
+                <RequireSession>
+                  <EditEvent />
+                </RequireSession>
+              ),
+            },
+          ]
+        : []),
       { path: '*', element: <NotFound /> },
     ],
   },

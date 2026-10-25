@@ -44,7 +44,7 @@ export function EventEditor({
         <h1 className="text-3xl font-bold">Invalid event ID</h1>
         <p className="text-muted-foreground">Choose an event you host to edit it.</p>
         <Button asChild variant="outline">
-          <Link to="/events">Browse events</Link>
+          <Link to="/demo/events">Browse demo events</Link>
         </Button>
       </section>
     )
@@ -73,7 +73,7 @@ export function EventEditor({
           Try again
         </Button>
         <Button asChild variant="ghost">
-          <Link to="/events">Back to events</Link>
+          <Link to="/demo/events">Back to demo events</Link>
         </Button>
       </section>
     )
@@ -85,7 +85,7 @@ export function EventEditor({
           You’re signed in as a different player. Your changes cannot be submitted.
         </p>
         <Button asChild variant="outline">
-          <Link to={`/events/${id}`}>View event</Link>
+          <Link to={`/demo/events/${id}`}>View demo event</Link>
         </Button>
       </section>
     )
@@ -120,7 +120,7 @@ export function EventEditor({
           Check again
         </Button>
         <Button asChild variant="ghost">
-          <Link to="/events">Browse events</Link>
+          <Link to="/demo/events">Browse demo events</Link>
         </Button>
       </section>
     )

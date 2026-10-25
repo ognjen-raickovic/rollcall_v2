@@ -116,11 +116,25 @@ PostgreSQL checks are recorded in [attendance verification](attendance-verificat
 React attendance remains mocked. No room-code admission, admin override, uploads or automated
 eligibility checks are included. Participant privacy/access must remain explicit in 4C adapters.
 
-## Milestone 4C: frontend event integration — planned
+## Milestone 4C-1: frontend event reads — implemented
 
-Replace mock event API adapters deliberately, adopting UUID actors/events and paginated DTOs.
-Preserve feature boundaries, forms, filters, feedback, themes and geography. Do not coerce
-numeric demos into real accounts or claim browser-only custom images were uploaded.
+Homepage featured events, cursor-paginated discovery and UUID details consume real APIs.
+Dedicated DTOs preserve structured locations/game/host/counts/viewer state; viewer-aware
+caches and auth/abort checks protect addresses across account transitions. Public lists
+never combine fixtures or fall back when the backend is unavailable. Category filtering
+applies to loaded chronological pages with Load More until exhaustion. Existing layouts,
+themes, geography and profiles remain intact. Numeric workflows are isolated in opt-in
+development `/demo/events/*`. See [verification](event-frontend-verification.md).
+
+## Milestone 4C-2: frontend event mutations — planned
+
+Connect UUID create/edit/delete/join/leave through feature APIs/hooks using strict backend
+payloads, real verified sessions and explicit confirmation/feedback. Replace pending controls,
+invalidate viewer details/discovery and handle private leave losing access. Preserve
+idempotency/conflicts and form validation, with deliberate local-date conversion and existing
+game/city IDs. No numeric demo actor may authorize persistent writes. Default covers only
+until Storage; never claim browser data URLs were uploaded. Add focused mutation/cache/browser
+checks before replacing the isolated demo workflows.
 
 ## Milestone 4D: event covers — planned
 

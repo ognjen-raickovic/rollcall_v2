@@ -3,6 +3,7 @@ import { createRequire } from 'node:module'
 import { test, expect } from '@playwright/test'
 
 const enabled = process.env.RUN_LOCAL_AUTH_UI === 'true'
+test.use({ trace: 'off' }) // Real session headers and recovery links must not enter traces.
 const mailOrigin = 'http://127.0.0.1:55324'
 
 async function followEmail(page, request, email, subject) {
@@ -103,12 +104,12 @@ test('local real account confirmation, restoration, recovery and demo identity s
     await expect(page.getByText('Account verified by RollCall.', { exact: true })).toBeVisible()
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
     await page.screenshot({ path: info.outputPath('verified-account.png'), fullPage: true })
-    await page.goto('/events/new')
+    await page.goto('/demo/events/new')
     await expect(
       page.getByRole('heading', { name: 'Event hosting is still a demo', exact: true }),
     ).toBeVisible()
     await expect(page.locator('#event-title')).toHaveCount(0)
-    await page.goto('/events/1')
+    await page.goto('/demo/events/1')
     await expect(page.getByRole('button', { name: 'Demo attendance unavailable' })).toBeDisabled()
     await expect(page.getByText('18 Bokeska Street', { exact: true })).toHaveCount(0)
     await page.goto('/account')

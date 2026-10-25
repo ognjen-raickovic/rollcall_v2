@@ -4,13 +4,12 @@ import { Link } from 'react-router'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 
-import { useEvents } from '../api/use-events'
+import { usePersistentEvents } from '../api/use-persistent-events'
 import { EventCard } from './event-card'
 
-type FeaturedEventsProps = { games?: { id: number; name: string; category: string }[] }
-
-export function FeaturedEvents({ games }: FeaturedEventsProps) {
-  const events = useEvents({ upcomingOnly: true, visibility: 'public' })
+export function FeaturedEvents() {
+  const events = usePersistentEvents({ upcomingOnly: true, status: 'scheduled', limit: 3 })
+  const featured = events.data?.pages[0]?.items ?? []
   return (
     <section id="upcoming" aria-labelledby="upcoming-title" className="scroll-mt-8 border-t py-12">
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
@@ -45,7 +44,7 @@ export function FeaturedEvents({ games }: FeaturedEventsProps) {
             Try again
           </Button>
         </div>
-      ) : !events.data?.length ? (
+      ) : !featured.length ? (
         <div role="status" className="space-y-4 rounded-xl border bg-card p-8 text-center">
           <CalendarDays className="mx-auto size-8 text-primary" aria-hidden="true" />
           <p className="font-semibold">The next game night is on its way.</p>
@@ -58,14 +57,11 @@ export function FeaturedEvents({ games }: FeaturedEventsProps) {
         </div>
       ) : (
         <ul className="grid gap-6 md:grid-cols-3">
-          {events.data.slice(0, 3).map((event) => {
-            const game = games?.find((item) => item.id === event.gameId)
-            return (
-              <li key={event.id}>
-                <EventCard event={event} gameName={game?.name} category={game?.category} />
-              </li>
-            )
-          })}
+          {featured.map((event) => (
+            <li key={event.id}>
+              <EventCard event={event} />
+            </li>
+          ))}
         </ul>
       )}
     </section>

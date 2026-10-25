@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { authClient, authConfigurationError } from '../api/auth-client'
 import { sessionAccount } from '../api/auth-api'
 import { authKey, recoveryKey } from '../api/use-auth'
+import { EVENT_DETAILS_QUERY_KEY } from '@/lib/query-keys'
 
 const recoveryMarker = 'rollcall.password-recovery'
 
@@ -15,6 +16,7 @@ export function AuthSessionSync() {
       const previous = client.getQueryData<{ id: string } | null>(authKey)
       if (previous?.id !== session?.user.id || event === 'SIGNED_OUT') {
         // Destroying queries aborts their consumed signals before a new account can render them.
+        client.removeQueries({ queryKey: EVENT_DETAILS_QUERY_KEY })
         client.removeQueries({ queryKey: ['own-profile'] })
         client.removeQueries({ queryKey: ['profile-experience'] })
         client.removeQueries({ queryKey: ['public-profile'] })
@@ -22,6 +24,7 @@ export function AuthSessionSync() {
       client.setQueryData(authKey, sessionAccount(session))
       if (session) client.setQueryData(['session'], null)
       if (event === 'PASSWORD_RECOVERY') {
+        client.removeQueries({ queryKey: EVENT_DETAILS_QUERY_KEY })
         client.setQueryData(recoveryKey, true)
         try {
           sessionStorage.setItem(recoveryMarker, 'true')

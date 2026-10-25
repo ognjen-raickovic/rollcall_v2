@@ -1,11 +1,11 @@
 ﻿# RollCall entities and API contract
 
-Shared contract for Workshop 3 mocks and implemented backend milestones through 4B.
+Shared contract for Workshop 3 mocks, backend milestones through 4B and frontend 4C-1 reads.
 Feature types live in `frontend/src/features/<domain>/types.ts`; APIs and fixtures live in
 that feature's `api/`. Real profiles and per-game experience use owner-scoped APIs; the
 database game catalog is read-only. Separate numeric demo catalogs and mock events remain
 available in explicit development demo mode. Geography/profiles/catalog use real HTTP;
-users also integrates with Supabase Auth. The backend model intentionally
+Production event reads also use real HTTP; users integrates with Supabase Auth. The backend model intentionally
 differs where stated below.
 
 ## Backend Milestones 1 through 4B: implemented API
@@ -154,7 +154,8 @@ private/unlisted/cancelled discovery. Exact contracts and errors are in
 custom persistent cover paths are deferred. Checked functions, explicit ACLs and non-bypass
 executor RLS enforce host/privacy rules through the Data API too.
 
-React event APIs/DTOs below remain mocks until 4C. Attendance/participant address authorization
+The historical numeric event APIs/DTOs below remain demo-only; production reads are 4C-1.
+Attendance/participant address authorization
 is implemented in 4B below; Storage is 4D; private codes/role-authorized access is 5.
 
 ## Persistent attendance: Milestone 4B
@@ -185,6 +186,38 @@ including legitimate private members retained after visibility changes. Leaving 
 participant-only access on subsequent requests. No room codes, new private admissions or
 admin overrides exist. See [event contracts](events-api.md) and
 [attendance verification](attendance-verification.md) for guarantees, limits and 4C requirements.
+
+## Frontend persistent event reads: Milestone 4C-1
+
+`features/events/api/event-dtos.ts` defines validated `EventSummary`, `EventPage`,
+`EventDetails` and `EventDiscoveryFilters` independently of numeric `types.ts` mocks.
+`persistent-events-api.ts` reads only GET endpoints and validates UUIDs/filters before
+HTTP, response bounds/counts/schedules/covers and viewer relationships afterward. Public
+DTOs strip address and unexpected private fields. Summary cards use actual game/city/country,
+cover, capacity/count/slots; price is omitted because summaries do not contain it. Details
+render the backend host UUID/display name directly, with a public-profile link.
+
+Homepage featured events request three upcoming public records. `/events` uses bounded
+infinite pages (`pageInfo.nextCursor`) in chronological order, with title/country/city/game/
+availability filters and URL/back/forward state. Invalid URLs show reset guidance and do
+not fetch. Category filters are applied to loaded pages using real game categories; Load More
+remains available even when the current pages contain no category match. Loaded counts are
+not global totals. Query keys include normalized filters/category scope; infinite-query
+page parameters retain the returned cursors. Inactive accumulated pages are dropped so
+changed filters start at the first cursor.
+
+Details use `[...EVENT_DETAILS_QUERY_KEY,eventUUID,viewerUUIDOrNull]`, zero inactive cache
+retention, no previous-viewer placeholders and consumed abort signals. Routes compose the
+users `useApiSession` getter; it validates the SDK session's UUID before/after HTTP. The
+returned viewer ID/host relationship must match, and UI renders address only for the matching
+host/current participant. Auth transitions remove protected queries before account state
+changes; session/refetch errors suppress protected cached data. Tokens never enter query
+keys, URLs or logs. HTTP paths stay on the configured API origin and redirects are rejected.
+
+Production create/edit/join/leave/delete frontend controls await 4C-2 and never call mock
+APIs. Numeric fixtures/forms/attendance are isolated at opt-in development `/demo/events/*`;
+there is no mixed list or fallback. Backend mutation endpoints are unchanged and can be
+used by local test fixtures. See [frontend verification](event-frontend-verification.md).
 
 ## Real profiles and per-game experience: Milestone 3B
 

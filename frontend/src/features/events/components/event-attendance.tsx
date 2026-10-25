@@ -51,7 +51,7 @@ export function EventAttendance({
       leave.mutate(variables, {
         onSuccess: () => {
           if (event.visibility === 'private')
-            void navigate('/events', {
+            void navigate('/demo/events', {
               replace: true,
               state: { eventNotice: 'You’ve left the private event.' },
             })
@@ -137,7 +137,7 @@ export function EventAttendance({
       )}
       {isOrganizer ? (
         <Button asChild variant="outline" className="w-full">
-          <Link to={`/events/${event.id}/edit`}>Edit Event</Link>
+          <Link to={`/demo/events/${event.id}/edit`}>Edit Event</Link>
         </Button>
       ) : (
         <Button

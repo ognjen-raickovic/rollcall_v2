@@ -5,7 +5,7 @@ import { GameSymbol } from '@/components/game-symbol'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 
-import { useGames } from '../api/use-games'
+import { useCatalogGames } from '../api/use-catalog'
 import type { GameCategory } from '../types'
 
 const categories: { id: GameCategory; title: string; description: string }[] = [
@@ -16,7 +16,7 @@ const categories: { id: GameCategory; title: string; description: string }[] = [
 ]
 
 export function GameCategories() {
-  const games = useGames()
+  const games = useCatalogGames()
   return (
     <section aria-labelledby="categories-title" className="py-8 md:py-12">
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">

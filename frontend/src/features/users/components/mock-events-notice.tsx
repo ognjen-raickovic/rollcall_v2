@@ -7,8 +7,8 @@ export function MockEventsNotice() {
     <section className="mx-auto max-w-xl space-y-6 py-8">
       <h1 className="text-3xl font-bold tracking-tight">Event hosting is still a demo</h1>
       <p className="text-muted-foreground">
-        Real accounts are ready. Event creation, editing and attendance have not yet been connected to real
-        accounts or persistent storage.
+        This development area uses numeric demo players and in-memory events. Your real account can view
+        persistent events through Explore events; it cannot act as a demo player.
       </p>
       {demoModeEnabled && (
         <p className="text-sm text-muted-foreground">

@@ -1,22 +1,15 @@
 import { ArrowUpRight, MapPin, Users } from 'lucide-react'
 import { Link } from 'react-router'
 
-import type { Event } from '../types'
+import type { EventSummary } from '../api/event-dtos'
 import { EventImage } from './event-image'
 
-type EventCardProps = { event: Event; gameName?: string; category?: string }
+type EventCardProps = { event: EventSummary }
 
-export function EventCard({ event, gameName, category }: EventCardProps) {
+export function EventCard({ event }: EventCardProps) {
   const date = new Date(event.startsAt)
-  const seats = event.capacity - event.attendeeIds.length
-  const availability =
-    event.status === 'cancelled'
-      ? 'Cancelled'
-      : date.getTime() <= Date.now()
-        ? 'Past event'
-        : seats > 0
-          ? `${seats} ${seats === 1 ? 'seat' : 'seats'} open`
-          : 'Full · 0 seats open'
+  const seats = event.availableSlots
+  const availability = seats > 0 ? `${seats} ${seats === 1 ? 'seat' : 'seats'} open` : 'Full · 0 seats open'
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-xl border bg-card transition-colors hover:border-primary/60">
       <Link
@@ -25,9 +18,9 @@ export function EventCard({ event, gameName, category }: EventCardProps) {
         className="relative flex h-40 items-center justify-center overflow-hidden bg-secondary focus-visible:outline-2 focus-visible:outline-ring focus-visible:-outline-offset-2"
       >
         <EventImage
-          src={event.imageUrl}
+          src={event.cover.imageUrl}
           title={event.title}
-          category={category}
+          category={event.game.category}
           className="absolute inset-0"
         />
         <span className="absolute top-4 left-4 rounded-md border bg-card px-3 py-2 text-center">
@@ -36,15 +29,10 @@ export function EventCard({ event, gameName, category }: EventCardProps) {
           </span>
           <span className="block text-xl leading-tight font-bold">{date.getDate()}</span>
         </span>
-        <span className="absolute right-4 bottom-4 rounded-md bg-background px-3 py-1 text-xs font-medium">
-          {event.price === 0
-            ? 'Free entry'
-            : new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'EUR' }).format(event.price)}
-        </span>
       </Link>
       <div className="flex flex-1 flex-col gap-3 p-6">
         <p className="text-xs font-semibold tracking-wide text-primary uppercase">
-          {gameName ?? 'Tabletop gaming'} ·{' '}
+          {event.game.name} ·{' '}
           <time dateTime={event.startsAt}>
             {date.toLocaleDateString('en-GB', { weekday: 'short' })},{' '}
             {date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
@@ -58,14 +46,12 @@ export function EventCard({ event, gameName, category }: EventCardProps) {
         </Link>
         <p className="flex items-start gap-2 text-sm text-muted-foreground">
           <MapPin className="mt-1 size-4 shrink-0" aria-hidden="true" />
-          {[event.venue, event.location?.cityName ?? event.city, event.location?.countryName ?? 'Montenegro']
-            .filter(Boolean)
-            .join(', ')}
+          {[event.venue, event.city.name, event.country.name].filter(Boolean).join(', ')}
         </p>
         <div className="mt-auto flex items-center justify-between gap-2 border-t pt-4 text-xs text-muted-foreground">
           <span className="flex items-center gap-2">
             <Users className="size-4" aria-hidden="true" />
-            {event.attendeeIds.length}/{event.capacity} players
+            {event.participantCount}/{event.capacity} players
           </span>
           <span className="flex items-center gap-2 text-primary">
             {availability}

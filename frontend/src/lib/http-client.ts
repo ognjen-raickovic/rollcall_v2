@@ -16,6 +16,7 @@ type HttpOptions = {
   body?: unknown
   token?: string
   signal?: AbortSignal
+  resource?: 'profile' | 'event'
 }
 
 export async function httpRequest<T>(
@@ -23,6 +24,7 @@ export async function httpRequest<T>(
   schema: ZodType<T>,
   options: HttpOptions = {},
 ): Promise<T> {
+  const resource = options.resource ?? 'profile'
   const configured = (import.meta.env.VITE_API_ORIGIN ?? '').trim()
   const origin = new URL(configured || window.location.origin)
   if (
@@ -34,9 +36,12 @@ export async function httpRequest<T>(
     origin.hash
   )
     throw new Error('The API origin is invalid. Check the application configuration.')
+  const url = new URL(path, origin)
+  if (!path.startsWith('/api/') || url.origin !== origin.origin)
+    throw new Error('The API request address is invalid.')
   let response: Response
   try {
-    response = await fetch(new URL(path, origin), {
+    response = await fetch(url, {
       method: options.method ?? 'GET',
       headers: {
         Accept: 'application/json',
@@ -48,10 +53,11 @@ export async function httpRequest<T>(
         ? AbortSignal.any([options.signal, AbortSignal.timeout(5000)])
         : AbortSignal.timeout(5000),
       cache: 'no-store',
+      redirect: 'error',
     })
   } catch (error) {
     if (options.signal?.aborted) throw error
-    throw new Error('The profile service is unavailable. Check your connection and try again.')
+    throw new Error(`The ${resource} service is unavailable. Check your connection and try again.`)
   }
   if (!response.ok) {
     const fields: Record<string, string[]> = {}
@@ -79,10 +85,14 @@ export async function httpRequest<T>(
       response.status === 401
         ? 'Your session could not be verified. Log in again to continue.'
         : response.status === 404
-          ? 'This profile or game could not be found.'
+          ? resource === 'event'
+            ? 'This event could not be found or is not available to this account.'
+            : 'This profile or game could not be found.'
           : response.status === 400
             ? 'Check the highlighted fields and try again.'
-            : 'The profile service could not complete this request. Please try again.',
+            : response.status === 403 && resource === 'event'
+              ? 'This account does not have access to this event.'
+              : `The ${resource} service could not complete this request. Please try again.`,
       fields,
     )
   }
@@ -93,5 +103,5 @@ export async function httpRequest<T>(
   } catch {
     /* Treat malformed JSON like an invalid response contract. */
   }
-  throw new Error('The profile service returned unexpected data. Please try again.')
+  throw new Error(`The ${resource} service returned unexpected data. Please try again.`)
 }
