@@ -62,7 +62,7 @@ export function useEventForm({ event, currentUserId, games }: UseEventFormOption
       const saved = event
         ? await update.mutateAsync({ id: event.id, changes: input, actor })
         : await create.mutateAsync({ input, actor })
-      await navigate(`/events/${saved.id}`, {
+      await navigate(`/demo/events/${saved.id}`, {
         replace: true,
         state: {
           eventNotice: event

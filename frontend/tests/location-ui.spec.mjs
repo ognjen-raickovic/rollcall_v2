@@ -35,29 +35,14 @@ test.beforeEach(async ({ page }, info) => {
   )
 })
 
-test('homepage location search bridges legacy fixtures and legacy editing requires confirmation', async ({
-  page,
-}, info) => {
+test('isolated demo legacy editing requires a confirmed real city suggestion', async ({ page }) => {
   const errors = []
   page.on('pageerror', (error) => errors.push(error.message))
   page.on('console', (message) => {
     if (message.type() === 'error') errors.push(message.text())
   })
-  await page.goto('/')
-  await expect(page.locator('#home-location-country')).toBeEnabled()
-  await expect(page.locator('article')).toHaveCount(3)
-  await expect(page.getByRole('heading', { name: 'Good games. Better company.' })).toBeVisible()
-  await page.screenshot({ path: info.outputPath('homepage.png'), fullPage: true })
+  await page.goto('/demo/events/1')
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
-  await page.locator('#home-location-country').selectOption('ME')
-  const id = await chooseCity(page, 'home-location', 'Niksic', 'Nikšić')
-  await page.locator('#discovery-search').fill('Commander')
-  await page.getByRole('button', { name: 'Find events', exact: true }).click()
-  await expect(page).toHaveURL(new RegExp(`cityId=${id}`))
-  await expect(page.getByRole('link', { name: 'Commander night in Niksic', exact: true })).toBeVisible()
-  await expect(page.locator('article')).toHaveCount(1)
-  await page.getByRole('link', { name: 'Reset filters', exact: true }).click()
-  await page.getByRole('link', { name: 'First adventure: D&D in Podgorica', exact: true }).click()
   await expect(page.getByText('18 Bokeska Street', { exact: true })).toHaveCount(0)
   await page.getByRole('link', { name: 'Log in', exact: true }).click()
   await signIn(page)
@@ -70,11 +55,11 @@ test('homepage location search bridges legacy fixtures and legacy editing requir
   await expect(page.locator('#event-location-city')).toHaveAttribute('aria-invalid', 'true')
   await chooseCity(page, 'event-location', 'Podgorica', 'Podgorica')
   await page.getByRole('button', { name: 'Save changes', exact: true }).click()
-  await expect(page).toHaveURL(/\/events\/1$/)
+  await expect(page).toHaveURL(/\/demo\/events\/1$/)
   expect(errors).toEqual([])
 })
 
-test('four-country creation, optional venue, discovery history, editing and participation', async ({
+test('isolated demo four-country creation, optional venue, editing and participation', async ({
   page,
 }, info) => {
   const errors = []
@@ -91,7 +76,8 @@ test('four-country creation, optional venue, discovery history, editing and part
     ['BA', 'Sarajevo', 'Sarajevo', 'Bosnia and Herzegovina'],
     ['HR', 'Zagreb', 'Zagreb', 'Croatia'],
   ]) {
-    await page.getByRole('link', { name: 'Host an event', exact: true }).first().click()
+    await page.getByRole('link', { name: 'Demo events', exact: true }).click()
+    await page.getByRole('link', { name: 'Create demo event', exact: true }).click()
     await expect(page.locator('#event-location-country')).toBeEnabled()
     await expect(page.locator('#event-location-country option')).toHaveCount(5)
     await page.locator('#event-title').fill(`Location journey ${code}`)
@@ -107,7 +93,7 @@ test('four-country creation, optional venue, discovery history, editing and part
     if (code === 'ME') {
       await page.locator('#event-location-city').fill('Podgorica')
       await page.getByRole('button', { name: 'Create Event', exact: true }).click()
-      await expect(page).toHaveURL(/\/events\/new$/)
+      await expect(page).toHaveURL(/\/demo\/events\/new$/)
       await expect(page.locator('#event-location-city')).toHaveAttribute('aria-invalid', 'true')
     }
     const cityId = await chooseCity(page, 'event-location', query, city, code === 'ME')
@@ -121,35 +107,12 @@ test('four-country creation, optional venue, discovery history, editing and part
     await expect(page.getByText(`${city}, ${country}`, { exact: true }).first()).toBeVisible()
     events[code] = { path: new URL(page.url()).pathname, cityId, city }
   }
-  await page.getByRole('link', { name: 'Explore events', exact: true }).first().click()
+  await page.getByRole('link', { name: 'Demo events', exact: true }).click()
   for (const code of ['ME', 'RS', 'BA', 'HR']) {
-    await page.locator('#filter-location-country').selectOption(code)
-    await expect(page.locator('#filter-location-city')).toHaveValue('')
-    await page.getByRole('button', { name: 'Search', exact: true }).click()
-    await expect(page).toHaveURL(new RegExp(`country=${code}`))
     await expect(page.getByRole('link', { name: `Location journey ${code}`, exact: true })).toBeVisible()
   }
-  await page.locator('#filter-location-country').selectOption('RS')
-  const selected = await chooseCity(page, 'filter-location', 'Beograd', 'Belgrade')
-  expect(selected).toBe(events.RS.cityId)
-  await page.locator('#event-search').fill('Location journey RS')
-  await page.locator('#event-game').selectOption('1')
-  await page.locator('#event-availability').selectOption('true')
-  await page.getByRole('button', { name: 'Search', exact: true }).click()
-  await expect(page).toHaveURL(new RegExp(`cityId=${selected}`))
-  await expect(page.getByRole('link', { name: 'Location journey RS', exact: true })).toBeVisible()
-  await expect(page.locator('article')).toHaveCount(1)
-  await page.screenshot({ path: info.outputPath('discovery-location.png'), fullPage: true })
+  await page.screenshot({ path: info.outputPath('demo-locations.png'), fullPage: true })
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
-  await page.getByRole('link', { name: 'Reset filters', exact: true }).click()
-  await expect(page.locator('#filter-location-country')).toHaveValue('')
-  await expect(page.locator('#filter-location-city')).toBeDisabled()
-  await page.goBack()
-  await expect(page.locator('#filter-location-country')).toHaveValue('RS')
-  await expect(page.locator('#filter-location-city')).toHaveValue('Belgrade')
-  await expect(page.locator('article')).toHaveCount(1)
-  await page.goForward()
-  await expect(page.locator('#filter-location-country')).toHaveValue('')
   await page.getByRole('link', { name: 'Location journey RS', exact: true }).click()
   await page.getByRole('link', { name: /^Edit event$/i }).click()
   await expect(page.locator('#event-location-city')).toHaveValue('Belgrade')
@@ -204,7 +167,7 @@ test('country retry, city retry, aliases, keyboard, debounce and stale responses
   })
   await page.goto('/events')
   await expect(page.getByRole('button', { name: 'Retry countries' })).toBeVisible()
-  await expect(page.locator('article')).toHaveCount(7)
+  await expect(page.getByRole('heading', { name: 'Find your next game night' })).toBeVisible()
   const failedAttempts = countryRequests
   failCountries = false
   await page.getByRole('button', { name: 'Retry countries' }).click()

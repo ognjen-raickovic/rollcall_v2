@@ -12,9 +12,9 @@ const links = [
   { to: '/events/new', label: 'Host an event' },
 ]
 
-type AppLayoutProps = { account: ReactNode }
+type AppLayoutProps = { account: ReactNode; showDemoEvents?: boolean }
 
-export function AppLayout({ account }: AppLayoutProps) {
+export function AppLayout({ account, showDemoEvents = false }: AppLayoutProps) {
   return (
     <div className="flex min-h-dvh flex-col">
       <a
@@ -54,6 +54,16 @@ export function AppLayout({ account }: AppLayoutProps) {
                 </NavLink>
               </li>
             ))}
+            {showDemoEvents && (
+              <li>
+                <NavLink
+                  to="/demo/events"
+                  className="text-muted-foreground hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring"
+                >
+                  Demo events
+                </NavLink>
+              </li>
+            )}
           </ul>
           <div className="ml-auto flex items-center gap-2 md:ml-0">
             <ThemeToggle />
@@ -81,7 +91,7 @@ export function AppLayout({ account }: AppLayoutProps) {
           <p>
             <span className="font-semibold text-foreground">RollCall</span> · Made for good company.
           </p>
-          <p className="text-xs">Workshop demo · No real bookings</p>
+          <p className="text-xs">Community preview · Event actions coming soon</p>
         </div>
       </footer>
     </div>

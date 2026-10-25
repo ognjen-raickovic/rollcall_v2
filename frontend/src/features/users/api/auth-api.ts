@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import type { Session } from '@supabase/supabase-js'
+import { HttpError } from '@/lib/http-client'
 
 import type { Account } from '../types'
 import { authClient, authConfigurationError } from './auth-client'
@@ -46,6 +47,16 @@ function callback(path: string): string {
 }
 
 export const authApi = {
+  accessToken: async (expectedUserId: string | null): Promise<string | null> => {
+    if (authConfigurationError()) {
+      if (expectedUserId === null) return null
+      throw new HttpError(401, 'Your session could not be verified. Log in again to continue.')
+    }
+    const { data, error } = await authClient().auth.getSession()
+    if (error || (data.session?.user.id ?? null) !== expectedUserId)
+      throw new HttpError(401, 'Your account changed. Log in again or reload this page.')
+    return data.session?.access_token ?? null
+  },
   get: async (): Promise<Account | null> => {
     if (authConfigurationError()) return null
     const { data, error } = await authClient().auth.getSession()

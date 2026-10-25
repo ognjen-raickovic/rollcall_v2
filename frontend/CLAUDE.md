@@ -17,7 +17,7 @@ Dependency direction: shared code -> features -> app, never the other way around
 - `src/app/router.tsx`: all routes; `src/app/providers.tsx`: global providers (TanStack Query)
 - `src/app/routes/`: one file per route, only combines features and layout
 - `src/features/<name>/types.ts`: entity types of that feature
-- `src/features/<name>/api/<name>-api.ts`: data access (geography/profiles/real game catalog use Fastify; users owns Supabase Auth; numeric event/demo APIs remain mocked)
+- `src/features/<name>/api/<name>-api.ts`: data access (geography/profiles/catalog/production event reads use Fastify; users owns Supabase Auth; separate numeric event/demo APIs remain mocked)
 - `src/features/<name>/api/use-<name>.ts`: TanStack Query hooks around the API
 - `src/features/<name>/components/`: components of that feature (e.g. `events-list.tsx`)
 - `src/components/ui/`: shadcn/ui components, added with `pnpm dlx shadcn@latest add <name>` (run inside `frontend/`)
@@ -46,8 +46,9 @@ Dependency direction: shared code -> features -> app, never the other way around
 - Milestone 3A adds real Auth in the users feature. Its Supabase browser client uses only
   the configured public URL/publishable key, PKCE and supported session persistence/refresh.
   Do not query application tables directly from the browser. Read `../docs/authentication.md`.
-  Milestone 3B adds real UUID profiles, private birth year and per-game experience. Keep event
-  CRUD/attendance and numeric demo catalogs mocked. Real UUID accounts and numeric
+  Milestone 3B adds real UUID profiles, private birth year and per-game experience. Milestone
+  4C-1 connects production event reads; mutations await 4C-2. Keep numeric demos separate
+  under development-only `/demo/events` routes. Real UUID accounts and numeric
   demo identities remain separate; neither identity may be coerced into the other.
   Explicit demo mode requires `import.meta.env.DEV` and `VITE_ENABLE_DEMO_MODE=true`;
   production builds cannot select fixture profiles. Read `../docs/location-ui.md` for geography.
@@ -61,9 +62,9 @@ Dependency direction: shared code -> features -> app, never the other way around
 - Venue is optional (blank string when omitted; 2–120 characters when provided). Keep
   address required, but render the exact value only to the host/current participants.
   Mock data remains in browser memory and is not a privacy boundary; real server enforcement
-  is enforced by the separate Milestone 4A event API, which React does not consume yet.
+  is enforced by the Milestone 4A/4B event API, consumed by real read pages in 4C-1.
   Milestone 4B permits verified current participants as well as hosts to read protected
-  addresses/private details, with no new private admission. React still uses its mock APIs.
+  addresses/private details, with no new private admission. Demo mutations remain mocked.
 - Read `../SPEC.md` for scope. Homepage, demo login, discovery/details, and shared create/edit
   forms, optional browser-side covers, curated tags, and light/dark themes are implemented.
   Recurring events, invitations, cloud uploads, and advanced administration remain out of scope.
@@ -80,8 +81,22 @@ Dependency direction: shared code -> features -> app, never the other way around
   The demo selection is tab-scoped; real Auth uses the SDK's persisted/refreshable session.
   Supabase callbacks must not await other Auth SDK calls inside `onAuthStateChange`.
   Profile editing/onboarding and per-game experience are implemented in Milestone 3B.
-  Milestones 4A/4B implement UUID event backend APIs and real attendance; React migration is 4C. Do not switch
-  event mocks without that explicit task. See `../docs/events-api.md` for the separate DTOs.
+  Milestones 4A/4B implement UUID event backend APIs and real attendance; 4C-1 implements
+  React reads only. See `../docs/events-api.md` for DTOs and 4C-2 mutation requirements.
+- `api/event-dtos.ts`, `persistent-events-api.ts` and `use-persistent-events.ts` own real
+  event read schemas/HTTP/query hooks. Do not coerce UUIDs into `types.ts` numeric mocks.
+  Details receive the route-composed `useApiSession` getter, verify viewer identity before
+  and after HTTP, and use `EVENT_DETAILS_QUERY_KEY` plus event/viewer UUIDs. Auth cleanup
+  destroys these queries before account transitions. No tokens in keys/URLs; no retained
+  sensitive cache or previous-account placeholder data. Auth errors hide cached addresses.
+- Discovery is public, cursor-paginated and never falls back to mocks. Changing filter scopes
+  drops accumulated pages; category filtering applies to loaded chronological pages and
+  keeps Load More available until exhaustion. Use real catalog IDs. Public cards have no
+  price/address because summaries omit them. `EventDetailsView` shares presentation between
+  real and explicit demo controllers, while action controls remain separate.
+- `/events/new` and `/events/:eventId/edit` explain pending hosting; real detail mutation
+  buttons are disabled honestly. Demo forms/actions stay under `/demo/events/*`, are
+  development-only with opt-in, and never receive UUID actors/events. Keep useful mock tests.
 - Read `../docs/profiles.md`. Public profiles exclude email/private birth year/roles. Compose
   the existing geography picker and real game catalog into profile forms at routes; never
   import geography/games from users. Clear private profile caches on logout/account changes.

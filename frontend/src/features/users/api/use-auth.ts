@@ -1,4 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useCallback } from 'react'
+import { EVENT_DETAILS_QUERY_KEY } from '@/lib/query-keys'
 
 import { authApi } from './auth-api'
 
@@ -7,6 +9,18 @@ export const recoveryKey = ['auth-recovery'] as const
 
 export function useAuth() {
   return useQuery({ queryKey: authKey, queryFn: authApi.get, staleTime: Infinity, retry: false })
+}
+
+export function useApiSession() {
+  const account = useAuth()
+  const viewerId = account.data?.id ?? null
+  const getAccessToken = useCallback(() => authApi.accessToken(viewerId), [viewerId])
+  return {
+    viewerId,
+    getAccessToken,
+    ready: !account.isPending && !account.error,
+    error: account.error,
+  }
 }
 
 export function useAccountIdentity() {
@@ -25,6 +39,7 @@ export function useAuthLogin() {
   return useMutation({
     mutationFn: authApi.login,
     onSuccess: (account) => {
+      client.removeQueries({ queryKey: EVENT_DETAILS_QUERY_KEY })
       client.setQueryData(authKey, account)
       client.setQueryData(['session'], null)
     },
@@ -36,6 +51,7 @@ export function useRegister() {
   return useMutation({
     mutationFn: authApi.register,
     onSuccess: ({ account }) => {
+      client.removeQueries({ queryKey: EVENT_DETAILS_QUERY_KEY })
       if (account) client.setQueryData(authKey, account)
       client.setQueryData(['session'], null)
     },
@@ -47,6 +63,7 @@ export function useAuthLogout() {
   return useMutation({
     mutationFn: authApi.logout,
     onSuccess: () => {
+      client.removeQueries({ queryKey: EVENT_DETAILS_QUERY_KEY })
       client.setQueryData(authKey, null)
       client.setQueryData(['session'], null)
       client.setQueryData(recoveryKey, false)
@@ -70,6 +87,7 @@ export function useUpdatePassword() {
   return useMutation({
     mutationFn: authApi.updatePassword,
     onSuccess: () => {
+      client.removeQueries({ queryKey: EVENT_DETAILS_QUERY_KEY })
       client.setQueryData(authKey, null)
       client.setQueryData(recoveryKey, false)
     },

@@ -11,11 +11,17 @@ with inline validation and host authorization.
 The final polish adds optional custom event covers, curated multi-select tags, and a
 matching light theme alongside the default dark theme.
 
+**Current frontend milestone: 4C-1.** The homepage, `/events` and UUID event details now
+read persistent events from Fastify/PostgreSQL, with real filters, cursor pagination and
+viewer-authorized addresses. Frontend event mutations await 4C-2 and show clear unavailable
+states. Numeric workflows are isolated at development-only `/demo/events/*`; public pages
+never fall back to fixtures. See [frontend integration verification](docs/event-frontend-verification.md).
+
 **Backend Milestone 1** adds an independent Fastify API, Supabase database schema and
 local development tools. Its original boundary was health and geography; the current
 Milestones 3A/3B implement real authentication and profiles, and 4A adds persistent event
-backend APIs. Milestone 4B adds real backend attendance; React events still use mocks and
-uploads remain future work.
+backend APIs. Milestone 4B adds real backend attendance. The 4C-1 frontend reads real events;
+frontend mutations and uploads remain later work.
 Start with [backend setup](backend/README.md),
 [architecture](docs/backend-architecture.md), [schema](docs/database-schema.md), and
 [roadmap](docs/backend-roadmap.md).
@@ -80,13 +86,14 @@ pnpm build                      # frontend/dist and backend/dist
 pnpm test:mock                   # mock API integration checks, no backend needed
 pnpm test:backend                # backend tests without a running database
 pnpm test:profiles               # focused frontend profile/account-isolation checks
+pnpm test:events                 # real event clients, pagination and viewer privacy
 pnpm format                     # Prettier on frontend/src
 pnpm --filter frontend preview  # preview the production build
 ```
 
 On PowerShell with disabled script execution, use `pnpm.cmd` instead of `pnpm`.
-The frontend builds and renders mock event browsing without a backend. Country/city
-selection requires Fastify and local Supabase; unavailable geography displays errors and
+The frontend builds without a running backend, but public event browsing and country/city
+selection require Fastify and local Supabase; unavailable services display errors and
 retry controls, without a silent fixture fallback. Real authentication additionally requires
 the public local Supabase URL and publishable/anon key in `frontend/.env`.
 
@@ -141,7 +148,12 @@ checks explicitly. The mock suite
 covers entity references, validation, authorization, private access, capacity, concurrent
 joins, response isolation, and demo sessions. Preview the production build, then review
 home, discovery, details, login, and create/edit at 375px and 1440px. Keep creation/editing
-journeys within one page runtime: reloading intentionally restores fixture event data.
+demo journeys within one page runtime: reloading restores numeric fixtures. Real event
+reads use persistent PostgreSQL data. For real event browser checks, configure local Auth,
+start the API/frontend, set `RUN_LOCAL_EVENT_READ_UI=true` and run
+`pnpm --filter frontend exec playwright test tests/events-read-ui.spec.mjs`. It creates
+isolated confirmed accounts/events through the local API and cleans them afterward, without
+resetting existing data. Traces are disabled to keep session credentials out of artifacts.
 See [the final frontend review](docs/frontend-review.md) for executed checks and limitations.
 
 ## Architecture and scope
@@ -158,7 +170,7 @@ frontend/
   src/app/                   Providers, router, route composition
   src/features/users/        Real Auth, UUID profile/experience APIs/forms, separate numeric demo session
   src/features/games/        Real read-only profile game catalog plus unchanged event catalog mocks
-  src/features/events/       Types, mock CRUD/attendance, shared validation/form, discovery/details
+  src/features/events/       Real read DTOs/clients/hooks, shared views, isolated numeric demo CRUD
   src/features/geography/    HTTP geography API/hooks and reusable country/city controls
   src/components/ui/         Starter shadcn primitives
   src/components/layout/     Navigation and app layout
@@ -173,6 +185,7 @@ docs/backend-roadmap.md      Milestone boundaries and future integration
 docs/events-api.md           Persistent backend event contracts and privacy model
 docs/events-api-verification.md Executed Milestone 4A checks and remaining boundaries
 docs/attendance-verification.md Executed Milestone 4B lifecycle, privacy and concurrency checks
+docs/event-frontend-verification.md Executed 4C-1 read/cache/browser checks and 4C-2 boundary
 docs/geographic-import.md    GeoNames scope, attribution, safe reruns and search behavior
 .claude/                     Preserved rules, commands, design skill, reviewer, format hook
 ```
@@ -184,10 +197,16 @@ Shared reference IDs validate mock relationships without cross-feature imports. 
 and events share only the `src/lib/location.ts` selection-reference contract; routes compose
 their controls rather than introducing feature imports.
 
+Real event reads validate backend UUID DTOs; public cards use structured game/location/count
+fields and only authorized details include addresses. Detail caches include the verified viewer,
+are destroyed on account changes/logout, and reject late responses after identity changes.
+Discovery uses public cursor pages. Category filtering applies to loaded pages, with Load More
+available until exhaustion; the displayed number is loaded matches, not the total event count.
+
 Mock writes take an explicit numeric `{ userId }` actor and simulate event permissions.
-They are separate from real Supabase UUID identity. Event data lives in memory and refresh
+They are separate from real Supabase UUID identity. Demo data lives in memory and refresh
 resets changes. To demonstrate legacy event writes, explicitly set
-`VITE_ENABLE_DEMO_MODE=true`, restart the Vite development server and use `/demo/login`.
+`VITE_ENABLE_DEMO_MODE=true`, restart Vite and use `/demo/login` and `/demo/events`.
 Its selected profile ID stays in sessionStorage for the tab; production builds disable
 selection even if the flag is set. A real Auth session does not supply a mock actor.
 Public browsing/geography works independently. Payments, messaging, maps and waitlists
@@ -200,12 +219,17 @@ Routes: `/`, `/events`, `/events/:eventId`, `/events/new`, `/events/:eventId/edi
 Search/category links filter the upcoming public event list through URL parameters. Search
 matches event titles; country/city, game, and open-seat controls combine with it and can be reset.
 Event details show the host, game, schedule, tags, minimum age, visibility, and
-capacity. Join/leave updates visible seats and provides success/error feedback; anonymous
-protected actions redirect to login and back. Full, past, and canceled tables cannot be joined.
-Explicit development demo users can create mock events; only the mock host can edit them.
-Real accounts see the current persistence limitation. Both routes use a shared
-React Hook Form + Zod form, preserving entered data on errors and navigating to details on
-success. Public future events appear in matching discovery filters. UI branding is always **RollCall**.
+capacity and viewer-specific host/participant state. Public event action buttons are disabled
+honestly until 4C-2. `/events/new` and `/events/:eventId/edit` explain pending hosting rather
+than calling mock mutations. No UUID event is passed to a numeric fixture API.
+
+### Isolated development demo
+
+Only explicit development demo players can use `/demo/events/new` and
+`/demo/events/:eventId/edit`. They retain the shared React Hook Form/Zod form, covers,
+inline errors, mock join/leave and numeric host authorization. Demo details and success/
+cancel/edit navigation stay under `/demo/events/*`. No such routes exist in production.
+The following cover/fixture behavior describes this historical demo, not persistent event storage.
 
 The location picker requires a backend suggestion before submission and retains its real
 integer city ID plus display labels. Legacy fixtures keep city strings and a known ME

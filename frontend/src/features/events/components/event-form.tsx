@@ -59,7 +59,7 @@ export function EventForm({ event, currentUserId, hostName, games, renderLocatio
   const countryCode = form.watch('countryCode') ?? ''
   const city = form.watch('city')
   const fallback = eventCover(games.find((game) => game.id === gameId)?.category)
-  const cancelTo = event ? `/events/${event.id}` : '/events'
+  const cancelTo = event ? `/demo/events/${event.id}` : '/demo/events'
   const inputStyle = 'h-11 bg-background'
   const selectStyle =
     'h-11 w-full min-w-0 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring aria-invalid:border-destructive'

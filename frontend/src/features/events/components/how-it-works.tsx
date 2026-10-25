@@ -33,13 +33,13 @@ export function HowItWorks() {
           },
           {
             Icon: CalendarCheck,
-            title: 'Take your seat',
-            description: 'Pick an event, choose a demo profile, and join the party.',
+            title: 'Get to know the table',
+            description: 'Explore the host, schedule and player guidance. Joining will be available soon.',
           },
           {
             Icon: Users,
-            title: 'Show up. Play on.',
-            description: 'Bring your curiosity. Good company will take care of the rest.',
+            title: 'Build your player profile',
+            description: 'Share your favorite games and experience, ready for your next table.',
           },
         ].map(({ Icon, title, description }, index) => (
           <li key={title}>

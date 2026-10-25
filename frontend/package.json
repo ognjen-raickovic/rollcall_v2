@@ -10,6 +10,7 @@
     "test:mock": "node --test scripts/check-mock-api.mjs",
     "test:geography": "node --test scripts/check-geography-api.mjs",
     "test:profiles": "node --test scripts/check-profiles-api.mjs",
+    "test:events": "node --test scripts/check-events-api.mjs",
     "test:ui": "playwright test",
     "lint": "oxlint && node scripts/check-boundaries.mjs",
     "format": "prettier --write src",

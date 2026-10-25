@@ -213,8 +213,9 @@ migrations with `pnpm exec supabase db push --local`, preserving existing data; 
 or rerun the geography import. Start Fastify with `pnpm dev:backend`. The database seed has
 no real events/accounts; register and confirm a real local account before creating events.
 
-React continues calling its mock event APIs and numeric demo actors. Real join/leave and
-participant address access are implemented in 4B; frontend event adapters are 4C; custom covers/Storage are
+React production reads now call the real API in 4C-1. Numeric demo actors/events remain
+isolated under opt-in development `/demo/events/*`; real frontend mutations await 4C-2.
+Real join/leave and participant address access are implemented in 4B; custom covers/Storage are
 4D; private codes and role-authorized access are 5. Account roles and claimed experience
 do not grant extra event access in 4A. No deployment or hosted migration has been performed.
 
@@ -223,3 +224,24 @@ Executed checks are recorded in [4A verification](events-api-verification.md) an
 [policy rules](https://www.postgresql.org/docs/17/sql-createpolicy.html) and
 [row locking](https://www.postgresql.org/docs/17/explicit-locking.html) describe the primitives
 used here; project-specific guarantees come from the executed database/RPC tests.
+
+## Frontend consumption: Milestone 4C-1
+
+Homepage featured events and `/events` use validated real public summaries and cursor pages.
+`/events/:eventId` validates UUIDs and uses the current Supabase session for viewer-specific
+details. Summary cards contain no protected addresses or invented prices. Details use actual
+host/game/location fields and explicit viewer state; only matching hosts/participants get an
+address. Inactive sensitive caches are discarded, auth transitions clear old queries before
+changing viewer state, abort signals cancel old requests and identity is rechecked after HTTP.
+Tokens stay out of query keys/URLs/logs; requests reject unrelated paths and redirects.
+
+Discovery keys include backend filters and the frontend category scope. Pages use the returned
+cursor, and filter changes start at the first page. Category is not a backend query parameter:
+it filters loaded pages without changing chronological order, and Load More remains available
+while the backend has further pages. Empty/error/retry states never substitute mocks.
+
+The frontend currently has no real event mutation methods. Read-only participation and host
+controls explain pending actions. Production create/edit paths show a pending-hosting page;
+numeric forms/attendance remain solely in development demo routes. Backend endpoints and
+database permissions are unchanged. See [frontend verification](event-frontend-verification.md)
+for executed checks and 4C-2 requirements.

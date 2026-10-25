@@ -17,8 +17,34 @@ now adds real Supabase Auth and verified backend identity. Milestone 3B adds rea
 private optional age information and per-game experience, keeping event/demo mocks separate.
 Milestone 4A implements persistent backend event APIs; the frontend continues using mocks.
 Milestone 4B adds real transactional attendance and participant-aware backend details.
+Milestone 4C-1 connects the React homepage, discovery and details to real event reads.
 
-## Current Milestone 4B: persistent attendance and capacity
+## Current Milestone 4C-1: real frontend event reads
+
+Homepage featured events and `/events` read persistent public events, with title, actual
+country/city/game IDs, category and open-seat filters. Discovery uses bounded backend cursor
+pages and an accessible Load More action; filter URLs/back/forward remain supported and
+filter changes restart pagination. Category filtering applies to loaded chronological pages
+and retains Load More until remaining backend pages are exhausted. Counts describe loaded
+matches, never invented community activity or an unbounded total. Empty/error/retry states
+are honest; unavailable services never trigger a mock fallback.
+
+`/events/:eventId` validates UUIDs and renders actual game/host/location/schedule/tags/
+experience/price/capacity plus viewer state. Dedicated DTOs remain separate from numeric
+demo types. Only matching authenticated hosts/current members receive protected addresses;
+public cards/metadata omit them. Details carry real session tokens only to the configured
+API origin, verify viewer identity and use account-aware keys. Auth transitions remove old
+queries before new account state; abort/post-response checks prevent stale protected data.
+
+The existing layout, default illustrations and light/dark tokens are preserved. Summary
+cards omit price because the discovery contract does not contain it. Detail actions and
+hosting/editing routes explain that frontend mutations await 4C-2; they never call mock
+mutations for UUID records. Numeric fixtures/forms/attendance remain explicitly isolated at
+development-only `/demo/events/*` with opt-in and clear nonpersistent labels. Public routes
+never merge them with real records. No Storage, codes, admin controls or backend changes
+are added. See [frontend verification](docs/event-frontend-verification.md).
+
+## Milestone 4B: persistent attendance and capacity
 
 Verified Supabase UUID accounts join/leave through POST/DELETE
 `/api/events/:eventId/attendees/me`. Both return safe JSON attendance summaries with
