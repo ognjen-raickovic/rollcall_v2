@@ -48,7 +48,7 @@ You may talk to me in any language.
   adds GeoNames imports and backend search; Milestone 2B integrates country/city selection.
   Milestone 3A adds real Supabase Auth and verified `GET /api/me`.
   Milestone 3B adds real profiles and per-game experience with a read-only database game catalog.
-  Milestone 4A adds persistent event backend APIs. React event CRUD/attendance and numeric
+  Milestones 4A/4B add persistent event backend APIs and transactional attendance. React event CRUD/attendance and numeric
   demo catalogs remain separate mocks until frontend integration in 4C.
 - Optional event covers are prepared in the browser and passed through mock APIs as bounded
   data URLs. Do not persist images in browser storage or connect cloud uploads during geography work.
@@ -97,9 +97,12 @@ You may talk to me in any language.
   profile DTOs and the real game catalog. Identity comes from verified tokens, never submitted
   actors. RLS/grants must also block cross-user/role/private-data access through the Data API.
 - Follow @docs/events-api.md for bounded public/scheduled discovery and verified host-only
-  writes, private details and exact addresses. Event tables stay closed to API roles; use
-  checked RPCs, the non-bypass executor, explicit ACLs/RLS and empty search paths. No real
-  attendance, uploads, codes or admin privileges are included in 4A. Keep React events mocked.
+  content writes. In 4B private details/addresses require the host or current membership.
+  Attendance uses verified subjects, event row locks and the existing membership/counter
+  infrastructure; private outsiders cannot join. Raw tables stay closed to API roles; use
+  checked RPCs, non-bypass executor/trigger roles, explicit ACLs/RLS and empty search paths.
+  No self-declared eligibility checks, uploads, codes or admin override. Keep React events
+  mocked until 4C. See @docs/attendance-verification.md for executed checks.
 - Follow @docs/location-ui.md for shared location references, route-composed geography controls,
   required suggestion selection, legacy compatibility and the optional venue/address boundary.
 - Report executed backend/database checks and unavailable checks separately. Prepared SQL

@@ -1,18 +1,21 @@
-# Milestone 4A: persistent event backend
+# Persistent event backend: Milestones 4A and 4B
 
 This milestone adds database-backed event HTTP operations. React event CRUD/attendance
-continues using its existing numeric mocks; frontend integration is Milestone 4C. No real
-join/leave, uploads, private codes or administration is implemented here.
+continues using its existing numeric mocks; frontend integration is Milestone 4C.
+Milestone 4B adds persistent join/leave and participant-aware details. Uploads, private
+codes and administration remain deferred.
 
 ## HTTP contract
 
 | Method/path | Access/result |
 | --- | --- |
 | `GET /api/events` | Public discovery; `{ items: EventSummary[], pageInfo: { limit, nextCursor } }` |
-| `GET /api/events/:eventId` | Public/unlisted detail, or verified private host; public/host DTO |
+| `GET /api/events/:eventId` | Public/unlisted detail, or verified private host/current participant; viewer-specific DTO |
 | `POST /api/events` | Verified real account; 201 host detail and Location header |
 | `PATCH /api/events/:eventId` | Verified host; 200 updated host detail |
 | `DELETE /api/events/:eventId` | Verified host; 204 |
+| `POST /api/events/:eventId/attendees/me` | Verified account joins its own seat; 200 AttendanceResult |
+| `DELETE /api/events/:eventId/attendees/me` | Verified account leaves its own seat; 200 AttendanceResult |
 
 IDs are UUIDs for events/accounts and positive PostgreSQL integers for games/cities/countries.
 Missing or inaccessible events use the same 404 body; malformed UUIDs return 400. Writes
@@ -59,10 +62,17 @@ cover: { kind: 'default', imageUrl: <known local game illustration> }
 Discovery summaries always have public/scheduled visibility/status. `PublicEventDetails`
 extends the summary with `description`, `host: { id, displayName }`, `minimumAge`,
 `experienceLevel`, `price`, `currency: 'EUR'`, `createdAt`, `updatedAt`.
-`HostEventDetails` additionally contains `address`; public DTOs omit that key completely.
+All detail DTOs include `viewer: { userId: UUID | null, isHost: boolean, hasJoined: boolean }`.
+Anonymous viewers have null/false/false. A verified nonparticipant gets its own UUID and
+false/false. Hosts have true/false, and participants false/true; hosts never occupy a seat.
+The backend verifies that the viewer UUID matches its independently verified request identity.
+`HostEventDetails` and `ParticipantEventDetails` additionally contain `address`; public DTOs
+omit that key completely. Discovery summaries remain viewer-independent and unchanged.
 No DTO exposes participant identities, emails, private age, roles or invitation data.
-Public/unlisted details can include past/cancelled events; private details are host-only.
-An unlisted URL never grants address access. Participant address access is deferred to 4B.
+Public/unlisted details can include past/cancelled events. Private details require the host
+or an existing membership. An unlisted URL, account role or sharing flag never grants address
+access; only the verified host/current participant gets it. Leaving removes participant-only
+address access, and subsequent private detail requests return the same 404 as missing events.
 
 ### Requests and validation
 
@@ -88,7 +98,48 @@ must provide a valid future schedule. Invalid combined public/private writes rol
 
 DELETE is a hard delete: its protected location and existing membership rows cascade;
 referenced profiles, games and cities remain. Missing/inaccessible/repeated deletes return
-404. No participant management API is introduced.
+404. No endpoint lets a host/admin remove another account's membership in this milestone.
+
+### Attendance requests, state and idempotency
+
+POST and DELETE `/api/events/:eventId/attendees/me` accept no body or `{}` and no query
+parameters. Event IDs must be UUIDs. No actor, user, profile, host or capacity field is
+accepted; the only participant identity is the verified Supabase subject. Both operations
+return 200 JSON, including no-ops:
+
+```json
+{
+  "eventId": "00000000-0000-4000-8000-000000000001",
+  "hasJoined": true,
+  "capacity": 4,
+  "participantCount": 1,
+  "availableSlots": 3
+}
+```
+
+DELETE returns `hasJoined: false`. The summary intentionally has no address or full event
+details, so leaving a private event can succeed while removing detail access. HTTP responses
+use `Cache-Control: no-store` and `Vary: Authorization`; clients must also isolate detail
+caches by verified account and invalidate discovery/detail queries after mutations.
+
+Checks occur in order: authentication, event existence/visibility, scheduled/future state,
+host exclusion, membership and capacity. Missing/inaccessible events return 404; timing,
+host and full-event conflicts return 409 `CONFLICT`. Invalid IDs/payloads/query fields return
+400; missing/invalid tokens return 401. State checks precede idempotency: even an existing
+participant cannot repeat a join/leave on a past/cancelled event. The start boundary is checked
+against actual time after acquiring the event lock.
+
+Any verified account may join public/unlisted events when those checks pass. Event experience,
+tags and minimum age remain guidance; optional private birth year or claimed game experience
+does not gate participation. A repeat join by a current participant is a no-op even if full.
+An accessible public/unlisted nonmember leave is a no-op. No-ops preserve membership timestamps,
+event count and updatedAt. The host is never a participant and gets a conflict on either action.
+
+Private outsiders cannot discover details or join/leave merely by knowing a UUID. Existing
+private participants can remain, repeat join or leave; membership may legitimately predate
+a host's visibility change. After leaving they cannot rejoin or repeat leave without another
+authorized admission mechanism; subsequent private operations return 404 to conceal existence.
+Room-code admission and role overrides are not implemented. No participant lists are exposed.
 
 ### Interim covers
 
@@ -110,23 +161,45 @@ Public RPC interfaces are `discover_events(p_filters jsonb)`, `get_event(p_event
 fields plus optional `afterStartsAt`/`afterId` instead of an encoded cursor. SQL returns
 `{ items, hasMore }`; the backend emits the HTTP pageInfo/cursor. Detail/create/update
 functions return explicit camelCase JSON DTOs; delete returns void.
+Attendance uses `join_event(p_event_id uuid)` and `leave_event(p_event_id uuid)`, returning
+the safe attendance summary above. Neither accepts a participant ID.
 
 Table permissions remain closed to ordinary clients. A narrowly scoped NOLOGIN,
 NOBYPASSRLS executor role owns hardened private functions with explicit RLS policies.
 Public wrappers are SECURITY INVOKER and delegate only to the bounded, checked private
 functions. Ownership is derived from `auth.uid()`, never an input actor. Function execution,
-schema access and table grants are explicit. Details and writes use host checks; list
+schema access and table grants are explicit. Content writes use host checks; details use
+host/current-membership checks; list
 predicates enforce discovery independently of caller identity. Protected address access
-remains host-only even if an existing sharing flag is true. Deferred location invariants
-must be checked while the authorized executor context is active.
+requires the host or current membership, regardless of sharing flags. Deferred location
+invariants run in the restricted trigger context described below.
 
 Two additive migrations implement this boundary: `20261025000200_events_api.sql` and
 `20261025000300_event_executor_identity.sql`. The latter uses a private argument-free
 `event_api_actor()` owned by the trusted migration role solely to resolve `auth.uid()`
 across Supabase's Auth-schema ownership boundary. It reads no tables and only the executor
-may execute it. There is no privileged runtime client. The executor has no membership
-writes, counter updates, host reassignment or role-management privileges. A sharing flag,
-participant record or admin role never grants address/private-detail access in 4A.
+may execute it. There is no privileged runtime client. The 4A executor has no direct counter,
+host-reassignment or role-management privileges. The 4B migration adds only owner-scoped
+membership reads/inserts/deletes behind the checked attendance functions.
+
+`20261025000400_event_attendance.sql` reuses `event_participants`, its unique event/profile
+key, foreign keys and existing counter/invariant trigger bodies. Attendance locks the event
+before checking/mutating membership; host capacity/content changes and deletion serialize
+on the same row. A lock-only executor UPDATE policy uses readable rows with `WITH CHECK
+(false)`; it allows SELECT FOR UPDATE without permitting non-host content updates. The
+existing host-only content check remains. Membership RLS depends only on the current actor,
+avoiding cyclic event/membership policies. Raw client tables remain closed.
+
+Existing counter/location-invariant triggers now run as the separate NOLOGIN/NOBYPASSRLS
+`rollcall_attendance_counter`, with SELECT on required event columns, UPDATE(participant_count)
+and SELECT(event_id) on protected locations only. It cannot read addresses, change content,
+write memberships or assign roles. Its trigger functions have empty search paths and no
+client execution grants. This allows atomic counters and deferred invariants even after a
+private leave removes the executor's detail access. Failed operations roll back membership
+and counter changes together; duplicates do not create extra rows or seats.
+The additive `20261025000500_attendance_private_recheck.sql` rechecks membership immediately
+after the lock with a fresh command snapshot, before returning private event state. This
+prevents a waiting private request from using membership removed by a concurrent leave.
 
 Direct PostgREST missing/unauthorized event RPCs use database code `P0002` (PostgREST HTTP
 500); Fastify deliberately normalizes that code to the same sanitized 404 for both cases.
@@ -141,8 +214,12 @@ or rerun the geography import. Start Fastify with `pnpm dev:backend`. The databa
 no real events/accounts; register and confirm a real local account before creating events.
 
 React continues calling its mock event APIs and numeric demo actors. Real join/leave and
-participant address policy are 4B; frontend event adapters are 4C; custom covers/Storage are
+participant address access are implemented in 4B; frontend event adapters are 4C; custom covers/Storage are
 4D; private codes and role-authorized access are 5. Account roles and claimed experience
 do not grant extra event access in 4A. No deployment or hosted migration has been performed.
 
-Implementation and executed checks are recorded in [verification](events-api-verification.md).
+Executed checks are recorded in [4A verification](events-api-verification.md) and
+[4B attendance verification](attendance-verification.md). PostgreSQL's
+[policy rules](https://www.postgresql.org/docs/17/sql-createpolicy.html) and
+[row locking](https://www.postgresql.org/docs/17/explicit-locking.html) describe the primitives
+used here; project-specific guarantees come from the executed database/RPC tests.

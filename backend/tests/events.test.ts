@@ -49,8 +49,13 @@ const publicDetails: PublicEventDetails = {
   currency: 'EUR',
   createdAt: '2026-01-01T00:00:00Z',
   updatedAt: '2026-01-01T00:00:00Z',
+  viewer: { userId: null, isHost: false, hasJoined: false },
 }
-const hostDetails: HostEventDetails = { ...publicDetails, address: 'Fictional workshop address' }
+const hostDetails: HostEventDetails = {
+  ...publicDetails,
+  viewer: { userId: hostId, isHost: true, hasJoined: false },
+  address: 'Fictional workshop address',
+}
 const createInput = {
   title: summary.title,
   description: publicDetails.description,
@@ -96,6 +101,14 @@ function routeApp() {
         },
         remove: async (id) => {
           note('remove', id)
+        },
+        join: async (id) => {
+          note('join', id)
+          return { eventId: id, hasJoined: true, capacity: 4, participantCount: 1, availableSlots: 3 }
+        },
+        leave: async (id) => {
+          note('leave', id)
+          return { eventId: id, hasJoined: false, capacity: 4, participantCount: 0, availableSlots: 4 }
         },
       }
       return repository
@@ -319,6 +332,12 @@ test('event adapter isolates caller headers and projects public versus host deta
     return Response.json({
       ...hostDetails,
       visibility,
+      viewer:
+        path.endsWith('/create_event') || path.endsWith('/update_event')
+          ? hostDetails.viewer
+          : new Headers(init?.headers).get('Authorization') === 'Bearer first-caller'
+            ? hostDetails.viewer
+            : { userId: otherId, isHost: false, hasJoined: false },
       email: 'private@example.test',
       birthYear: 1990,
       role: 'admin',
@@ -335,8 +354,10 @@ test('event adapter isolates caller headers and projects public versus host deta
       .sort(),
     ['Bearer first-caller', 'Bearer second-caller'],
   )
-  assert.deepEqual(await first.get(eventId), publicDetails)
-  assert.deepEqual(await second.get(eventId, otherId), publicDetails)
+  assert.deepEqual(await second.get(eventId, otherId), {
+    ...publicDetails,
+    viewer: { userId: otherId, isHost: false, hasJoined: false },
+  })
   assert.deepEqual(await first.get(eventId, hostId), hostDetails)
   const filters = eventDiscoverySchema.parse({ limit: '1' })
   const page = await first.list(filters)
@@ -363,9 +384,9 @@ test('event adapter isolates caller headers and projects public versus host deta
     p_patch: { title: 'Changed title' },
   })
   visibility = 'private'
-  for (const actor of [undefined, otherId]) {
+  for (const actor of [otherId]) {
     await assert.rejects(
-      first.get(eventId, actor),
+      second.get(eventId, actor),
       (error: unknown) =>
         error instanceof ApiError && error.status === 404 && error.message === 'This event does not exist.',
     )

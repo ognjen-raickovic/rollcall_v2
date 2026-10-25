@@ -10,8 +10,9 @@ for both assistants. Read `../SPEC.md`, `../docs/entities.md`,
   integration is delivered. Milestone 3A adds reusable verified Supabase bearer identity
   and `GET /api/me`. Milestone 3B adds UUID profile reads/owner writes, private optional birth
   year, real catalog reads and per-game experience. Milestone 4A adds persistent event
-  discovery/details and host-only create/update/delete. Attendance (4B), frontend integration
-  (4C), Storage (4D) and private codes/role authorization (5) remain deferred.
+  discovery/details and host-only create/update/delete. Milestone 4B adds persistent
+  transactional join/leave and participant-aware details. Frontend integration (4C), Storage
+  (4D) and private codes/role authorization (5) remain deferred.
 - Preserve the frontend's mocks, numeric IDs, routes and styling. Do not import frontend
   feature types into this package. Database UUIDs require an explicit future integration.
 - Keep routes, Zod validation and data access within the owning module; common errors and
@@ -37,10 +38,14 @@ for both assistants. Read `../SPEC.md`, `../docs/entities.md`,
   and valid game/experience values in SQL as well as API validation. Public responses contain no
   email, private age/declaration or role information. Keep the registration initializer unchanged.
 - Read `../docs/events-api.md` for event contracts. Use bounded checked RPCs, not broad table
-  grants. Private event details and exact addresses are verified-host-only in 4A, even for
-  existing participants/admins or an old sharing flag. The event executor is NOLOGIN and
-  NOBYPASSRLS with focused column privileges and owner policies. Harden function search paths
-  and ACLs; the argument-free Auth subject helper reads no tables. Keep frontend mocks intact.
+  grants. Private details/addresses require the verified host or current participant in 4B;
+  roles/sharing flags grant no access. Attendance derives its actor from Auth, locks the
+  event and rechecks visibility/state/actual time before mutations/no-ops. Reuse membership
+  keys and counters; never read a count then insert without serialization. Private outsiders
+  cannot join; claimed experience/age does not gate attendance. Event and counter-trigger
+  executors are NOLOGIN/NOBYPASSRLS with separate minimal privileges. Harden search paths
+  and ACLs; trigger-only counter privileges must not become client grants. The argument-free
+  Auth subject helper reads no tables. Keep frontend mocks intact until 4C.
 - Version schema changes under `../supabase/migrations/`. Add explicit grants/RLS, indexes,
   delete behavior, constraints and tests with each schema change. Keep private age, roles,
   exact addresses and future invitation secrets outside public DTOs.

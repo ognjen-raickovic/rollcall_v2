@@ -6,7 +6,7 @@ started as the frontend MVP for AI-DEV 2026 Workshop 3, based on
 foundation; Milestone 2A adds GeoNames imports and backend place search. Milestone 2B
 connects frontend country/city selection to that API. Milestone 3A adds real Supabase Auth
 and verified backend identity. Milestone 3B adds real editable UUID profiles and per-game
-experience. Milestone 4A adds persistent event backend APIs; React event CRUD/attendance
+experience. Milestones 4A/4B add persistent event backend APIs and transactional attendance; React event CRUD/attendance
 and their numeric demo catalogs remain separate mocks until Milestone 4C.
 
 ## Shared rules
@@ -68,10 +68,13 @@ Keep foundation routes simple until finished pages are requested.
   shared `src/lib/location.ts` defines the location reference without cross-feature imports.
   Never invent geographic IDs or silently select an ambiguous legacy fixture location.
 - Read `docs/events-api.md` before real event work. Discovery is bounded, public/scheduled
-  only; private details and exact addresses are host-only in 4A. Derive host identity from
-  verified tokens; never accept submitted actors. Preserve closed client event tables,
-  executor RLS, explicit function ACLs and empty search paths. Real attendance (4B), frontend
-  adapters (4C), Storage (4D) and private codes/role authorization (5) require separate work.
+  only; content writes are host-only. Private details and exact addresses require the host
+  or current membership in 4B. Derive all actors from verified tokens; never submitted IDs.
+  Attendance locks the event and validates current visibility/state/time before changing
+  the existing membership table. Preserve closed client tables, executor/trigger-role RLS,
+  explicit ACLs and empty search paths. Private outsiders cannot join; no experience/age
+  eligibility or admin override. Frontend adapters (4C), Storage (4D) and private codes/role
+  authorization (5) remain separate work. See `docs/attendance-verification.md` for checks.
 - Event forms require a confirmed city suggestion, clear it on country/text changes, and
   allow an empty venue. Exact addresses render only for the host/current participants;
   this is a demo UI safeguard, not server-side privacy or authorization.

@@ -63,6 +63,8 @@ export type Database = {
       create_event: { Args: { p_input: Json }; Returns: Json }
       update_event: { Args: { p_event_id: string; p_patch: Json }; Returns: Json }
       delete_event: { Args: { p_event_id: string }; Returns: undefined }
+      join_event: { Args: { p_event_id: string }; Returns: Json }
+      leave_event: { Args: { p_event_id: string }; Returns: Json }
     }
     Enums: Record<string, never>
     CompositeTypes: Record<string, never>

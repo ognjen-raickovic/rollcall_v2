@@ -127,6 +127,7 @@ export const eventDiscoverySchema = z
 
 export const eventIdSchema = z.strictObject({ eventId: z.uuid() })
 export const noQuerySchema = z.strictObject({})
+export const attendanceBodySchema = z.strictObject({}).optional()
 
 const summaryFields = {
   id: z.uuid(),
@@ -185,10 +186,49 @@ const detailFields = {
   createdAt: instant,
   updatedAt: instant,
 }
-export const publicEventDetailsSchema = z.object(detailFields).superRefine(checkSummary)
-export const hostEventDetailsSchema = z
-  .object({ ...detailFields, address: z.string().min(3).max(200) })
+const publicViewer = z.object({
+  userId: z.uuid().nullable(),
+  isHost: z.literal(false),
+  hasJoined: z.literal(false),
+})
+export const databaseEventDetailsSchema = z
+  .object({
+    ...detailFields,
+    viewer: z.object({ userId: z.uuid().nullable(), isHost: z.boolean(), hasJoined: z.boolean() }),
+  })
   .superRefine(checkSummary)
+export const publicEventDetailsSchema = z
+  .object({ ...detailFields, viewer: publicViewer })
+  .superRefine(checkSummary)
+export const hostEventDetailsSchema = z
+  .object({
+    ...detailFields,
+    viewer: z.object({ userId: z.uuid(), isHost: z.literal(true), hasJoined: z.literal(false) }),
+    address: z.string().min(3).max(200),
+  })
+  .superRefine(checkSummary)
+export const participantEventDetailsSchema = z
+  .object({
+    ...detailFields,
+    viewer: z.object({ userId: z.uuid(), isHost: z.literal(false), hasJoined: z.literal(true) }),
+    address: z.string().min(3).max(200),
+  })
+  .superRefine(checkSummary)
+  .refine((value) => value.participantCount > 0, 'A joined viewer must have a participant seat.')
+export const attendanceResultSchema = z
+  .object({
+    eventId: z.uuid(),
+    hasJoined: z.boolean(),
+    capacity: writableFields.capacity,
+    participantCount: summaryFields.participantCount,
+    availableSlots: summaryFields.availableSlots,
+  })
+  .refine(
+    (value) =>
+      value.availableSlots === value.capacity - value.participantCount &&
+      (!value.hasJoined || value.participantCount > 0),
+    'Invalid event attendance.',
+  )
 export const databaseEventPageSchema = z.object({
   items: z.array(discoverySummarySchema).max(50),
   hasMore: z.boolean(),

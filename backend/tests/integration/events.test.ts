@@ -7,7 +7,12 @@ import { buildApp } from '../../src/app.js'
 import { loadEnvironment } from '../../src/config/env.js'
 import { createDatabaseClient } from '../../src/db/supabase.js'
 import { validateLocalDatabaseUrl } from '../../scripts/geography/store.js'
-import type { EventPage, HostEventDetails, PublicEventDetails } from '../../src/modules/events/types.js'
+import type {
+  EventPage,
+  HostEventDetails,
+  ParticipantEventDetails,
+  PublicEventDetails,
+} from '../../src/modules/events/types.js'
 
 type Actor = { id: string; token: string }
 type Place = { id: number; countryId: number; name: string }
@@ -239,7 +244,7 @@ test(
     )
 
     await t.test(
-      'detail authorization hides private existence and all non-host addresses, including participants and sharing flags',
+      'detail authorization protects private existence and addresses while recognizing existing participants',
       async () => {
         assert.ok(publicEvent)
         privateEvent = await create({ title: `${prefix} hidden table`, visibility: 'private' })
@@ -258,21 +263,32 @@ test(
           privateEvent.id,
         ])
         await db.query("insert into private.account_roles(profile_id,role) values($1,'superadmin')", [
-          other.id,
+          third.id,
         ])
         const own = await json<HostEventDetails>(await api('GET', `/api/events/${privateEvent.id}`, host))
         assert.equal(own.address, privateEvent.address)
         for (const event of [publicEvent, unlistedEvent, cancelled])
-          for (const actor of [undefined, other]) {
+          for (const actor of [undefined, other, third]) {
             const response = await api('GET', `/api/events/${event.id}`, actor)
-            const detail = await json<PublicEventDetails>(response)
-            assertPublic(detail)
+            const detail = await json<PublicEventDetails | ParticipantEventDetails>(response)
+            if (event.id === publicEvent.id && actor?.id === other.id) {
+              assert.ok('address' in detail)
+              const { address, ...safe } = detail
+              assert.equal(address, publicEvent.address)
+              assert.deepEqual(detail.viewer, { userId: other.id, isHost: false, hasJoined: true })
+              assertPublic(safe)
+            } else assertPublic(detail)
             assert.equal(response.headers.get('cache-control'), 'no-store')
           }
+        const participant = await json<ParticipantEventDetails>(
+          await api('GET', `/api/events/${privateEvent.id}`, other),
+        )
+        assert.equal(participant.address, privateEvent.address)
+        assert.deepEqual(participant.viewer, { userId: other.id, isHost: false, hasJoined: true })
         const missing = await api('GET', `/api/events/${randomUUID()}`)
         const missingBody = await missing.text()
         assert.equal(missing.status, 404)
-        for (const actor of [undefined, other, third]) {
+        for (const actor of [undefined, third]) {
           const hidden = await api('GET', `/api/events/${privateEvent.id}`, actor)
           assert.equal(hidden.status, 404)
           assert.equal(await hidden.text(), missingBody)
@@ -471,11 +487,11 @@ test(
         (await data('rpc/create_event', host, { p_input: input({ hostId: other.id }) })).status,
         400,
       )
-      const hidden = await data('rpc/get_event', other, { p_event_id: privateEvent.id })
-      const missing = await data('rpc/get_event', other, { p_event_id: randomUUID() })
+      const hidden = await data('rpc/get_event', third, { p_event_id: privateEvent.id })
+      const missing = await data('rpc/get_event', third, { p_event_id: randomUUID() })
       assert.equal(hidden.status, missing.status)
       assert.equal(await hidden.text(), await missing.text())
-      const safe = await data('rpc/get_event', other, { p_event_id: publicEvent.id })
+      const safe = await data('rpc/get_event', third, { p_event_id: publicEvent.id })
       assert.equal(safe.status, 200)
       assertPublic(await safe.json())
       const role = (

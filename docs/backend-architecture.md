@@ -8,7 +8,8 @@ read-only geography API. Milestone 2A adds local GeoNames import tools, aliases 
 database search. Milestone 2B connects React geography controls to those read endpoints.
 Milestone 3A adds real Supabase Auth and verified Fastify identity. Milestone 3B adds real
 UUID profiles, private age and per-game experience with a read-only database game catalog.
-Milestone 4A adds persistent backend event discovery/details and host-only CRUD. React
+Milestone 4A adds persistent backend event discovery/details and host-only CRUD. Milestone
+4B adds transactional persistent attendance and participant-aware details. React
 event/demo catalog IDs, images, create/edit and attendance remain mocked. Demo selection is explicitly
 enabled only during Vite development and is separate from real UUID accounts.
 
@@ -169,7 +170,7 @@ Auth schema; it reads no tables and is executable only by the executor. All path
 objects qualified and ACLs explicit. Private schema USAGE permits function naming, not table
 access; PostgREST still does not expose that schema.
 
-RLS and explicit host checks restrict private details, writes and exact addresses to the host,
+At the original 4A boundary, RLS and explicit host checks restrict private details, writes and exact addresses to the host,
 including when a sharing flag, existing participation or an admin role exists. Create/update
 validate SQL inputs and final relationships/schedules/tags inside one transaction. Updates
 lock the event before checking capacity against attendance. Deferred location invariants are
@@ -177,8 +178,35 @@ flushed while the authorized executor context is active. Hard delete cascades lo
 memberships, including past/cancelled records, while referenced catalog/profile data remains.
 See [event contracts](events-api.md) and [executed checks](events-api-verification.md).
 
-Real attendance authorization/participant addresses (4B), React adapters (4C), Storage (4D)
-and private-code/role access (5) require separate implementation and review.
+Milestone 4B extends participant reads/attendance below. React adapters (4C), Storage (4D)
+and private-code/role access (5) remain deferred.
+
+## Milestone 4B attendance boundary
+
+POST/DELETE `/api/events/:eventId/attendees/me` use the existing verified UUID guard and
+fresh bearer-scoped unprivileged client. Payload/query allowlists never accept a participant
+ID. Checked join/leave RPCs derive the subject internally, lock the event row, recheck current
+private membership and actual start time, and mutate the existing composite-key membership
+table. No client read-count-then-insert race is possible; capacity edits/deletion use the same
+parent lock. No-op joins/leaves preserve timestamps while retaining access/state/host checks.
+Private outsiders stay concealed; existing private participants can leave, losing detail access.
+
+Owner membership policies avoid event-table references and RLS cycles. Event/location reads
+allow the verified host/current member; content writes remain host-only. A lock-only UPDATE
+policy with false WITH CHECK allows SELECT FOR UPDATE but no nonhost content write. The
+separate `rollcall_attendance_counter` non-login/non-bypass role owns existing counter and
+location-invariant triggers, with counter-column update and location-ID read privileges only.
+It never reads address text or owns tables. Trigger functions are hardened, not client-callable;
+raw membership/event/location tables remain closed to API roles. No privileged client is used.
+
+Details include viewer `{userId,isHost,hasJoined}`; the repository verifies the viewer subject
+against its independently verified caller and projects explicit public/host/participant DTOs.
+Only hosts/current participants receive address text. Mutation summaries contain event ID,
+joined state and capacity/count/slots, without addresses or private profile fields. No-store
+and Authorization variance apply. Participant caches in 4C must be isolated by real UUID and
+cleared/refetched on account changes or attendance mutations. No age/experience gating,
+participant lists, private admission or admin override is added. See
+[event contracts](events-api.md) and [attendance verification](attendance-verification.md).
 
 ## Sensitive data and authorization design
 
@@ -190,8 +218,8 @@ and private-code/role access (5) require separate implementation and review.
 | Per-game experience             | Public reads; owner writes          | Self-declared user-owned values; no attendance eligibility inference                               |
 | Public events                   | Checked discovery/detail RPCs       | No address in public DTOs; host-only writes                                                        |
 | Unlisted events                 | Checked direct detail RPC           | Hidden from discovery; link never grants address access                                            |
-| Private events                  | Verified host-only detail           | Participant/role-authorized access deferred to later reviewed milestones                           |
-| Exact event locations           | Verified host-only DTO              | Participant access deferred to 4B; sharing flag grants no access in 4A                              |
+| Private events                  | Verified host/current member detail | No outsider admission; role overrides and invitation codes remain deferred                        |
+| Exact event locations           | Verified host/current member DTO    | No address to anonymous/nonmembers; sharing flag grants no access                                  |
 | Account roles                   | No client grants                    | Server-enforced authorization; only authorized superadmins manage admins                           |
 | Invitation secrets              | No table/workflow yet               | Separate server-managed encrypted storage and hash verification                                    |
 
@@ -201,10 +229,11 @@ Per-game `beginner`, `intermediate`, or `veteran` experience is also self-declar
 not replace each event's `all-levels`, `beginner`, or `experienced` expectation.
 
 Event capacity excludes the host. The attendance table's unique key prevents duplicate
-seats and database triggers serialize capacity changes on the event row. Future join/leave
-API functions must atomically authorize the actor, check future/scheduled availability,
-apply membership changes and return the visible DTO. Idempotent repeats must preserve
-the existing mock contract. They are not yet exposed through HTTP or the Data API.
+seats and database triggers serialize capacity changes on the event row. Join/leave
+API functions atomically authorize the actor, check future/scheduled availability, apply
+membership changes and return a safe attendance summary. Milestone 4B implements these
+operations with genuine lock-contention tests; details expose separately authorized viewer
+state/address access. Idempotent repeats preserve the scoped existing contract.
 
 ## Private room codes: later milestone
 

@@ -1,6 +1,6 @@
 ﻿# RollCall entities and API contract
 
-Shared contract for Workshop 3 mocks and implemented backend milestones through 4A.
+Shared contract for Workshop 3 mocks and implemented backend milestones through 4B.
 Feature types live in `frontend/src/features/<domain>/types.ts`; APIs and fixtures live in
 that feature's `api/`. Real profiles and per-game experience use owner-scoped APIs; the
 database game catalog is read-only. Separate numeric demo catalogs and mock events remain
@@ -8,7 +8,7 @@ available in explicit development demo mode. Geography/profiles/catalog use real
 users also integrates with Supabase Auth. The backend model intentionally
 differs where stated below.
 
-## Backend Milestones 1 through 4A: implemented API
+## Backend Milestones 1 through 4B: implemented API
 
 Only the following HTTP endpoints are implemented. All other HTTP paths later in this
 document describe the Workshop 3 mock-shaped intended contract, not existing server routes.
@@ -27,10 +27,12 @@ document describe the Workshop 3 mock-shaped intended contract, not existing ser
 | `GET /api/users/:userId`                   | `PublicProfile`                                                         | Public; UUID path                            |
 | `GET /api/games`                           | `Game[]` from the database catalog                                      | Public; read-only                            |
 | `GET /api/events`                          | `{ items: EventSummary[], pageInfo: { limit, nextCursor } }`             | Public/scheduled discovery only              |
-| `GET /api/events/:eventId`                 | `PublicEventDetails` or `HostEventDetails`                              | Public/unlisted; private host only           |
+| `GET /api/events/:eventId`                 | `PublicEventDetails`, `HostEventDetails` or `ParticipantEventDetails`   | Public/unlisted; private host/current member |
 | `POST /api/events`                        | 201 `HostEventDetails`, Location header                                | Verified UUID host derived from token        |
 | `PATCH /api/events/:eventId`               | Updated `HostEventDetails`                                             | Verified host only                           |
 | `DELETE /api/events/:eventId`              | 204, no body                                                          | Verified host; cascading hard delete         |
+| `POST /api/events/:eventId/attendees/me`    | 200 `AttendanceResult`                                                 | Verified subject joins its own seat          |
+| `DELETE /api/events/:eventId/attendees/me`  | 200 `AttendanceResult`                                                 | Verified subject leaves its own seat         |
 
 `/api/me` returns no password, token, role, profile metadata, address or private age. Its
 identity comes from cryptographically verified claims and explicit issuer/audience/expiry/
@@ -91,7 +93,7 @@ constraints, delete behavior and the ER diagram are in [database schema](databas
 
 Only geography had Data API read grants through Milestone 3A. Milestone 3B adds public-safe
 profile/game/experience reads, mutable-column owner updates and owner-only private age access
-through invoker functions. Milestone 4A adds checked event RPCs, while raw event/location/
+through invoker functions. Milestones 4A/4B add checked event/attendance RPCs, while raw event/location/
 attendance tables and role data remain denied to clients; RLS stays enabled.
 `/api/me` reads verified Auth identity, not an application table. The additive 3A migration creates a
 minimal profile on Auth registration and backfills missing rows with `RollCall player`.
@@ -127,9 +129,11 @@ remain positive PostgreSQL integers. No mock actor, email or numeric demo identi
 country `{id,isoCode,name}`, nullable venue, startsAt/endsAt, capacity/participantCount/
 availableSlots, tags, visibility/status and default cover `{kind,imageUrl}`. Public details
 add description, host `{id,displayName}`, minimumAge, experienceLevel, EUR price/currency and
-timestamps. Only host details contain `address`. Email, private age, roles, participant
-identities and future codes never appear. Private details are host-only in 4A; participants
-and privileged roles get no additional access. Missing/inaccessible events share one 404.
+timestamps. Milestone 4B adds viewer `{userId,isHost,hasJoined}` to all details, with null
+identity for anonymous viewers. Hosts/current participants receive an additional `address`;
+other DTOs omit it. Email, private age, roles, other participant identities and future codes
+never appear. Private details require host/current membership; roles/sharing flags grant no
+override. Missing/inaccessible events share one 404. Discovery summaries remain unchanged.
 
 Create requires title 3–100, description 10–5000, existing gameId/cityId, address 3–200,
 future ISO start and later end, capacity 1–100, and all-levels/beginner/experienced expectation.
@@ -150,8 +154,37 @@ private/unlisted/cancelled discovery. Exact contracts and errors are in
 custom persistent cover paths are deferred. Checked functions, explicit ACLs and non-bypass
 executor RLS enforce host/privacy rules through the Data API too.
 
-React event APIs/DTOs below remain mocks until 4C. Real attendance/participant address
-authorization is 4B; Storage is 4D; private codes/role-authorized access is 5.
+React event APIs/DTOs below remain mocks until 4C. Attendance/participant address authorization
+is implemented in 4B below; Storage is 4D; private codes/role-authorized access is 5.
+
+## Persistent attendance: Milestone 4B
+
+POST/DELETE `/api/events/:eventId/attendees/me` require verified Supabase identity, a UUID
+event path, no query parameters and no body or `{}`. Clients cannot submit an actor or remove
+another account. Both return `AttendanceResult: {eventId,hasJoined,capacity,participantCount,
+availableSlots}` with 200, never a protected address or membership list. Auth failures are 401,
+malformed requests 400, missing/inaccessible private events 404, and timing/host/full conflicts
+409 `CONFLICT`. Responses are no-store and vary on Authorization.
+
+Public/unlisted future scheduled events allow joining. Hosts do not occupy seats. Private
+outsiders cannot join; current private members may repeat join or leave. Experience/tags/
+minimum age remain guidance; no eligibility check reads private age or claimed experience.
+Timing/status/host checks precede no-op handling. Repeat join is idempotent even full; a
+nonmember public/unlisted leave is a no-op. No-ops preserve count/membership/event timestamps.
+Private leave removes detail/address access; repeat private leave/rejoin then returns 404.
+
+The database locks the event, rechecks current private membership and actual start time,
+then modifies the existing composite-key membership. Existing trigger bodies maintain exact
+counters; separate narrowly privileged non-bypass trigger ownership supports their writes
+and deferred address invariants. Counts cannot exceed capacity or fall below zero. Capacity
+edits serialize on the same event lock. Raw clients receive no table writes; function ACLs,
+owner RLS and column grants protect the Data API as well as Fastify.
+
+All details contain current viewer state; host/current members get protected addresses,
+including legitimate private members retained after visibility changes. Leaving revokes
+participant-only access on subsequent requests. No room codes, new private admissions or
+admin overrides exist. See [event contracts](events-api.md) and
+[attendance verification](attendance-verification.md) for guarantees, limits and 4C requirements.
 
 ## Real profiles and per-game experience: Milestone 3B
 
@@ -407,8 +440,8 @@ Exact address rendering is separately limited to the host/current participants. 
 and non-participating viewers see a neutral address-sharing explanation, including public
 or unlisted events. Mock API objects still contain the address in browser memory, so this
 is a UI safeguard, not server-side privacy. The separate 4A event API omits protected addresses
-from unauthorized DTOs and enforces verified host identity. Real attendance authorization
-is deferred to 4B. The demo session supplies its selected user ID through route props;
+from unauthorized DTOs; 4B extends it with verified participant identity and real attendance.
+The demo session supplies its selected user ID through route props;
 real backend operations derive actors from verified sessions, never client-supplied user IDs.
 Mock actor objects are not HTTP request bodies.
 

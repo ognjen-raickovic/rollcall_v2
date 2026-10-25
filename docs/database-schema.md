@@ -12,7 +12,7 @@ in the development seed; frontend demo users are not migrated into real accounts
 This document describes schema foundations and implemented profile/event access boundaries.
 Through 3A only geography had client grants. Milestone
 3B adds public profile/game/experience reads and owner-only profile/private-age/experience writes.
-Milestone 4A adds checked event RPCs without raw client event/location/attendance grants.
+Milestones 4A/4B add checked event/attendance RPCs without raw client event/location/attendance grants.
 All application tables retain RLS; raw event and role access remains denied by default.
 The `private` schema is not exposed by the local Data API.
 
@@ -252,7 +252,7 @@ GIN trigram index and bounded keyset discovery. No table or existing record is r
 ## Attendance and transactional capacity
 
 `public.event_participants` has event UUID/profile UUID FKs, a composite primary key
-preventing duplicate membership, and `joined_at`. Membership rows are immutable; future
+preventing duplicate membership, and `joined_at`. Membership rows are immutable;
 join/leave operations insert/delete instead of rewriting identities. A profile-side index
 supports membership lookup.
 
@@ -262,13 +262,45 @@ serialize on that parent row; a failed increment raises an error and rolls the i
 membership back. Running after insert preserves `ON CONFLICT DO NOTHING` semantics for
 duplicate members. The count/capacity CHECK also prevents an edit below current attendance.
 Deletion decrements the counter only for an available event; event deletion's cascading
-membership cleanup is exempt. Future API transactions must still enforce private-event
-authorization and actor identity before performing writes. No client can currently edit
-the counter or insert membership through the Data API. Only checked host event mutations
-are exposed in 4A; attendance HTTP/RPC operations remain deferred.
+membership cleanup is exempt. The 4B attendance functions enforce private-event access,
+verified actor identity and actual timing before writes. Clients cannot directly edit counters
+or memberships through the Data API; only checked subject-scoped attendance RPCs are exposed.
 
-This is database integrity groundwork, not a completed join API. Concurrent multi-connection
-integration tests must remain part of delivering real attendance endpoints.
+`20261025000400_event_attendance.sql` reuses the existing table, composite key, counter
+arithmetic and trigger bodies. Checked `join_event(uuid)`/`leave_event(uuid)` wrappers lock
+the event first, then check access/state/host/membership/capacity inside one transaction.
+Current participants can repeat joins even when full; accessible nonmember leaves are no-ops.
+State checks still precede no-op handling. Event timestamps do not change on no-ops.
+Capacity edits and event deletion serialize on the same row. Failed operations roll back
+membership and counters together; the host never occupies a seat.
+
+The existing counter and required-location trigger functions now have SECURITY DEFINER
+ownership under `rollcall_attendance_counter`, a NOLOGIN/NOINHERIT/NOBYPASSRLS role.
+It can SELECT only event columns needed by those bodies, UPDATE(participant_count), and
+SELECT(event_id) on protected locations; it cannot read address text, edit event content,
+change memberships or assume account privileges. Empty search paths and closed function
+ACLs keep these trigger-only capabilities out of client calls. RLS remains enabled with
+focused counter/invariant policies. This handles deferred checks after private leave without
+retaining the departed participant's address permission.
+
+The existing event executor gains owner-only membership SELECT/INSERT/DELETE, never UPDATE.
+Membership policies reference only the subject, avoiding recursion through event policies.
+Event/location read policies recognize current membership; private outsiders remain hidden.
+A separate lock-only UPDATE policy has readable-row USING and false WITH CHECK, so
+attendance can SELECT FOR UPDATE but a nonhost still cannot produce an updated content row.
+The original host-only content check and immutable-host/column restrictions remain intact.
+
+`20261025000500_attendance_private_recheck.sql` rechecks membership after lock acquisition
+using a fresh command snapshot, before state-specific errors. This protects against stale
+private access if a concurrent leave commits while another request waits. Actual time is
+checked after the lock, so a queued join cannot use the transaction's earlier now() to join
+an event that has started. Existing private members may leave; no outsider admission is added.
+
+Detail DTOs now include viewer state and return protected addresses to hosts/current members
+only; discovery summaries remain safe/public. Join/leave return a small address-free summary,
+including after private leave removes detail access. No API/client table grants, service-role
+path, new attendance table, geographic import or destructive migration is required.
+See [event contracts](events-api.md) and [attendance verification](attendance-verification.md).
 
 ## Delete behavior and timestamps
 
@@ -316,8 +348,9 @@ below ship with actor-specific allow/deny tests.
 
 `20261025000200_events_api.sql` adds the title index, `rollcall_events_executor` role,
 reference/event/location policies and private validation/DTO/checked entry functions.
-The executor is NOLOGIN, NOINHERIT and NOBYPASSRLS, does not own event tables, and has
-no membership writes, participant-count updates or host reassignment privileges. Mutable
+At the 4A boundary the executor is NOLOGIN, NOINHERIT and NOBYPASSRLS, does not own event tables, and has
+no membership writes, participant-count updates or host reassignment privileges. 4B adds
+only subject-scoped membership access as described above. Mutable
 column grants and RLS limit event/location writes to `auth.uid()` ownership. Raw event,
 location and attendance permissions stay closed to anon/authenticated clients.
 
@@ -340,7 +373,7 @@ event, validate merged values and reject capacity below attendance. Deferred add
 constraints execute inside the executor context. Deletion cascades locations/memberships;
 profiles/geography/catalog remain intact. Private details and addresses are host-only in 4A,
 regardless of sharing flags, participation or roles. All public DTOs explicitly omit them.
-The two additive migrations change no geography/profile records or registration initializer.
+The two 4A additive migrations change no geography/profile records or registration initializer.
 See [event API](events-api.md) and [verification](events-api-verification.md).
 
 Invitation secrets have no table/column in Milestone 1. A later dedicated, non-exposed

@@ -97,16 +97,24 @@ atomic; updates preserve attendance and hard delete cascades memberships/locatio
 Default local illustrations are supported; custom cover payloads are rejected.
 See [contracts](events-api.md) and [verification](events-api-verification.md).
 
-React numeric event CRUD/attendance remains mocked. No attendance API, Storage, private
-codes, participant address access or admin override is included.
+React numeric event CRUD/attendance remains mocked. The 4A delivery included no attendance
+API, Storage, private codes, participant address access or admin override; 4B extends it below.
 
-## Milestone 4B: real attendance — planned
+## Milestone 4B: real attendance — implemented
 
-Implement verified-actor transactional join/leave, idempotent repeats, duplicate prevention
-and concurrent final-seat/capacity tests. Reuse UUID events/subjects and existing row locking,
-counter triggers and participant key. Separately review private-event eligibility, minimum-age/
-self-declared experience policy and authorized participant address access. Never infer permission
-from a submitted actor or an unlisted URL. Extend DTO/RLS/grant tests before enabling access.
+Verified-actor POST/DELETE `/api/events/:eventId/attendees/me` persist membership in the
+existing table and return safe attendance summaries. Event row locking serializes join/leave
+and host capacity changes; existing keys/triggers maintain unique seats and exact counts.
+Idempotent repeats preserve timestamps, subject to access/timing/status/host rules. Private
+outsiders cannot join; existing private participants may leave and lose protected access.
+Participant-aware details include viewer state and authorized addresses, with no email/age/
+role disclosure. Explicit grants/RLS keep raw tables closed; separate non-bypass counter
+trigger privileges avoid widening event content/address permissions. Claimed experience and
+minimum age remain guidance. Real HTTP/RPC, direct Data API, SQL and genuine concurrent
+PostgreSQL checks are recorded in [attendance verification](attendance-verification.md).
+
+React attendance remains mocked. No room-code admission, admin override, uploads or automated
+eligibility checks are included. Participant privacy/access must remain explicit in 4C adapters.
 
 ## Milestone 4C: frontend event integration — planned
 
