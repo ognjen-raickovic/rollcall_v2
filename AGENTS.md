@@ -5,7 +5,8 @@ started as the frontend MVP for AI-DEV 2026 Workshop 3, based on
 `jovanp-najveci/ai-frontend-starter`. Backend Milestone 1 adds an independent API/database
 foundation; Milestone 2A adds GeoNames imports and backend place search. Milestone 2B
 connects frontend country/city selection to that API. Milestone 3A adds real Supabase Auth
-and verified backend identity; event CRUD/attendance and public user/game catalogs remain mocks.
+and verified backend identity. Milestone 3B adds real editable UUID profiles and per-game
+experience; event CRUD/attendance and their numeric demo catalogs remain separate mocks.
 
 ## Shared rules
 
@@ -25,7 +26,7 @@ Keep foundation routes simple until finished pages are requested.
   backend work is scoped by the milestones in `SPEC.md`. Frontend features never import each
   other, including types; routes compose them. Read `backend/AGENTS.md` and
   `docs/backend-architecture.md` before backend or migration work.
-- User profiles/games remain read-only mock catalogs. Users own real Supabase Auth and a
+- Users own real profiles/experience and Supabase Auth, alongside separate mock catalogs and a
   separate, explicitly enabled development-only demo session. Real account IDs are UUIDs;
   demo IDs are numeric and must never be equated or coerced. Pass demo identity through
   route composition; a real login grants no mock host/attendance identity.
@@ -42,7 +43,7 @@ Keep foundation routes simple until finished pages are requested.
   changes, preserve teammates' work, and coordinate shared contract/router/token/lock files.
 - Do not commit, push, or merge without explicit user approval. Never expose secrets or env files.
 - Keep database credentials and privileged keys server-side. The runtime API uses only an
-  unprivileged Supabase key with explicit grants/RLS for geography reads. Never add a
+  unprivileged Supabase key with focused grants/RLS for geography and profiles. Never add a
   service-role bypass as a shortcut. Do not create, alter, reset, link, or deploy a remote
   Supabase project without explicit approval. Local reset scripts must remain explicitly local.
 - Geographic imports are separate local maintenance commands, never API request paths.
@@ -53,9 +54,14 @@ Keep foundation routes simple until finished pages are requested.
   `GET /api/me`. Read `docs/authentication.md`. Only Auth uses a browser Supabase client
   with a publishable/anon key; never expose privileged keys. Keep event CRUD/attendance
   mocked. Demo selection requires both Vite development mode and explicit opt-in, and
-  production builds cannot impersonate fixtures. Profile editing/game experience are 3B;
+  production builds cannot impersonate fixtures. Milestone 3B adds real profiles/experience;
   persistent UUID event integration is Milestone 4. No invitations or administration.
   Read `docs/location-ui.md` before changing location controls or event-location adapters.
+- Read `docs/profiles.md` for real profile contracts. Profile writes derive identity from the
+  verified bearer token, use an isolated unprivileged user context and preserve owner RLS.
+  Public profile DTOs omit email, birth year, declaration timestamps and roles. Birth year
+  is optional/private/self-declared; game experience is public and self-declared, never a
+  joining requirement. Reuse the existing registration initializer and database game catalog.
 - Geography owns its API/hooks and controls. Routes compose them into event render slots;
   shared `src/lib/location.ts` defines the location reference without cross-feature imports.
   Never invent geographic IDs or silently select an ambiguous legacy fixture location.

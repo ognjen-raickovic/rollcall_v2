@@ -34,7 +34,7 @@ select is((select count(*)::integer from pg_class c join pg_namespace n on n.oid
    'event_participants', 'profile_private', 'account_roles', 'event_locations')
   and c.relrowsecurity), 10, 'RLS enabled on every application table');
 select ok(not has_schema_privilege('anon', 'private', 'usage'), 'private schema is unavailable to anon');
-select ok(not has_schema_privilege('authenticated', 'private', 'usage'), 'private schema is unavailable to authenticated');
+select ok(has_schema_privilege('authenticated', 'private', 'usage'), 'private invoker age functions have narrow authenticated schema usage');
 select ok(not has_table_privilege('anon', 'public.events', 'select'), 'no public event table read yet');
 select ok(not has_table_privilege('authenticated', 'public.events', 'insert'), 'no client event writes yet');
 select ok(not has_table_privilege('authenticated', 'private.account_roles', 'update'), 'clients cannot promote themselves');

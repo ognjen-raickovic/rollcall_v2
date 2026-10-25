@@ -22,6 +22,16 @@ autocomplete values and keep long email addresses/messages inside the 375px view
 Login links to registration and recovery; confirmation has clear next steps and resend.
 The explicitly enabled development-only demo page retains selectable mock-player profiles,
 with a visible demo label. Real login never implies access to persistent event participation.
+
+Real profiles use a readable identity/biography/location summary and separate My Games list.
+Own profiles offer clear Edit profile and public-view links; a new account gets friendly
+completion guidance. Editing groups public details/location separately from private optional
+birth year, with explicit self-declared wording. Games use labeled native selectors and
+per-row update/remove actions with pending, success and error feedback. Reuse country/city
+controls through route composition. Use initials rather than adding picture uploads. Public
+views contain no email, age or roles. Preserve semantic tokens, keyboard focus and readable
+wrapping at 375px and 1440px in both themes.
+
 Creation/editing share a focused form with grouped sections for basics, location/schedule,
 players, and tags/visibility. Use existing input/textarea/button primitives and labeled native
 selects/date-time pickers. Keep hosting tips secondary in a desktop sidebar and below the form

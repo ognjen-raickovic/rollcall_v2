@@ -9,9 +9,10 @@ only a small development place/game dataset; geographic imports are explicit mai
 commands. There are no Auth users, profiles or events
 in the development seed; frontend demo users are not migrated into real accounts.
 
-This document describes schema foundations, not implemented event/profile HTTP routes.
-Only enabled geography has client grants through Milestone 3A. All other application tables
-have RLS enabled and no client grants/policies, so their current access is deny by default.
+This document describes schema foundations and the implemented profile access boundary;
+event HTTP routes remain future work. Through 3A only geography had client grants. Milestone
+3B adds public profile/game/experience reads and owner-only profile/private-age/experience writes.
+All application tables retain RLS; event and role access remains denied by default.
 The `private` schema is not exposed by the local Data API.
 
 ## Relationships
@@ -189,17 +190,17 @@ bootstrap and auditing require a controlled server/operations procedure, not a p
 Private birth year provides approximate self-declared age guidance without collecting a
 birth date. It is neither verification nor an automatic public profile field. Per-game
 experience is independently self-declared and is not a verified qualification. Public
-profile DTOs and experience visibility must be explicitly designed when endpoints arrive.
+profile DTOs now explicitly expose selected games/experience while omitting private age and email.
 
-Profile country/city selections can initially be unset; Milestone 3B onboarding can add
-stronger completion rules later. Milestone 1 had no Auth initializer. Milestone 3A adds
+Profile country/city selections can remain unset in Milestone 3B. A city must belong to the
+selected enabled country; country-only profiles are valid. Milestone 1 had no Auth initializer. Milestone 3A adds
 `20261024000400_auth_profile_initialization.sql`: a private, SECURITY DEFINER trigger with
 empty search path inserts only the registered Auth UUID and fixed `RollCall player` display
 name. It copies neither email nor editable metadata, geographic selections, private age or
 roles. Function execution is revoked from API roles; clients receive no new table privileges.
 An idempotent backfill initializes missing Auth-linked profiles without overwriting existing
 rows. Existing RLS and deny-by-default profile/event policies remain. UUID identity can be
-verified through `/api/me` without granting direct profile access. See
+verified through `/api/me`. Milestone 3B adds scoped profile permissions below. See
 [authentication](authentication.md) for registration and future onboarding boundaries.
 
 ## Events and protected locations
@@ -284,15 +285,24 @@ integration tests must remain part of delivering real attendance endpoints.
 
 All application tables, including those in `private` and the new city alias table, have RLS enabled. Migrations
 revoke implicit client grants on application tables/sequences/functions and PostgreSQL
-default function execution, then grant only geography SELECT and search execution to
+default function execution. The original migrations grant geography SELECT and search execution to
 `anon` and `authenticated`. Countries expose enabled rows; city SELECT requires an enabled
 parent country. Aliases require an enabled matching country as well. Search is security
 invoker so direct calls retain these restrictions. Direct table reads remain catalog reads;
 the bounded RPC additionally restricts searches to the four supported countries.
 
-No application table has INSERT/UPDATE/DELETE grants to those roles. No non-geography
-SELECT grant/policy exists yet. The `private` schema has no client usage grants and is not
-in the API's exposed schemas. No application service-role grants are provided or needed.
+Milestone 3B migration `20261025000100_user_profiles.sql` adds public-safe SELECT on profiles,
+games and user-game experience. Authenticated UPDATE on profiles is limited to display name,
+biography and country/city; owner RLS applies, and identity/timestamps cannot be supplied.
+Experience INSERT/UPDATE/DELETE is owner-scoped and keeps the unique profile/game PK.
+
+The private schema remains outside the API's exposed schemas. Authenticated schema USAGE
+and private-profile SELECT/limited INSERT/UPDATE support only owner data under RLS; no role,
+event-location or service-role grants are added. SECURITY INVOKER RPCs `get_my_profile()`
+and `update_my_profile(jsonb)` enforce the caller and make public/private changes atomic.
+`public_profile(uuid)` constructs safe JSON; `set_my_game_experience` and
+`remove_my_game_experience` derive the owner and validate game/level. All have empty search
+paths and explicit execute grants. No application service-role grants are provided or needed.
 The database owner remains an administrative trust boundary and must not become the
 ordinary request identity.
 

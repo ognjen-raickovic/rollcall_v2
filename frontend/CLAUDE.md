@@ -17,7 +17,7 @@ Dependency direction: shared code -> features -> app, never the other way around
 - `src/app/router.tsx`: all routes; `src/app/providers.tsx`: global providers (TanStack Query)
 - `src/app/routes/`: one file per route, only combines features and layout
 - `src/features/<name>/types.ts`: entity types of that feature
-- `src/features/<name>/api/<name>-api.ts`: data access (geography uses Fastify; users owns Supabase Auth and `/api/me`; event/catalog APIs remain mocked)
+- `src/features/<name>/api/<name>-api.ts`: data access (geography/profiles/real game catalog use Fastify; users owns Supabase Auth; numeric event/demo APIs remain mocked)
 - `src/features/<name>/api/use-<name>.ts`: TanStack Query hooks around the API
 - `src/features/<name>/components/`: components of that feature (e.g. `events-list.tsx`)
 - `src/components/ui/`: shadcn/ui components, added with `pnpm dlx shadcn@latest add <name>` (run inside `frontend/`)
@@ -46,7 +46,8 @@ Dependency direction: shared code -> features -> app, never the other way around
 - Milestone 3A adds real Auth in the users feature. Its Supabase browser client uses only
   the configured public URL/publishable key, PKCE and supported session persistence/refresh.
   Do not query application tables directly from the browser. Read `../docs/authentication.md`.
-  Keep event CRUD/attendance and user/game catalogs mocked. Real UUID accounts and numeric
+  Milestone 3B adds real UUID profiles, private birth year and per-game experience. Keep event
+  CRUD/attendance and numeric demo catalogs mocked. Real UUID accounts and numeric
   demo identities remain separate; neither identity may be coerced into the other.
   Explicit demo mode requires `import.meta.env.DEV` and `VITE_ENABLE_DEMO_MODE=true`;
   production builds cannot select fixture profiles. Read `../docs/location-ui.md` for geography.
@@ -64,17 +65,23 @@ Dependency direction: shared code -> features -> app, never the other way around
 - Read `../SPEC.md` for scope. Homepage, demo login, discovery/details, and shared create/edit
   forms, optional browser-side covers, curated tags, and light/dark themes are implemented.
   Recurring events, invitations, cloud uploads, and advanced administration remain out of scope.
-- User profiles/games expose read APIs only. Events expose CRUD and join/leave, applying the scoped
+- Real profiles expose owner editing and game-experience mutations; the real game catalog is read-only.
+  Separate numeric demo user/game catalogs expose reads only. Events expose CRUD and join/leave, applying the scoped
   CRUD guidance in `.claude/rules/data.md`. Use events as the feature implementation reference.
-- Relationships use numeric IDs. Shared request/error/reference helpers live in `src/lib/mock-db.ts`;
+- Demo relationships use numeric IDs; real profile IDs are Auth UUIDs and real game/geographic IDs are integers.
+  Shared mock request/error/reference helpers live in `src/lib/mock-db.ts`;
   entity records stay in their feature's `api/` folder. Features never import each other's types.
-- Writes take a mock actor and enforce `../docs/entities.md`. Profiles, games, and
+- Demo event writes take a mock actor and enforce `../docs/entities.md`. Mock profiles, games, and
   public/unlisted events have public reads; private events require an authorized mock actor.
 - The users domain owns real Auth APIs/hooks/forms and SDK auth-state subscription, plus
   the separate legacy `session-api.ts` numeric demo API/hooks and demo route guard.
   The demo selection is tab-scoped; real Auth uses the SDK's persisted/refreshable session.
   Supabase callbacks must not await other Auth SDK calls inside `onAuthStateChange`.
-  Profile editing/onboarding and per-game experience are Milestone 3B; UUID event APIs are 4.
+  Profile editing/onboarding and per-game experience are implemented in Milestone 3B; UUID event APIs are 4.
+- Read `../docs/profiles.md`. Public profiles exclude email/private birth year/roles. Compose
+  the existing geography picker and real game catalog into profile forms at routes; never
+  import geography/games from users. Clear private profile caches on logout/account changes.
+  Experience is self-declared and does not gate mock attendance. No profile picture uploads.
 - Compose session-aware navigation and event participation in app routes. Shared layout gets
   an account slot; events get a user ID through props. Never import users into events or shared code.
 - Event host/game query components are passed into detail render slots from the route.

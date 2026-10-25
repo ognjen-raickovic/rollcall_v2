@@ -4,6 +4,7 @@ import { createBrowserRouter } from 'react-router'
 import { NotFound } from '@/app/routes/not-found'
 import { RootLayout } from '@/app/routes/root-layout'
 import { RequireSession } from '@/features/users/components/require-session'
+import { RequireAccount } from '@/features/users/components/require-account'
 import { demoModeEnabled } from '@/features/users/api/auth-client'
 
 const Home = lazy(() => import('@/app/routes/home').then((module) => ({ default: module.Home })))
@@ -19,6 +20,13 @@ const AuthCallbackRoute = lazy(() =>
   import('@/app/routes/auth-callback').then((module) => ({ default: module.AuthCallbackRoute })),
 )
 const Account = lazy(() => import('@/app/routes/account').then((module) => ({ default: module.Account })))
+const Profile = lazy(() => import('@/app/routes/profile').then((module) => ({ default: module.Profile })))
+const EditProfile = lazy(() =>
+  import('@/app/routes/edit-profile').then((module) => ({ default: module.EditProfile })),
+)
+const PublicProfileRoute = lazy(() =>
+  import('@/app/routes/public-profile').then((module) => ({ default: module.PublicProfileRoute })),
+)
 const DemoLogin = lazy(() =>
   import('@/app/routes/demo-login').then((module) => ({ default: module.DemoLogin })),
 )
@@ -62,6 +70,23 @@ export const router = createBrowserRouter([
       { path: '/reset-password', element: <ResetPassword /> },
       { path: '/auth/callback', element: <AuthCallbackRoute /> },
       { path: '/account', element: <Account /> },
+      {
+        path: '/profile',
+        element: (
+          <RequireAccount>
+            <Profile />
+          </RequireAccount>
+        ),
+      },
+      {
+        path: '/profile/edit',
+        element: (
+          <RequireAccount>
+            <EditProfile />
+          </RequireAccount>
+        ),
+      },
+      { path: '/users/:userId', element: <PublicProfileRoute /> },
       ...(demoModeEnabled ? [{ path: '/demo/login', element: <DemoLogin /> }] : []),
       { path: '*', element: <NotFound /> },
     ],

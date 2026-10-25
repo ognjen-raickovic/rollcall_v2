@@ -19,6 +19,7 @@ type LocationPickerProps = {
   allCountries?: boolean
   inputRef?: Ref<HTMLInputElement>
   onBlur?: () => void
+  onQueryChange?: (query: string) => void
 }
 
 export function LocationPicker({
@@ -34,6 +35,7 @@ export function LocationPicker({
   allCountries = false,
   inputRef,
   onBlur,
+  onQueryChange,
 }: LocationPickerProps) {
   const countries = useCountries()
   const allowed = countries.data?.some((country) => country.isoCode === countryCode) ?? false
@@ -70,6 +72,7 @@ export function LocationPicker({
           required={required}
           inputRef={inputRef}
           onBlur={onBlur}
+          onQueryChange={onQueryChange}
           initialQuery={legacyCity}
           describedBy={`${cityId}-help${error ? ` ${cityId}-error` : ''}`}
         />

@@ -8,7 +8,8 @@ for both assistants. Read `../SPEC.md`, `../docs/entities.md`,
   Milestone 2A adds GeoNames import tooling and backend search only. Read
   `../docs/geographic-import.md` before imports/search changes. Milestone 2B frontend
   integration is delivered. Milestone 3A adds reusable verified Supabase bearer identity
-  and `GET /api/me`; profile editing, event endpoints, uploads, room codes and administration are deferred.
+  and `GET /api/me`. Milestone 3B adds UUID profile reads/owner writes, private optional birth
+  year, real catalog reads and per-game experience. Event endpoints/uploads/codes/admin remain deferred.
 - Preserve the frontend's mocks, numeric IDs, routes and styling. Do not import frontend
   feature types into this package. Database UUIDs require an explicit future integration.
 - Keep routes, Zod validation and data access within the owning module; common errors and
@@ -27,7 +28,12 @@ for both assistants. Read `../SPEC.md`, `../docs/entities.md`,
   Verify signatures through supported Supabase `getClaims`, plus issuer/audience/expiry
   and UUID subject checks. Never trust client actors/roles or mutate a shared client's session.
   Read `../docs/authentication.md`; `/api/me` returns only safe UUID/email identity.
-  Preserve public geography and deny-by-default application-table grants/RLS. No service-role key.
+  Preserve public geography and focused profile/catalog grants/RLS; events and roles remain denied.
+  No service-role key. Read `../docs/profiles.md` for atomic profile/age writes and private DTO rules.
+- Profile and experience mutations use the verified account UUID and an isolated bearer-scoped
+  unprivileged client. Enforce owner checks, immutable identity/timestamps, geographic consistency
+  and valid game/experience values in SQL as well as API validation. Public responses contain no
+  email, private age/declaration or role information. Keep the registration initializer unchanged.
 - Version schema changes under `../supabase/migrations/`. Add explicit grants/RLS, indexes,
   delete behavior, constraints and tests with each schema change. Keep private age, roles,
   exact addresses and future invitation secrets outside public DTOs.

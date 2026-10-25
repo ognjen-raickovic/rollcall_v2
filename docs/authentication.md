@@ -3,8 +3,9 @@
 RollCall uses local Supabase Auth for real email/password accounts. Registration, login,
 logout, email confirmation/resend, password recovery and reset are implemented. The SDK
 owns PKCE exchange, session persistence and automatic token refresh. Fastify independently
-verifies bearer identity for `GET /api/me`. Event CRUD/attendance and public user/game
-catalogs are still mocks; signing in does not create a persistent event profile workflow.
+verifies bearer identity for `GET /api/me`. Milestone 3B adds real profiles and game experience
+through [profile APIs](profiles.md). Event CRUD/attendance and their numeric demo catalogs
+remain separate mocks; signing in does not create persistent event participation.
 
 ## Local setup
 
@@ -133,9 +134,9 @@ existing rows. Email and editable metadata are not copied; no private age or acc
 is initialized. The SECURITY DEFINER function has an empty search path and no API-role
 execute grants. Profile/event tables retain RLS and deny-by-default grants.
 
-No profile editing, public profile endpoint, per-game experience flow, role management,
-private room code or persistent event API is added. Minimal initialization satisfies
-the current profile constraints without prematurely implementing onboarding.
+Milestone 3A added no profile editing or experience flow. Milestone 3B now provides those
+through focused APIs/RLS without changing this initializer; see [profiles](profiles.md).
+Role management, private room codes and persistent events remain outside the current scope.
 
 ## Real UUIDs and legacy numeric demo identities
 
@@ -152,8 +153,8 @@ profiles even when built with the flag set. Real login and demo selection are se
 journeys; event writes continue to receive an explicit numeric mock actor through routes.
 Mock tests remain independent of a running Auth server.
 
-Milestone 3B will add profile onboarding/editing and self-declared per-game experience
-with focused self-access policies. Milestone 4 will introduce persistent event/attendance
+Milestone 3B implements profile editing and self-declared per-game experience with focused
+self-access policies. Milestone 4 will introduce persistent event/attendance
 APIs, explicit UUID frontend adapters and verified host/member authorization, replacing
 numeric demo dependencies. Exact addresses must then be omitted from unauthorized server
 responses; hiding a field in a mock UI is not a privacy boundary.

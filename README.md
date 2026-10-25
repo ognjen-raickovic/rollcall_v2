@@ -39,6 +39,12 @@ participants. Event CRUD/attendance remains mocked and resets on reload. See
 Executed checks and remaining limits are recorded in
 [Milestone 3A verification](docs/authentication-verification.md).
 
+**Milestone 3B** adds real editable UUID profiles and per-game experience backed by PostgreSQL.
+Use `/profile` and `/profile/edit` after signing in, or `/users/:userId` for a public profile.
+Birth year is optional/private; email and roles never appear in public profile responses.
+The real game catalog is read-only and separate from existing event mocks. See
+[profile implementation and setup](docs/profiles.md).
+
 ## Setup
 
 Use Node.js 22.12+ (or a newer supported LTS) and the pnpm version pinned in `package.json`.
@@ -53,6 +59,7 @@ pnpm lint                       # both packages + frontend feature boundaries
 pnpm build                      # frontend/dist and backend/dist
 pnpm test:mock                   # mock API integration checks, no backend needed
 pnpm test:backend                # backend tests without a running database
+pnpm test:profiles               # focused frontend profile/account-isolation checks
 pnpm format                     # Prettier on frontend/src
 pnpm --filter frontend preview  # preview the production build
 ```
@@ -129,8 +136,8 @@ frontend/
   CLAUDE.md                  Frontend architecture and rules
   DESIGN.md                  Visual identity and token meanings
   src/app/                   Providers, router, route composition
-  src/features/users/        Real Auth/API identity, auth forms, read-only mock profiles, separate demo session
-  src/features/games/        Game catalog types, read mocks, query hooks
+  src/features/users/        Real Auth, UUID profile/experience APIs/forms, separate numeric demo session
+  src/features/games/        Real read-only profile game catalog plus unchanged event catalog mocks
   src/features/events/       Types, mock CRUD/attendance, shared validation/form, discovery/details
   src/features/geography/    HTTP geography API/hooks and reusable country/city controls
   src/components/ui/         Starter shadcn primitives
@@ -223,15 +230,15 @@ Registration initializes a minimal profile with its actual Auth UUID and a fixed
 The schema includes UUID profiles linked to Supabase Auth and UUID events, numeric
 geography/game IDs, country/city relationships, per-game experience and unique attendance.
 Exact addresses, private self-declared age information and roles are separated from
-public-safe records. Non-geography application tables have RLS enabled and no client
-grants in this milestone; their future endpoints/authorization are not implemented.
+public-safe records. Profile/game/experience tables now have focused public-read and
+owner-write grants/RLS. Events, roles and protected event locations remain denied.
 The numeric frontend demo IDs are unchanged and are not real account identities.
 The city endpoint searches canonical/alternate names with exact/prefix priority, substring
 fallback for three or more characters and four prominent suggestions by default. Existing
 DTO fields remain; country and administrative codes are additive.
 
 No hosted Supabase project is created, linked, migrated, reset or deployed by these
-commands. Profile editing/onboarding and per-game experience are Milestone 3B; persistent
+commands. Real profiles/per-game experience are implemented in Milestone 3B; persistent
 UUID event/attendance integration is Milestone 4. Invitation codes, role administration,
 Storage policies/uploads require later work. Frontend
 country/city autocomplete reads the existing geography API in Milestone 2B.

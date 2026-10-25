@@ -6,8 +6,9 @@ Workshop 3 is the completed React mock MVP. Backend Milestone 1 is a separate No
 TypeScript workspace package with Fastify, Zod, Supabase PostgreSQL migrations and a
 read-only geography API. Milestone 2A adds local GeoNames import tools, aliases and improved
 database search. Milestone 2B connects React geography controls to those read endpoints.
-Milestone 3A adds real Supabase Auth and verified Fastify identity. Numeric event/user
-catalog IDs, images, create/edit and attendance remain mocked. Demo selection is explicitly
+Milestone 3A adds real Supabase Auth and verified Fastify identity. Milestone 3B adds real
+UUID profiles, private age and per-game experience with a read-only database game catalog.
+Numeric event/demo catalog IDs, images, create/edit and attendance remain mocked. Demo selection is explicitly
 enabled only during Vite development and is separate from real UUID accounts.
 
 ```mermaid
@@ -40,7 +41,8 @@ server. `config/` owns environment validation, `db/` owns server-only Supabase s
 `shared/` owns common error handling. `backend/scripts/geography/` is a separate local
 maintenance importer; it is not imported by the API or bundled into the application build.
 `modules/auth/` owns token verification, request-local identity and the reusable guard
-used by `/api/me`. Only implemented modules are created; empty event/user abstractions are unnecessary.
+used by `/api/me` and private profile operations. `modules/profiles/` owns profile/catalog
+routes, strict validation and user-scoped data access. Only implemented modules are created.
 
 The backend never imports frontend feature internals. SQL database rows use snake_case;
 the REST boundary uses explicit camelCase DTOs and keeps errors compatible with the
@@ -51,7 +53,8 @@ inside feature API layers rather than rewriting component data access.
 
 The runtime API uses a server-only Supabase client with a publishable key (or the local
 legacy anon key). It has no user session, browser storage, automatic refresh or privileged
-role. Only enabled countries/cities can be read. City search calls the explicitly
+role. Public reads include enabled geography and public-safe profiles/games/experience.
+City search calls the explicitly
 granted, security-invoker `public.search_cities` function, which remains subject to
 the caller's table grants and RLS. Canonical and source alternate names are normalized in
 PostgreSQL. Exact matches rank ahead of prefixes, then substrings for queries with at least
@@ -61,8 +64,9 @@ Empty input favors population, then normalized name and ID. The reset seed has n
 metadata; the explicit import supplies source population values.
 
 All application tables have RLS enabled. Migrations revoke implicit/default access and
-grant only the geography reads/function execution needed now. Application writes, profile
-reads, event reads, private records and role records are not enabled for client roles.
+grant only the current geography/profile/catalog operations. Profile writes use owner RLS
+and mutable-column privileges; private birth year is owner-only. Events, protected event
+addresses and role records remain unavailable to client roles.
 Absence of an event endpoint does not justify granting its tables broad access in advance.
 
 ## Geographic import maintenance boundary
@@ -108,18 +112,35 @@ missing, malformed, invalid and expired tokens return 401 `UNAUTHENTICATED`. Geo
 does not use this guard and remains public. Never trust a submitted user ID, demo actor,
 arbitrary decoded JWT, client-supplied role or editable `user_metadata` for authorization.
 
-The minimal registration trigger initializes a fixed-placeholder profile without exposing
-profile access or creating roles. Profile editing/game experience are Milestone 3B.
+The minimal registration trigger initializes a fixed-placeholder profile without creating
+roles. Milestone 3B adds focused profile permissions without changing that initializer.
 Logout revokes refresh capability for the session; an issued access JWT may remain valid
 until expiry. This is standard token behavior, not instantaneous server-side logout
 revocation. See [authentication](authentication.md) for setup and verification boundaries.
 
-Future application operations must use an isolated per-request Supabase client carrying
+Profile operations now use an isolated per-request Supabase client carrying
 the verified user's bearer token. Do not mutate a shared client's session or install a global
 current user. Explicit grants plus operation-specific RLS must then enforce the same
 identity and ownership rules. A carefully scoped transactional database function may be
 used for operations such as joining, with its caller/authorization checked inside the
 transaction. Add those grants/functions only with the endpoint and allow/deny tests.
+
+## Milestone 3B profile boundary
+
+The auth guard verifies each protected request before its exact bearer token is passed to
+a newly constructed unprivileged Supabase client. It never sets a shared current user.
+Profile/experience RPCs derive ownership from `auth.uid()`, not JSON actor IDs. A strict
+nonempty profile PATCH is applied atomically with optional private birth year under one
+PostgreSQL transaction and caller RLS. Public DTO construction is explicit and contains
+no email, age/declaration timestamp, role or privileged metadata.
+
+The private schema remains unexposed by PostgREST. Authenticated schema usage and focused
+owner-only private-profile grants support SECURITY INVOKER functions, without opening
+roles or event locations. Column grants deny UUID/creation/update timestamp changes.
+Country-enabled checks and the existing city/country FK also protect direct Data API
+writes. Unique user/game keys and owner policies protect per-game experience. Catalog
+games are public/read-only. Browser components use Fastify; they do not access application
+tables directly. See [profiles](profiles.md) for contracts and executed checks.
 
 There is no general service-role repository in Milestone 1. If a future maintenance or
 moderation operation requires privileged access, isolate it behind a separately reviewed
@@ -128,18 +149,18 @@ RLS or route ordinary requests through a bypass client.
 
 ## Sensitive data and authorization design
 
-| Resource                        | Milestone 1 access           | Intended later authorization                                                                       |
-| ------------------------------- | ---------------------------- | -------------------------------------------------------------------------------------------------- |
-| Enabled countries/cities        | Anonymous/authenticated read | Public catalog and bounded search                                                                  |
-| Public-safe profiles/games      | No client grants yet         | Public-safe reads; self-only profile edits                                                         |
-| Private profile age information | No client grants             | Self-only read/write; no public DTO field                                                          |
-| Per-game experience             | No client grants             | Self-declared user-owned values; public display only by an explicit future contract                |
-| Public events                   | No client grants             | Public discoverability with addresses excluded by default                                          |
-| Unlisted events                 | No client grants             | Direct-link reads without public discovery; link access is not privacy                             |
-| Private events                  | No client grants             | Host/current participant or explicitly authorized moderator; later invitation workflow             |
-| Exact event locations           | No client grants             | Host/authorized participants; optional explicit public sharing, never implied by public visibility |
-| Account roles                   | No client grants             | Server-enforced authorization; only authorized superadmins manage admins                           |
-| Invitation secrets              | No table/workflow yet        | Separate server-managed encrypted storage and hash verification                                    |
+| Resource                        | Current access                      | Intended authorization                                                                             |
+| ------------------------------- | ----------------------------------- | -------------------------------------------------------------------------------------------------- |
+| Enabled countries/cities        | Anonymous/authenticated read        | Public catalog and bounded search                                                                  |
+| Public-safe profiles/games      | Public reads; owner profile updates | Public-safe reads; self-only profile edits                                                         |
+| Private profile age information | Owner-only RLS/invoker RPC          | Self-only read/write; no public DTO field                                                          |
+| Per-game experience             | Public reads; owner writes          | Self-declared user-owned values; no attendance eligibility inference                               |
+| Public events                   | No client grants                    | Public discoverability with addresses excluded by default                                          |
+| Unlisted events                 | No client grants                    | Direct-link reads without public discovery; link access is not privacy                             |
+| Private events                  | No client grants                    | Host/current participant or explicitly authorized moderator; later invitation workflow             |
+| Exact event locations           | No client grants                    | Host/authorized participants; optional explicit public sharing, never implied by public visibility |
+| Account roles                   | No client grants                    | Server-enforced authorization; only authorized superadmins manage admins                           |
+| Invitation secrets              | No table/workflow yet               | Separate server-managed encrypted storage and hash verification                                    |
 
 Age guidance uses an optional self-declared birth year, without collecting a birth date.
 It is approximate and unverified, not a proof of age. Event `minimum_age` remains guidance.

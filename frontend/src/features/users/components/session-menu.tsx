@@ -26,11 +26,11 @@ export function SessionMenu() {
     return (
       <div className="flex items-center gap-2">
         <Link
-          to="/account"
+          to="/profile"
           className="max-w-28 truncate text-sm font-medium hover:text-primary focus-visible:outline-2 focus-visible:outline-ring"
-          title={auth.data.email ?? 'Your account'}
+          title="Your player profile"
         >
-          Account
+          Profile
         </Link>
         <Button
           variant="ghost"

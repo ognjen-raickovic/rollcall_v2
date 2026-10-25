@@ -52,6 +52,9 @@ export function useAuthLogout() {
       client.setQueryData(recoveryKey, false)
       client.removeQueries({ queryKey: ['account-identity'] })
       client.removeQueries({ queryKey: ['events'] })
+      client.removeQueries({ queryKey: ['own-profile'] })
+      client.removeQueries({ queryKey: ['profile-experience'] })
+      client.removeQueries({ queryKey: ['public-profile'] })
     },
   })
 }
