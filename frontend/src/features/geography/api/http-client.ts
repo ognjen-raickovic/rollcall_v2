@@ -1,6 +1,6 @@
 import type { ZodType } from 'zod'
 
-// Geography is the only HTTP-backed feature in this milestone.
+// Geography data access stays within this feature; account identity has its own client.
 
 export function apiOrigin(value: string): string {
   const trimmed = value.trim().replace(/\/$/, '')

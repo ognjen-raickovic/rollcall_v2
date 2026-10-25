@@ -7,7 +7,8 @@ for both assistants. Read `../SPEC.md`, `../docs/entities.md`,
 - Milestone 1 implements Fastify/TypeScript configuration, health and geography reads.
   Milestone 2A adds GeoNames import tooling and backend search only. Read
   `../docs/geographic-import.md` before imports/search changes. Milestone 2B frontend
-  integration, real login, event endpoints, uploads, room codes and admin interfaces are deferred.
+  integration is delivered. Milestone 3A adds reusable verified Supabase bearer identity
+  and `GET /api/me`; profile editing, event endpoints, uploads, room codes and administration are deferred.
 - Preserve the frontend's mocks, numeric IDs, routes and styling. Do not import frontend
   feature types into this package. Database UUIDs require an explicit future integration.
 - Keep routes, Zod validation and data access within the owning module; common errors and
@@ -22,8 +23,11 @@ for both assistants. Read `../SPEC.md`, `../docs/entities.md`,
 - Download only the four supported country extracts. Keep archives/extracted data ignored;
   retain code, filters, manifests/reports and attribution. Never describe a sample or source
   dataset as perfectly complete. Read reported counts before claiming an import succeeded.
-- Later authenticated endpoints must verify Supabase identity and use a fresh request-local
-  context. Never trust client actors/roles or mutate a shared client's session.
+- Authenticated endpoints use the reusable auth guard and a fresh request-local identity.
+  Verify signatures through supported Supabase `getClaims`, plus issuer/audience/expiry
+  and UUID subject checks. Never trust client actors/roles or mutate a shared client's session.
+  Read `../docs/authentication.md`; `/api/me` returns only safe UUID/email identity.
+  Preserve public geography and deny-by-default application-table grants/RLS. No service-role key.
 - Version schema changes under `../supabase/migrations/`. Add explicit grants/RLS, indexes,
   delete behavior, constraints and tests with each schema change. Keep private age, roles,
   exact addresses and future invitation secrets outside public DTOs.

@@ -12,9 +12,9 @@ The final polish adds optional custom event covers, curated multi-select tags, a
 matching light theme alongside the default dark theme.
 
 **Backend Milestone 1** adds an independent Fastify API, Supabase database schema and
-local development tools. The frontend still uses its existing mocks and demo login.
-Only health and geography endpoints are implemented; event/auth APIs and real uploads
-remain future milestones. Start with [backend setup](backend/README.md),
+local development tools. Its original boundary was health and geography; the current
+Milestone 3A also implements real authentication. Event APIs and real uploads remain
+future milestones. Start with [backend setup](backend/README.md),
 [architecture](docs/backend-architecture.md), [schema](docs/database-schema.md), and
 [roadmap](docs/backend-roadmap.md).
 **Milestone 2A** adds reproducible GeoNames imports and improved Balkan place search;
@@ -29,6 +29,15 @@ participation, users, games and demo login remain mocked. Forms require a select
 venue is optional, and discovery supports country/city URL filters. See
 [location UI integration](docs/location-ui.md) for setup and the transitional event model.
 See [Milestone 2B verification](docs/location-ui-verification.md) for executed checks and limitations.
+
+**Milestone 3A** adds real Supabase email/password registration, login/logout, email
+confirmation, password recovery and persistent refreshed sessions. Fastify verifies bearer
+tokens for `GET /api/me`. Real accounts use UUIDs; numeric demo profiles remain a separate,
+explicitly enabled development-only mode. Real accounts cannot act as fixture hosts or
+participants. Event CRUD/attendance remains mocked and resets on reload. See
+[authentication setup and boundaries](docs/authentication.md).
+Executed checks and remaining limits are recorded in
+[Milestone 3A verification](docs/authentication-verification.md).
 
 ## Setup
 
@@ -51,13 +60,16 @@ pnpm --filter frontend preview  # preview the production build
 On PowerShell with disabled script execution, use `pnpm.cmd` instead of `pnpm`.
 The frontend builds and renders mock event browsing without a backend. Country/city
 selection requires Fastify and local Supabase; unavailable geography displays errors and
-retry controls, without a silent fixture fallback. No browser Supabase key is required.
+retry controls, without a silent fixture fallback. Real authentication additionally requires
+the public local Supabase URL and publishable/anon key in `frontend/.env`.
 
 For local backend development, install/start Docker Desktop and run from the root:
 
 ```bash
 pnpm db:start
 # Copy backend/.env.example to backend/.env and set the local URL/key from Supabase status.
+# Copy frontend/.env.example to frontend/.env and set its public local URL/key too.
+pnpm exec supabase db push --local # apply pending migrations without resetting geography
 pnpm dev:backend                 # http://127.0.0.1:3001
 pnpm db:lint                    # local SQL analysis
 pnpm db:test                    # local database tests
@@ -68,8 +80,14 @@ pnpm db:stop
 
 For UI development, keep Supabase running, start `pnpm dev:backend` in one terminal and
 `pnpm dev` in another. Vite proxies `/api` to Fastify in dev and preview. Optional
-`frontend/.env` settings are documented in `frontend/.env.example`; default local setup
-needs no frontend key or production URL. See [location UI setup](docs/location-ui.md).
+`frontend/.env` settings are documented in `frontend/.env.example`. Set
+`VITE_SUPABASE_URL=http://127.0.0.1:55321` and `VITE_SUPABASE_PUBLISHABLE_KEY` to the
+local public key. Never copy a secret/service-role key into a browser environment.
+Open `http://localhost:5173/register`; local confirmation/reset emails appear at
+`http://127.0.0.1:55324`. Follow email links in the same browser/origin that requested them
+because PKCE uses a locally retained verifier. Exact local redirect URLs are allowlisted
+in `supabase/config.toml`. See [authentication](docs/authentication.md) and
+[location UI setup](docs/location-ui.md).
 
 `pnpm db:reset` explicitly resets **only the local** database, reapplies migrations and
 loads development seeds. It destroys local data. Do not run it against a hosted project.
@@ -111,14 +129,14 @@ frontend/
   CLAUDE.md                  Frontend architecture and rules
   DESIGN.md                  Visual identity and token meanings
   src/app/                   Providers, router, route composition
-  src/features/users/        Public profiles, demo session API/hooks, login and route guard
+  src/features/users/        Real Auth/API identity, auth forms, read-only mock profiles, separate demo session
   src/features/games/        Game catalog types, read mocks, query hooks
   src/features/events/       Types, mock CRUD/attendance, shared validation/form, discovery/details
   src/features/geography/    HTTP geography API/hooks and reusable country/city controls
   src/components/ui/         Starter shadcn primitives
   src/components/layout/     Navigation and app layout
   src/lib/                   Mock helpers, reference IDs, utilities
-backend/                     Fastify API, server config, geography data access and tests
+backend/                     Fastify API, verified bearer identity, geography data access and tests
   scripts/geography/         Local GeoNames download/validation/import tooling
 supabase/                    Local CLI config, SQL migrations, development seed and DB tests
 docs/entities.md             Frontend mock contracts and implemented backend API boundary
@@ -136,22 +154,26 @@ Shared reference IDs validate mock relationships without cross-feature imports. 
 and events share only the `src/lib/location.ts` selection-reference contract; routes compose
 their controls rather than introducing feature imports.
 
-Mock writes take an explicit `{ userId }` actor and simulate permissions; this is **not
-real authentication**. Event data lives in memory and refresh resets changes. Choose a demo
-profile at `/login`; its ID stays in sessionStorage for this tab until logout/close (memory
-fallback if storage is blocked). No password is needed. Only geography uses the new
-database/API; there is no durable event storage or real authentication. Payments,
-messaging, maps and waitlists are not implemented.
+Mock writes take an explicit numeric `{ userId }` actor and simulate event permissions.
+They are separate from real Supabase UUID identity. Event data lives in memory and refresh
+resets changes. To demonstrate legacy event writes, explicitly set
+`VITE_ENABLE_DEMO_MODE=true`, restart the Vite development server and use `/demo/login`.
+Its selected profile ID stays in sessionStorage for the tab; production builds disable
+selection even if the flag is set. A real Auth session does not supply a mock actor.
+Public browsing/geography works independently. Payments, messaging, maps and waitlists
+are not implemented.
 See `docs/entities.md` for exact contracts and error behavior.
 
 Routes: `/`, `/events`, `/events/:eventId`, `/events/new`, `/events/:eventId/edit`, `/login`,
-and a not-found fallback. The homepage includes search, categories, and upcoming events.
+`/register`, `/forgot-password`, `/reset-password`, `/auth/callback`, the development-only
+`/demo/login`, and a not-found fallback. The homepage includes search, categories, and upcoming events.
 Search/category links filter the upcoming public event list through URL parameters. Search
 matches event titles; country/city, game, and open-seat controls combine with it and can be reset.
 Event details show the host, game, schedule, tags, minimum age, visibility, and
 capacity. Join/leave updates visible seats and provides success/error feedback; anonymous
 protected actions redirect to login and back. Full, past, and canceled tables cannot be joined.
-Signed-in users can create events; only the host can edit them. Both routes use a shared
+Explicit development demo users can create mock events; only the mock host can edit them.
+Real accounts see the current persistence limitation. Both routes use a shared
 React Hook Form + Zod form, preserving entered data on errors and navigating to details on
 success. Public future events appear in matching discovery filters. UI branding is always **RollCall**.
 
@@ -186,14 +208,18 @@ is initially visible to its host only.
 
 ## Backend boundary and security
 
-Implemented routes are `GET /health`, `GET /api/countries`, and
-`GET /api/cities?country=ME&q=pod&limit=4`. Health is a process liveness check; it does not
+Implemented routes are `GET /health`, `GET /api/countries`,
+`GET /api/cities?country=ME&q=pod&limit=4`, and authenticated `GET /api/me`.
+The last returns only `{ id: UUID, email: string | null }` with `Cache-Control: no-store`;
+invalid/missing/expired bearer tokens return 401. Health is a process liveness check; it does not
 prove database readiness. Geography is read through Supabase's Data API using an
 unprivileged key, explicit grants and RLS. No service-role key or database password is
 needed by the API. Never put privileged credentials in a frontend environment file.
 The separate local importer uses a maintenance-only PostgreSQL connection and never runs
 inside a request. Its privileges are not added to the runtime Supabase client.
 
+Registration initializes a minimal profile with its actual Auth UUID and a fixed
+`RollCall player` placeholder; no email/roles are copied from editable metadata.
 The schema includes UUID profiles linked to Supabase Auth and UUID events, numeric
 geography/game IDs, country/city relationships, per-game experience and unique attendance.
 Exact addresses, private self-declared age information and roles are separated from
@@ -205,8 +231,9 @@ fallback for three or more characters and four prominent suggestions by default.
 DTO fields remain; country and administrative codes are additive.
 
 No hosted Supabase project is created, linked, migrated, reset or deployed by these
-commands. Live authentication, profile/event APIs, invitation codes, role administration,
-Storage policies/uploads and persistent event integration require later work. Frontend
+commands. Profile editing/onboarding and per-game experience are Milestone 3B; persistent
+UUID event/attendance integration is Milestone 4. Invitation codes, role administration,
+Storage policies/uploads require later work. Frontend
 country/city autocomplete reads the existing geography API in Milestone 2B.
 
 ## Team workflow: Codex and Claude Code

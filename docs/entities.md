@@ -3,19 +3,32 @@
 Shared contract for Workshop 3 mocks, Milestone 2B location integration and the backend foundation.
 Feature types live in `frontend/src/features/<domain>/types.ts`; APIs and fixtures live in
 that feature's `api/`. Users and games are read-only in the frontend scope; mock events
-support CRUD plus attendance. Geography alone uses real HTTP. The backend model intentionally
+support CRUD plus attendance in explicit development demo mode. Geography and account identity
+use real HTTP; users also integrates with Supabase Auth. The backend model intentionally
 differs where stated below.
 
-## Backend Milestones 1 and 2A: implemented API
+## Backend Milestones 1 through 3A: implemented API
 
 Only the following HTTP endpoints are implemented. All other HTTP paths later in this
 document describe the Workshop 3 mock-shaped intended contract, not existing server routes.
 
-| Method/path | Result | Access |
-| --- | --- | --- |
-| `GET /health` | Process liveness response, independent of the database | Public |
-| `GET /api/countries` | `{ id: number, isoCode: string, name: string }[]` for enabled countries | Public, geography-only RLS/grants |
-| `GET /api/cities?country=ME&q=pod&limit=4` | `CitySuggestion[]` | Public, geography-only RLS/grants |
+| Method/path                                | Result                                                                  | Access                                   |
+| ------------------------------------------ | ----------------------------------------------------------------------- | ---------------------------------------- |
+| `GET /health`                              | Process liveness response, independent of the database                  | Public                                   |
+| `GET /api/countries`                       | `{ id: number, isoCode: string, name: string }[]` for enabled countries | Public, geography-only RLS/grants        |
+| `GET /api/cities?country=ME&q=pod&limit=4` | `CitySuggestion[]`                                                      | Public, geography-only RLS/grants        |
+| `GET /api/me`                              | `{ id: string (UUID), email: string \| null }`                          | Verified Supabase bearer token; no-store |
+
+`/api/me` returns no password, token, role, profile metadata, address or private age. Its
+identity comes from cryptographically verified claims and explicit issuer/audience/expiry/
+UUID checks, never a submitted actor. Missing/invalid/expired tokens return 401
+`{ code: 'UNAUTHENTICATED', message, fields: {} }`. Registration/login/recovery are Supabase
+Auth SDK operations, not new Fastify password endpoints. See [authentication](authentication.md).
+
+`Account` in the users feature has `id: string` validated as a UUID and `email: string | null`.
+It is distinct from the existing public mock `User` with numeric ID. Real Auth state never
+provides a numeric event actor. The SDK owns session token persistence/refresh; tokens are
+not fields of public application entities and must not be logged.
 
 `CitySuggestion` contains `id: number`, `countryId: number`, `name: string`,
 `administrativeDivision: string | null`, `latitude: number | null`, and
@@ -49,23 +62,26 @@ mock fallback data. `/health` is liveness, not a database readiness guarantee.
 The database is defined by versioned migrations in `supabase/migrations/`; exact columns,
 constraints, delete behavior and the ER diagram are in [database schema](database-schema.md).
 
-| Entity | Database foundation | Difference from Workshop 3 |
-| --- | --- | --- |
-| Country | Numeric PK; unique ISO alpha-2 code, name, enabled, created timestamp | Relational country catalog; ME/RS/BA/HR seeded, no frontend enum |
-| City | Numeric PK; country FK, canonical/ASCII/normalized names, optional administrative names/codes, coordinates/population, feature code/source ID/source modification date, created timestamp | Event/profile city is a selected ID; source upserts preserve internal IDs |
-| City alias | Composite city/normalized-name PK; matching city/country FK, source name, normalized key and source label | Alternate names support server search without merging same-name places |
-| Profile | UUID PK/FK to `auth.users`; display name, optional country/city, biography, timestamps | Real Auth identity replaces numeric demo IDs later; no credentials/roles/age in public DTOs |
-| Private profile | Optional self-declared birth year and declaration timestamp in a protected table | Private, approximate age guidance; no birth date or verification |
-| Account role | Protected profile relationship with `user`, `admin`, or `superadmin` | No arbitrary client role assignment or management endpoint |
-| Game | Numeric PK; existing category/name/description/player guidance | Separate curated database catalog; no game write API yet |
-| User game experience | Composite user/game relationship with `beginner`, `intermediate`, or `veteran`, timestamps | Independently self-declared for each game; not a verified qualification |
-| Event | UUID PK; host UUID/game/city FKs, optional venue, schedule/capacity/experience/price/tags/age/visibility/status, future cover reference, timestamps | Country derives from city; the frontend retains numeric event IDs and adds a selected location snapshot alongside its city label |
-| Event location | Required in-person address separated from public event fields, explicit public-sharing flag default false | Exact residential address is excluded from public reads by default |
-| Event participant | Composite event/profile PK, attendance timestamp; host excluded | Many-to-many attendance with serialized capacity protection rather than an embedded ID array |
+| Entity               | Database foundation                                                                                                                                                                       | Difference from Workshop 3                                                                                                       |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| Country              | Numeric PK; unique ISO alpha-2 code, name, enabled, created timestamp                                                                                                                     | Relational country catalog; ME/RS/BA/HR seeded, no frontend enum                                                                 |
+| City                 | Numeric PK; country FK, canonical/ASCII/normalized names, optional administrative names/codes, coordinates/population, feature code/source ID/source modification date, created timestamp | Event/profile city is a selected ID; source upserts preserve internal IDs                                                        |
+| City alias           | Composite city/normalized-name PK; matching city/country FK, source name, normalized key and source label                                                                                 | Alternate names support server search without merging same-name places                                                           |
+| Profile              | UUID PK/FK to `auth.users`; display name, optional country/city, biography, timestamps                                                                                                    | Initialized minimally in 3A; editing is 3B; numeric demo profiles stay separate; no credentials/roles/age in public DTOs         |
+| Private profile      | Optional self-declared birth year and declaration timestamp in a protected table                                                                                                          | Private, approximate age guidance; no birth date or verification                                                                 |
+| Account role         | Protected profile relationship with `user`, `admin`, or `superadmin`                                                                                                                      | No arbitrary client role assignment or management endpoint                                                                       |
+| Game                 | Numeric PK; existing category/name/description/player guidance                                                                                                                            | Separate curated database catalog; no game write API yet                                                                         |
+| User game experience | Composite user/game relationship with `beginner`, `intermediate`, or `veteran`, timestamps                                                                                                | Independently self-declared for each game; not a verified qualification                                                          |
+| Event                | UUID PK; host UUID/game/city FKs, optional venue, schedule/capacity/experience/price/tags/age/visibility/status, future cover reference, timestamps                                       | Country derives from city; the frontend retains numeric event IDs and adds a selected location snapshot alongside its city label |
+| Event location       | Required in-person address separated from public event fields, explicit public-sharing flag default false                                                                                 | Exact residential address is excluded from public reads by default                                                               |
+| Event participant    | Composite event/profile PK, attendance timestamp; host excluded                                                                                                                           | Many-to-many attendance with serialized capacity protection rather than an embedded ID array                                     |
 
-Only geography has Data API read grants in Milestones 1/2A. Other application tables have RLS
+Only geography has Data API read grants through Milestone 3A. Other application tables have RLS
 enabled and no client access until their future endpoints/policies are implemented and
-tested. Auth/profile/event APIs are not available just because their tables exist.
+tested. `/api/me` reads verified Auth identity, not an application table. Profile/event APIs
+are not available just because their tables exist. The additive 3A migration creates a
+minimal profile on Auth registration and backfills missing rows with `RollCall player`.
+It copies no email/editable metadata/role and preserves existing profiles and table grants.
 
 Frontend integration must deliberately adopt UUID profile/event IDs and selected city IDs
 through feature API adapters; never cast UUIDs to numbers or equate a numeric demo profile
@@ -109,13 +125,13 @@ rerun commands, attribution, limitations and execution evidence.
 import geography. Routes compose the picker into event form/discovery render props, and
 both features use `LocationReference` from `frontend/src/lib/location.ts`:
 
-| Field | Type and constraint |
-| --- | --- |
-| `cityId`, `countryId` | Actual positive PostgreSQL integer IDs, 1–2147483647 |
-| `countryIsoCode` | Two uppercase ASCII letters supplied by the country/city API |
-| `countryName` | Trimmed display label, 2–100 characters |
-| `cityName` | Canonical trimmed display label, 1–200 characters |
-| `administrativeDivision` | Nullable region label, 1–200 characters when present |
+| Field                      | Type and constraint                                            |
+| -------------------------- | -------------------------------------------------------------- |
+| `cityId`, `countryId`      | Actual positive PostgreSQL integer IDs, 1–2147483647           |
+| `countryIsoCode`           | Two uppercase ASCII letters supplied by the country/city API   |
+| `countryName`              | Trimmed display label, 2–100 characters                        |
+| `cityName`                 | Canonical trimmed display label, 1–200 characters              |
+| `administrativeDivision`   | Nullable region label, 1–200 characters when present           |
 | `admin1Code`, `admin2Code` | Nullable source administrative codes, maximum 20/80 characters |
 
 The reference is a selection/display snapshot, not a duplicated geographic catalog or a
@@ -163,13 +179,13 @@ contracts for the new database. The backend transition above takes precedence fo
 
 Code: `frontend/src/features/users/`.
 
-| Field | Type | Rules |
-| --- | --- | --- |
-| id | number | Required, assigned positive safe integer |
-| displayName | string | Required, 2–80 trimmed characters |
-| city | string | Required, 2–80 trimmed characters |
-| bio | string | Required; may be empty, up to 500 characters |
-| createdAt | ISO timestamp string | Required, assigned |
+| Field       | Type                 | Rules                                        |
+| ----------- | -------------------- | -------------------------------------------- |
+| id          | number               | Required, assigned positive safe integer     |
+| displayName | string               | Required, 2–80 trimmed characters            |
+| city        | string               | Required, 2–80 trimmed characters            |
+| bio         | string               | Required; may be empty, up to 500 characters |
+| createdAt   | ISO timestamp string | Required, assigned                           |
 
 Public profile only: no credentials, private email, roles, or session tokens. All users may
 organize and attend events. One user organizes many events; participation is many-to-many
@@ -178,10 +194,10 @@ these constraints describe curated fixtures and the intended future write contra
 
 **Access:** everyone can list/get public profiles; no user write endpoints in Workshop 3.
 
-| Mock function | Intended HTTP | Contract |
-| --- | --- | --- |
+| Mock function             | Intended HTTP              | Contract                                |
+| ------------------------- | -------------------------- | --------------------------------------- |
 | `usersApi.list(filters?)` | `GET /users?search=&city=` | `Promise<User[]>`, ascending fixture ID |
-| `usersApi.get(id)` | `GET /users/:id` | `Promise<User>` |
+| `usersApi.get(id)`        | `GET /users/:id`           | `Promise<User>`                         |
 
 `UserFilters`: optional `search` (0–100 characters, case-insensitive display-name substring)
 and `city` (0–80 characters, case-insensitive exact match); empty values do not filter.
@@ -191,14 +207,14 @@ Unknown filters fail with 400. Hooks: `useUsers(filters?)`, `useUser(id)`.
 
 Code: `frontend/src/features/games/`.
 
-| Field | Type | Rules |
-| --- | --- | --- |
-| id | number | Required, assigned positive safe integer |
-| name | string | Required, 2–100 trimmed characters |
-| category | GameCategory | Required enum below |
-| description | string | Required, 10–1000 characters |
-| minPlayers | number | Required, integer >= 1 |
-| maxPlayers | number | Required, integer >= minPlayers |
+| Field       | Type         | Rules                                    |
+| ----------- | ------------ | ---------------------------------------- |
+| id          | number       | Required, assigned positive safe integer |
+| name        | string       | Required, 2–100 trimmed characters       |
+| category    | GameCategory | Required enum below                      |
+| description | string       | Required, 10–1000 characters             |
+| minPlayers  | number       | Required, integer >= 1                   |
+| maxPlayers  | number       | Required, integer >= minPlayers          |
 
 `GameCategory`: `role-playing`, `trading-card`, `board-game`, `social-deduction`.
 A game has many events. Player counts are guidance for a single game table, not event
@@ -207,10 +223,10 @@ fixtures; catalog editing is outside this workshop.
 
 **Access:** public list/get. No game creation/update/removal endpoints in this scope.
 
-| Mock function | Intended HTTP | Contract |
-| --- | --- | --- |
+| Mock function             | Intended HTTP                  | Contract                                |
+| ------------------------- | ------------------------------ | --------------------------------------- |
 | `gamesApi.list(filters?)` | `GET /games?search=&category=` | `Promise<Game[]>`, ascending fixture ID |
-| `gamesApi.get(id)` | `GET /games/:id` | `Promise<Game>` |
+| `gamesApi.get(id)`        | `GET /games/:id`               | `Promise<Game>`                         |
 
 `GameFilters`: optional `search` (0–100 characters, case-insensitive name substring),
 `category` (GameCategory enum). Unknown filters fail with 400.
@@ -220,31 +236,31 @@ Hooks: `useGames(filters?)`, `useGame(id)`.
 
 Code: `frontend/src/features/events/`.
 
-| Field | Type | Create/update rules |
-| --- | --- | --- |
-| id | number | Assigned positive safe integer; immutable |
-| title | string | Required, 3–100 trimmed characters |
-| description | string | Required, 10–5000 trimmed characters |
-| gameId | number | Required positive safe integer referencing an existing game |
-| organizerId | number | Assigned from actor on create; immutable, existing user |
-| city | string | Required display label, 1–200 trimmed characters; equals selected `location.cityName` when a reference is supplied |
-| countryCode | string, optional for legacy calls | Two uppercase ASCII letters; equals selected location country when both are supplied; existing fixtures explicitly use ME |
-| location | LocationReference or null, optional for legacy calls | Actual selected IDs/display snapshot; required by current create/edit UI, optional only for mock compatibility |
-| venue | string | Optional on create/update; omitted create values normalize to `''`; blank allowed, otherwise 2–120 trimmed characters |
-| address | string | Required, 3–200 trimmed characters |
-| startsAt | ISO timestamp string | Required, strictly in the future on create/update |
-| endsAt | ISO timestamp string | Required, strictly after startsAt |
-| capacity | number | Required integer 1–100; player seats, excluding organizer |
-| attendeeIds | number[] | Assigned empty; unique existing users, excluding organizer; managed by join/leave |
-| experienceLevel | ExperienceLevel | Required: `all-levels`, `beginner`, `experienced` |
-| price | number | Required, EUR, 0–10000, maximum two decimal places; 0 means free |
-| imageUrl | string or null | Required key; null, HTTP(S) URL up to 2000 characters, local `/images/<kebab-name>.(svg,webp,png,jpg)` path, or bounded JPG/PNG/WebP data URL in the mock only |
-| tags | EventTag[] | Required; 0–6 unique canonical values from EVENT_TAGS; optional selection in the form |
-| minimumAge | number | Required integer 0–99; 0 means all ages; informational event guidance |
-| visibility | EventVisibility | Required: `public`, `private`, or `unlisted`; only public events enter discovery |
-| status | EventStatus | Assigned `scheduled` on create; update may set `scheduled` or `cancelled` |
-| createdAt | ISO timestamp string | Assigned on create, immutable |
-| updatedAt | ISO timestamp string | Assigned on create and successful state changes |
+| Field           | Type                                                 | Create/update rules                                                                                                                                            |
+| --------------- | ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| id              | number                                               | Assigned positive safe integer; immutable                                                                                                                      |
+| title           | string                                               | Required, 3–100 trimmed characters                                                                                                                             |
+| description     | string                                               | Required, 10–5000 trimmed characters                                                                                                                           |
+| gameId          | number                                               | Required positive safe integer referencing an existing game                                                                                                    |
+| organizerId     | number                                               | Assigned from actor on create; immutable, existing user                                                                                                        |
+| city            | string                                               | Required display label, 1–200 trimmed characters; equals selected `location.cityName` when a reference is supplied                                             |
+| countryCode     | string, optional for legacy calls                    | Two uppercase ASCII letters; equals selected location country when both are supplied; existing fixtures explicitly use ME                                      |
+| location        | LocationReference or null, optional for legacy calls | Actual selected IDs/display snapshot; required by current create/edit UI, optional only for mock compatibility                                                 |
+| venue           | string                                               | Optional on create/update; omitted create values normalize to `''`; blank allowed, otherwise 2–120 trimmed characters                                          |
+| address         | string                                               | Required, 3–200 trimmed characters                                                                                                                             |
+| startsAt        | ISO timestamp string                                 | Required, strictly in the future on create/update                                                                                                              |
+| endsAt          | ISO timestamp string                                 | Required, strictly after startsAt                                                                                                                              |
+| capacity        | number                                               | Required integer 1–100; player seats, excluding organizer                                                                                                      |
+| attendeeIds     | number[]                                             | Assigned empty; unique existing users, excluding organizer; managed by join/leave                                                                              |
+| experienceLevel | ExperienceLevel                                      | Required: `all-levels`, `beginner`, `experienced`                                                                                                              |
+| price           | number                                               | Required, EUR, 0–10000, maximum two decimal places; 0 means free                                                                                               |
+| imageUrl        | string or null                                       | Required key; null, HTTP(S) URL up to 2000 characters, local `/images/<kebab-name>.(svg,webp,png,jpg)` path, or bounded JPG/PNG/WebP data URL in the mock only |
+| tags            | EventTag[]                                           | Required; 0–6 unique canonical values from EVENT_TAGS; optional selection in the form                                                                          |
+| minimumAge      | number                                               | Required integer 0–99; 0 means all ages; informational event guidance                                                                                          |
+| visibility      | EventVisibility                                      | Required: `public`, `private`, or `unlisted`; only public events enter discovery                                                                               |
+| status          | EventStatus                                          | Assigned `scheduled` on create; update may set `scheduled` or `cancelled`                                                                                      |
+| createdAt       | ISO timestamp string                                 | Assigned on create, immutable                                                                                                                                  |
+| updatedAt       | ISO timestamp string                                 | Assigned on create and successful state changes                                                                                                                |
 
 `NewEvent` contains editable fields, excluding id, organizerId, attendeeIds,
 status, createdAt, updatedAt; venue and transitional location/country fields may be omitted
@@ -330,31 +346,31 @@ then state constraints. Join/leave check event availability before membership/ca
 
 ### API
 
-| Mock function | Intended HTTP | Result |
-| --- | --- | --- |
-| `eventsApi.list(filters?)` | `GET /events` with filters below | `Promise<Event[]>` |
-| `eventsApi.get(id, actor?)` | `GET /events/:id` (future server derives actor from session) | `Promise<Event>` |
-| `eventsApi.create(input, actor)` | `POST /events` with NewEvent | `Promise<Event>` |
-| `eventsApi.update(id, changes, actor)` | `PATCH /events/:id` with UpdateEvent | `Promise<Event>` |
-| `eventsApi.remove(id, actor)` | `DELETE /events/:id` | `Promise<void>` |
-| `eventsApi.join(id, actor)` | `POST /events/:id/attendees/me` with no body | `Promise<Event>` |
-| `eventsApi.leave(id, actor)` | `DELETE /events/:id/attendees/me` | `Promise<Event>` (200 JSON) |
+| Mock function                          | Intended HTTP                                                | Result                      |
+| -------------------------------------- | ------------------------------------------------------------ | --------------------------- |
+| `eventsApi.list(filters?)`             | `GET /events` with filters below                             | `Promise<Event[]>`          |
+| `eventsApi.get(id, actor?)`            | `GET /events/:id` (future server derives actor from session) | `Promise<Event>`            |
+| `eventsApi.create(input, actor)`       | `POST /events` with NewEvent                                 | `Promise<Event>`            |
+| `eventsApi.update(id, changes, actor)` | `PATCH /events/:id` with UpdateEvent                         | `Promise<Event>`            |
+| `eventsApi.remove(id, actor)`          | `DELETE /events/:id`                                         | `Promise<void>`             |
+| `eventsApi.join(id, actor)`            | `POST /events/:id/attendees/me` with no body                 | `Promise<Event>`            |
+| `eventsApi.leave(id, actor)`           | `DELETE /events/:id/attendees/me`                            | `Promise<Event>` (200 JSON) |
 
 `EventFilters` (all optional):
 
-| Filter | Validation and behavior |
-| --- | --- |
-| search | 0–100 characters; case-insensitive substring of event title only |
-| city | 0–200 characters; trimmed case/diacritic-insensitive display-label match; empty means all |
-| country | Optional two-letter country code, normalized uppercase; filters selected-reference country or the legacy fixture's known country |
-| cityId | Optional positive PostgreSQL integer city ID; selected references match by ID; unresolved ME fixtures may use the explicit country-plus-canonical-label bridge described below |
-| gameId | Positive safe integer; exact match; unknown ID returns an empty list |
-| startsAfter | ISO timestamp with timezone; inclusive lower bound on event start |
-| startsBefore | ISO timestamp with timezone; inclusive upper bound; cannot precede startsAfter |
-| availableOnly | Boolean; true restricts to scheduled future events with open player seats |
-| status | `scheduled` or `cancelled` |
-| visibility | `public` (default) or `unlisted` |
-| upcomingOnly | Boolean; true restricts to scheduled events whose start is strictly in the future at request time |
+| Filter        | Validation and behavior                                                                                                                                                        |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| search        | 0–100 characters; case-insensitive substring of event title only                                                                                                               |
+| city          | 0–200 characters; trimmed case/diacritic-insensitive display-label match; empty means all                                                                                      |
+| country       | Optional two-letter country code, normalized uppercase; filters selected-reference country or the legacy fixture's known country                                               |
+| cityId        | Optional positive PostgreSQL integer city ID; selected references match by ID; unresolved ME fixtures may use the explicit country-plus-canonical-label bridge described below |
+| gameId        | Positive safe integer; exact match; unknown ID returns an empty list                                                                                                           |
+| startsAfter   | ISO timestamp with timezone; inclusive lower bound on event start                                                                                                              |
+| startsBefore  | ISO timestamp with timezone; inclusive upper bound; cannot precede startsAfter                                                                                                 |
+| availableOnly | Boolean; true restricts to scheduled future events with open player seats                                                                                                      |
+| status        | `scheduled` or `cancelled`                                                                                                                                                     |
+| visibility    | `public` (default) or `unlisted`                                                                                                                                               |
+| upcomingOnly  | Boolean; true restricts to scheduled events whose start is strictly in the future at request time                                                                              |
 
 Unknown filters fail with 400. Results sort by start instant ascending, then ID. No filters
 returns all public events, including canceled/past events. `/events` and homepage discovery
@@ -389,17 +405,19 @@ status region; mutation errors use an alert. Removal
 also removes the deleted detail cache. Detail hooks disable invalid IDs; views explain invalid
 IDs rather than remaining in a pending state.
 
-## Frontend demo session
+## Frontend development-only demo session
 
 The users domain owns `api/session-api.ts`, `api/use-session.ts`, login UI, and the
-`RequireSession` guard. Public profile records are still read-only. Session selection is
+`RequireSession` guard. It is enabled only when both `import.meta.env.DEV` and
+`VITE_ENABLE_DEMO_MODE=true`; its UI lives at `/demo/login`, separate from real `/login`.
+Production builds cannot select demo identities. Public profile records are still read-only. Session selection is
 a browser-only operation, not a user entity write or a real authentication endpoint.
 
-| Operation | Contract |
-| --- | --- |
-| `sessionApi.get()` | `Promise<User \| null>`; restore a known profile or return anonymous |
+| Operation                  | Contract                                                                  |
+| -------------------------- | ------------------------------------------------------------------------- |
+| `sessionApi.get()`         | `Promise<User \| null>`; restore a known profile or return anonymous      |
 | `sessionApi.login(userId)` | `Promise<User>`; validate through `usersApi.get`, then select the profile |
-| `sessionApi.logout()` | `Promise<null>`; clear the selection |
+| `sessionApi.logout()`      | `Promise<null>`; clear the selection                                      |
 
 `useSession` caches the current public User or null at `['session']`; `useLogin`/`useLogout`
 cancel pending session reads and update that cache on success. Session reads do not automatically
@@ -411,7 +429,8 @@ Only the selected ID is persisted; profiles continue to come from the existing m
 
 Anonymous users can browse public/unlisted events. Create/edit require a demo session;
 event join/leave derives the actor from the current user. Anonymous join redirects to
-`/login?returnTo=<encoded internal path>`, then returns to the event without automatically
+the real login journey, with an explicit demo option only in opted-in development; the demo
+login preserves an internal `returnTo` and returns to the event without automatically
 joining. Only the organizer sees the Edit Event link. The editor checks ownership before
 rendering any form and update checks it again in the API. Non-hosts get an authorization state;
 missing/invalid IDs get recovery links. Private detail reads use the same explicit mock actor.
@@ -420,8 +439,10 @@ missing/invalid IDs get recovery links. Private detail reads use the same explic
 and login self-redirects (including encoded equivalents). Invalid targets fall back to `/events`.
 Logout clears navigation/current-user state and protected routes redirect to login. Event
 records remain in memory; session persistence does not persist attendance changes on reload.
-This mechanism simulates identity only and offers no security. Future real session endpoints
-and credential contracts must be designed with the backend; these demo operations make no HTTP calls.
+This mechanism simulates identity only and offers no security. It is not the real Auth
+session, and these demo operations make no HTTP calls. A real UUID account cannot inherit
+a numeric fixture's host/attendance rights. Production browsing retains mock public events,
+but real event writes await Milestone 4.
 
 For UI composition, event discovery accepts structural game summaries (ID/name/category)
 from app routes, and attendance accepts a current-user ID and session loading/error flags.
@@ -477,10 +498,11 @@ Event dates are generated relative to the page-load date in UTC. The core exampl
 upcoming after reload; one deliberately uses a past offset. Dates remain stable within the
 runtime, and the API evaluates upcoming/available status at request time. Bundled illustrations
 in `frontend/public/images/` cover role-playing, trading cards, board games, and social deduction.
-No remote image service or real HTTP API is used. Local images have alt text and a fallback
+No remote image service or real event HTTP API is used. Local images have alt text and a fallback
 if an image fails. IDs in shared references must match users/games fixtures.
 
 A later frontend/backend integration should preserve working journeys and compatible error
 semantics while explicitly adapting the changed UUID/city/address model described above.
 No HTTP server was implemented in Workshop 3. Backend Milestone 1 adds only the health/
-geography server routes; event/profile/auth routes remain planned.
+geography server routes; Milestone 3A adds real Supabase Auth and `/api/me`. Profile editing
+and persistent event routes remain planned for 3B and 4 respectively.

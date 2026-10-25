@@ -1,7 +1,8 @@
 # Frontend country and city integration
 
-Milestone 2B connects React to the existing geography API. Events, users, games, attendance
-and demo authentication still use their existing frontend mock APIs. Creating or editing
+Milestone 2B connected React to the existing geography API. Milestone 3A now provides real
+Supabase Auth separately; events, user/game catalogs, attendance and the explicitly enabled
+development demo session retain their frontend mocks. Creating or editing
 an event does not write PostgreSQL, create a real account or persist across page reloads.
 This milestone preserves the RollCall layout, branding and dark/light token palettes.
 
@@ -154,8 +155,10 @@ pnpm exec supabase db push --local
 ```
 
 Configure ignored `backend/.env` using `backend/.env.example` and local Supabase status:
-`SUPABASE_URL` plus an unprivileged publishable/legacy anon key. No browser Supabase key
-is needed. If populated-place coverage is absent, follow [the importer](geographic-import.md);
+`SUPABASE_URL` plus an unprivileged publishable/legacy anon key. Geography alone needs no
+browser Supabase key; real Auth additionally needs the public URL/key in `frontend/.env`,
+as described in [authentication setup](authentication.md). If populated-place coverage is absent,
+follow [the importer](geographic-import.md);
 do not reset an existing populated database merely to start the UI.
 
 In one terminal:

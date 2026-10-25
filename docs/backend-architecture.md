@@ -6,20 +6,23 @@ Workshop 3 is the completed React mock MVP. Backend Milestone 1 is a separate No
 TypeScript workspace package with Fastify, Zod, Supabase PostgreSQL migrations and a
 read-only geography API. Milestone 2A adds local GeoNames import tools, aliases and improved
 database search. Milestone 2B connects React geography controls to those read endpoints.
-Demo login, numeric event/user IDs, images, create/edit and attendance remain on mock APIs.
+Milestone 3A adds real Supabase Auth and verified Fastify identity. Numeric event/user
+catalog IDs, images, create/edit and attendance remain mocked. Demo selection is explicitly
+enabled only during Vite development and is separate from real UUID accounts.
 
 ```mermaid
 flowchart LR
   Demo[React MVP] --> Mocks[Existing in-memory event/user/game APIs]
   Demo --> GeoUI[Geography query hooks and controls]
   GeoUI --> API
-  Client[API client / future React integration] --> API[Fastify REST API]
+  Client[React API client] --> API[Fastify REST API]
   API --> Validation[Zod query validation]
   Validation --> Geography[Geography repository]
   Geography --> DataAPI[Supabase Data API / PostgREST]
   DataAPI --> RLS[Explicit grants + RLS]
   RLS --> PG[(Supabase PostgreSQL)]
-  FutureAuth[Supabase Auth - future integration] -. verified identity .-> API
+  Demo --> Auth[Supabase Auth]
+  Auth -. verified bearer identity .-> API
   FutureStorage[Supabase Storage - future integration] -. protected cover objects .-> API
 ```
 
@@ -36,8 +39,8 @@ server. `config/` owns environment validation, `db/` owns server-only Supabase s
 `modules/geography/` owns its routes, query/response validation and repository, and
 `shared/` owns common error handling. `backend/scripts/geography/` is a separate local
 maintenance importer; it is not imported by the API or bundled into the application build.
-Only implemented modules are created; empty
-auth/events/users abstractions are unnecessary.
+`modules/auth/` owns token verification, request-local identity and the reusable guard
+used by `/api/me`. Only implemented modules are created; empty event/user abstractions are unnecessary.
 
 The backend never imports frontend feature internals. SQL database rows use snake_case;
 the REST boundary uses explicit camelCase DTOs and keeps errors compatible with the
@@ -90,15 +93,29 @@ Therefore Fastify validation is supplemented by SQL constraints, function argume
 explicit grants and RLS. API-only authorization cannot be assumed while tables/functions
 are also reachable through the Data API.
 
-## Future authenticated access
+## Milestone 3A authenticated access
 
-Authentication is not implemented in Milestone 1. Later, Fastify must verify Supabase
-access tokens against the configured project, expiry and issuer before using the subject
-as a profile UUID. Never trust a submitted user ID, demo actor, arbitrary JWT payload,
-client-supplied role or editable `user_metadata` for authorization.
+The browser users feature owns a Supabase Auth client for email/password registration,
+login/logout, confirmation and recovery. Supported PKCE/session persistence/refresh replace
+custom token handling. It uses only public configuration and does not access application
+tables directly. Real UUID accounts never become numeric demo event actors.
 
-Use an isolated per-request Supabase client carrying the verified user's bearer token
-for ordinary operations. Do not mutate a shared client's session or install a global
+Fastify verifies bearer tokens using Supabase `getClaims`: asymmetric keys use the Auth
+JWKS; symmetric keys use Auth-server verification. Additional checks enforce configured
+issuer, authenticated audience, expiration and UUID subject. The reusable guard attaches
+safe request-local identity. `GET /api/me` returns only `{ id, email }`, with `no-store`;
+missing, malformed, invalid and expired tokens return 401 `UNAUTHENTICATED`. Geography
+does not use this guard and remains public. Never trust a submitted user ID, demo actor,
+arbitrary decoded JWT, client-supplied role or editable `user_metadata` for authorization.
+
+The minimal registration trigger initializes a fixed-placeholder profile without exposing
+profile access or creating roles. Profile editing/game experience are Milestone 3B.
+Logout revokes refresh capability for the session; an issued access JWT may remain valid
+until expiry. This is standard token behavior, not instantaneous server-side logout
+revocation. See [authentication](authentication.md) for setup and verification boundaries.
+
+Future application operations must use an isolated per-request Supabase client carrying
+the verified user's bearer token. Do not mutate a shared client's session or install a global
 current user. Explicit grants plus operation-specific RLS must then enforce the same
 identity and ownership rules. A carefully scoped transactional database function may be
 used for operations such as joining, with its caller/authorization checked inside the
@@ -158,7 +175,7 @@ rate limiter or invitation interface is claimed as implemented now.
 ## Runtime and failure behavior
 
 Configuration is validated before startup. Supabase credentials/configuration remain in
-`backend/.env`; no frontend environment is required. The API returns uniform validation,
+`backend/.env`; browser Auth uses only the public values in `frontend/.env`. The API returns uniform validation,
 not-found, upstream-unavailable and unexpected-error responses without leaking database
 messages or credentials. Supabase requests are time-bounded. Logs must omit authorization
 headers, cookies, keys and private payloads.
@@ -168,7 +185,7 @@ with a controlled 503 when the configured database/Data API cannot be reached or
 invalid data. No mock fallback silently substitutes fixture results. A valid country
 with no matching places returns `[]` rather than an error.
 
-The API defaults to loopback. CORS, real authentication, production rate limiting,
+The API defaults to loopback. Production CORS, rate limiting,
 deployment/TLS/proxy settings, operational monitoring and hosted project setup are later
 release requirements. This milestone does not deploy or modify a remote Supabase project.
 

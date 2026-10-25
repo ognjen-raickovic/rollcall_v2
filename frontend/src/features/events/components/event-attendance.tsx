@@ -13,6 +13,7 @@ type EventAttendanceProps = {
   currentUserId: number | null
   sessionPending: boolean
   sessionError: boolean
+  participationUnavailable?: boolean
 }
 
 export function EventAttendance({
@@ -20,6 +21,7 @@ export function EventAttendance({
   currentUserId,
   sessionPending,
   sessionError,
+  participationUnavailable = false,
 }: EventAttendanceProps) {
   const join = useJoinEvent()
   const leave = useLeaveEvent()
@@ -36,7 +38,7 @@ export function EventAttendance({
   const error = join.error ?? leave.error
 
   function handleAttendance() {
-    if (pending || unavailable || (full && !attending)) return
+    if (participationUnavailable || pending || unavailable || (full && !attending)) return
     if (currentUserId === null) {
       void navigate(loginPath(`${location.pathname}${location.search}${location.hash}`))
       return
@@ -62,21 +64,23 @@ export function EventAttendance({
       })
   }
 
-  const actionLabel = sessionPending
-    ? 'Checking session...'
-    : join.isPending
-      ? 'Joining...'
-      : leave.isPending
-        ? 'Leaving...'
-        : unavailable
-          ? 'Attendance closed'
-          : full && !attending
-            ? 'Event full'
-            : attending
-              ? 'Leave Event'
-              : currentUserId === null
-                ? 'Log in to join'
-                : 'Join Event'
+  const actionLabel = participationUnavailable
+    ? 'Demo attendance unavailable'
+    : sessionPending
+      ? 'Checking session...'
+      : join.isPending
+        ? 'Joining...'
+        : leave.isPending
+          ? 'Leaving...'
+          : unavailable
+            ? 'Attendance closed'
+            : full && !attending
+              ? 'Event full'
+              : attending
+                ? 'Leave Event'
+                : currentUserId === null
+                  ? 'Log in to join'
+                  : 'Join Event'
 
   return (
     <div className="space-y-6 rounded-xl border border-primary/30 bg-card p-6">
@@ -140,7 +144,9 @@ export function EventAttendance({
           className="w-full"
           size="lg"
           onClick={handleAttendance}
-          disabled={sessionPending || pending || unavailable || (full && !attending)}
+          disabled={
+            participationUnavailable || sessionPending || pending || unavailable || (full && !attending)
+          }
           variant={attending ? 'outline' : 'default'}
         >
           {pending ? (

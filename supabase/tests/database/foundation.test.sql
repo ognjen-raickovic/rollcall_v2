@@ -81,7 +81,8 @@ insert into auth.users(id) values
 insert into public.profiles(id, display_name) values
   ('00000000-0000-4000-8000-000000000001', 'Host fixture'),
   ('00000000-0000-4000-8000-000000000002', 'Player one fixture'),
-  ('00000000-0000-4000-8000-000000000003', 'Player two fixture');
+  ('00000000-0000-4000-8000-000000000003', 'Player two fixture')
+  on conflict (id) do update set display_name = excluded.display_name;
 select throws_ok($$insert into public.profiles(id, display_name) values
   ('00000000-0000-4000-8000-000000000004', 'Missing Auth user')$$,
   '23503', null, 'profiles require an existing Supabase Auth UUID');

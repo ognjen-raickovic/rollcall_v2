@@ -5,10 +5,13 @@ import { installErrorHandler } from './middleware/error-handler.js'
 import { createGeographyRepository } from './modules/geography/geography-repository.js'
 import { registerGeographyRoutes } from './modules/geography/geography-routes.js'
 import type { GeographyRepository } from './modules/geography/types.js'
+import { registerAuthRoutes } from './modules/auth/auth-routes.js'
+import { createTokenVerifier } from './modules/auth/token-verifier.js'
+import type { TokenVerifier } from './modules/auth/types.js'
 
 export function buildApp(
   env: Environment,
-  options: { geography?: GeographyRepository; logger?: boolean } = {},
+  options: { geography?: GeographyRepository; verifyToken?: TokenVerifier; logger?: boolean } = {},
 ) {
   const app = Fastify({
     logger:
@@ -31,6 +34,7 @@ export function buildApp(
     trustProxy: false,
   })
   installErrorHandler(app)
+  registerAuthRoutes(app, options.verifyToken ?? createTokenVerifier(env))
   app.get('/health', async () => ({ status: 'ok', service: 'rollcall-api' }))
   const repository = options.geography ?? createGeographyRepository(createDatabaseClient(env))
   registerGeographyRoutes(app, repository, {

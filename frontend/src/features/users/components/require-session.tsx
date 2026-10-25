@@ -5,15 +5,18 @@ import { Button } from '@/components/ui/button'
 import { loginPath } from '@/lib/auth-navigation'
 
 import { useSession } from '../api/use-session'
+import { useAuth } from '../api/use-auth'
+import { MockEventsNotice } from './mock-events-notice'
 
 type RequireSessionProps = { children: ReactNode }
 
 export function RequireSession({ children }: RequireSessionProps) {
   const session = useSession()
+  const auth = useAuth()
   const location = useLocation()
   const signInPath = loginPath(`${location.pathname}${location.search}${location.hash}`)
 
-  if (session.isPending)
+  if (session.isPending || auth.isPending)
     return (
       <p role="status" className="py-12 text-muted-foreground">
         Checking your session...
@@ -32,6 +35,7 @@ export function RequireSession({ children }: RequireSessionProps) {
         </Button>
       </section>
     )
+  if (auth.data) return <MockEventsNotice />
   if (!session.data) return <Navigate to={signInPath} replace />
   return children
 }

@@ -4,8 +4,8 @@ RollCall helps tabletop players discover, organize, and join gaming events. This
 started as the frontend MVP for AI-DEV 2026 Workshop 3, based on
 `jovanp-najveci/ai-frontend-starter`. Backend Milestone 1 adds an independent API/database
 foundation; Milestone 2A adds GeoNames imports and backend place search. Milestone 2B
-connects frontend country/city selection to that API; events, users, games and demo login
-continue using their existing mocks.
+connects frontend country/city selection to that API. Milestone 3A adds real Supabase Auth
+and verified backend identity; event CRUD/attendance and public user/game catalogs remain mocks.
 
 ## Shared rules
 
@@ -25,9 +25,10 @@ Keep foundation routes simple until finished pages are requested.
   backend work is scoped by the milestones in `SPEC.md`. Frontend features never import each
   other, including types; routes compose them. Read `backend/AGENTS.md` and
   `docs/backend-architecture.md` before backend or migration work.
-- User profiles/games are read-only catalogs. Users also own the demo session; its selected
-  profile ID may persist in sessionStorage for the current tab. Events own CRUD and attendance.
-  Use numeric reference IDs and pass session identity through route composition.
+- User profiles/games remain read-only mock catalogs. Users own real Supabase Auth and a
+  separate, explicitly enabled development-only demo session. Real account IDs are UUIDs;
+  demo IDs are numeric and must never be equated or coerced. Pass demo identity through
+  route composition; a real login grants no mock host/attendance identity.
 - Keep mock records inside each feature's `api/`; shared request/error/reference helpers may
   live in `src/lib`. Components use query hooks, not API modules directly.
 - Update `docs/entities.md` alongside entity/API changes, and `SPEC.md` alongside scope changes.
@@ -48,8 +49,12 @@ Keep foundation routes simple until finished pages are requested.
   Read `docs/geographic-import.md` before imports. Preserve city IDs/references, retain
   source identifiers and report real counts/checksums. Do not reset a populated local
   database without checking what must be preserved. Keep downloaded datasets out of Git.
-- Milestone 2B integrates geography only. Keep events, users, games, session selection and
-  attendance mocked; do not add real authentication, invitation codes or administration.
+- Milestone 3A implements registration/login/logout, confirmation, recovery and verified
+  `GET /api/me`. Read `docs/authentication.md`. Only Auth uses a browser Supabase client
+  with a publishable/anon key; never expose privileged keys. Keep event CRUD/attendance
+  mocked. Demo selection requires both Vite development mode and explicit opt-in, and
+  production builds cannot impersonate fixtures. Profile editing/game experience are 3B;
+  persistent UUID event integration is Milestone 4. No invitations or administration.
   Read `docs/location-ui.md` before changing location controls or event-location adapters.
 - Geography owns its API/hooks and controls. Routes compose them into event render slots;
   shared `src/lib/location.ts` defines the location reference without cross-feature imports.

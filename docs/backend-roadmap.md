@@ -61,18 +61,30 @@ future backend responsibility. Legacy fixtures keep their city text and known co
 invented IDs; edits require confirmation from a real suggestion. See
 [location UI](location-ui.md) for contracts, setup and remaining limitations.
 
-Real event persistence and authentication remain separate later milestones.
+Real event persistence and authentication were separate from 2B; authentication is now 3A below.
 
-## Milestone 3 planning: real identity and profiles
+## Milestone 3A: real authentication
 
-Integrate Supabase Auth, verified bearer identity and request-isolated clients. Create
-Auth-linked profiles through a controlled onboarding flow, enforce self-only writes and
-keep age information private. Establish account deletion/retention rules, moderation needs
-and a safe superadmin bootstrap outside arbitrary client access. Implement independently
-self-declared game experience with clear unverified wording. Add allow/deny tests before
-granting application table access.
+Delivered scope: Supabase email/password registration, sign-in/out, confirmation/resend,
+password recovery/reset, PKCE, persistent automatically refreshed sessions, authentication-aware
+navigation and cryptographically verified `GET /api/me`. Minimal registration initialization
+creates UUID-linked profiles with a fixed safe display name and no metadata-derived roles.
+Application-table access remains denied by default; geography remains public.
 
-## Later: real event and attendance APIs
+Real accounts stay independent of numeric mock profiles. Legacy event demonstrations require
+explicit development-only demo mode, which is unavailable in production builds. Event CRUD,
+attendance and public catalogs remain mocked; a real account cannot impersonate fixtures.
+See [authentication](authentication.md) for exact local setup and limitations.
+
+## Milestone 3B: profiles and onboarding
+
+Add profile editing/onboarding with self-only permissions, validated country/city and safe
+public DTOs. Keep self-declared age private and add independently self-declared game experience.
+Design account deletion/retention and completion requirements. Add focused grants/RLS and
+allow/deny tests with each operation; no broad table access as a shortcut. Role administration
+and superadmin bootstrap remain separately controlled later work.
+
+## Milestone 4: real event and attendance APIs
 
 Introduce authenticated create/update/remove and safe event read/discovery DTOs. Adopt
 UUID user/event IDs deliberately in frontend feature API adapters. Preserve the optional venue

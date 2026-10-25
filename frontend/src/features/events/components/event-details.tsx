@@ -28,6 +28,7 @@ type EventDetailsProps = {
   currentUserId: number | null
   sessionPending: boolean
   sessionError: boolean
+  participationUnavailable?: boolean
   renderHost: (userId: number) => ReactNode
   renderGame: (gameId: number) => ReactNode
 }
@@ -37,6 +38,7 @@ export function EventDetails({
   currentUserId,
   sessionPending,
   sessionError,
+  participationUnavailable,
   renderHost,
   renderGame,
 }: EventDetailsProps) {
@@ -294,6 +296,7 @@ export function EventDetails({
             currentUserId={currentUserId}
             sessionPending={sessionPending}
             sessionError={sessionError}
+            participationUnavailable={participationUnavailable}
           />
           <section aria-label="Event host" className="rounded-xl border bg-card p-6">
             {renderHost(event.organizerId)}

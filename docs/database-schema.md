@@ -10,7 +10,7 @@ commands. There are no Auth users, profiles or events
 in the development seed; frontend demo users are not migrated into real accounts.
 
 This document describes schema foundations, not implemented event/profile HTTP routes.
-Only enabled geography has client grants in Milestones 1/2A. All other application tables
+Only enabled geography has client grants through Milestone 3A. All other application tables
 have RLS enabled and no client grants/policies, so their current access is deny by default.
 The `private` schema is not exposed by the local Data API.
 
@@ -191,8 +191,16 @@ birth date. It is neither verification nor an automatic public profile field. Pe
 experience is independently self-declared and is not a verified qualification. Public
 profile DTOs and experience visibility must be explicitly designed when endpoints arrive.
 
-Profile country/city selections can initially be unset; an onboarding flow can add stronger
-completion rules later. No Auth trigger automatically creates a profile in Milestone 1.
+Profile country/city selections can initially be unset; Milestone 3B onboarding can add
+stronger completion rules later. Milestone 1 had no Auth initializer. Milestone 3A adds
+`20261024000400_auth_profile_initialization.sql`: a private, SECURITY DEFINER trigger with
+empty search path inserts only the registered Auth UUID and fixed `RollCall player` display
+name. It copies neither email nor editable metadata, geographic selections, private age or
+roles. Function execution is revoked from API roles; clients receive no new table privileges.
+An idempotent backfill initializes missing Auth-linked profiles without overwriting existing
+rows. Existing RLS and deny-by-default profile/event policies remain. UUID identity can be
+verified through `/api/me` without granting direct profile access. See
+[authentication](authentication.md) for registration and future onboarding boundaries.
 
 ## Events and protected locations
 

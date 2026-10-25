@@ -70,7 +70,9 @@ test(
       await client.query('insert into auth.users(id) values($1)', [profileId])
       await client.query(
         `insert into public.profiles(id,display_name,country_id,city_id)
-      select $1,'Import reference fixture',country_id,id from public.cities where id=$2`,
+        select $1,'Import reference fixture',country_id,id from public.cities where id=$2
+        on conflict (id) do update set display_name = excluded.display_name,
+          country_id = excluded.country_id, city_id = excluded.city_id`,
         [profileId, originalCity.id],
       )
       const records = parseCountry(fixture(900000001, 'Podgorica', 'ME', 'Titograd,Подгорица'), 'ME').places

@@ -78,7 +78,8 @@ try {
     insert into auth.users(id) values ('${hostId}'), ('${firstPlayerId}'), ('${secondPlayerId}');
     insert into public.profiles(id, display_name) values
       ('${hostId}', 'Concurrency host fixture'), ('${firstPlayerId}', 'Concurrency player one'),
-      ('${secondPlayerId}', 'Concurrency player two');
+      ('${secondPlayerId}', 'Concurrency player two')
+      on conflict (id) do update set display_name = excluded.display_name;
     insert into public.events(id, host_id, game_id, city_id, title, description, starts_at, ends_at,
       capacity, experience_level)
     select '${eventId}', '${hostId}', (select min(id) from public.games),

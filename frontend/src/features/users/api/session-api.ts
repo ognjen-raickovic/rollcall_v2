@@ -31,6 +31,7 @@ function writeUserId(id: number | null) {
 
 export const sessionApi = {
   get: async (): Promise<User | null> => {
+    if (import.meta.env.PROD) return null
     const id = readUserId()
     if (id === null) return mockRequest(() => null)
     try {
@@ -44,6 +45,7 @@ export const sessionApi = {
     }
   },
   login: async (userId: number): Promise<User> => {
+    if (import.meta.env.PROD) throw new Error('Demo profile login is disabled in production.')
     const user = await usersApi.get(userId)
     writeUserId(user.id)
     return user
