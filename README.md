@@ -13,8 +13,9 @@ matching light theme alongside the default dark theme.
 
 **Backend Milestone 1** adds an independent Fastify API, Supabase database schema and
 local development tools. Its original boundary was health and geography; the current
-Milestone 3A also implements real authentication. Event APIs and real uploads remain
-future milestones. Start with [backend setup](backend/README.md),
+Milestones 3A/3B implement real authentication and profiles, and 4A adds persistent event
+backend APIs. React events still use mocks; real attendance and uploads remain future work.
+Start with [backend setup](backend/README.md),
 [architecture](docs/backend-architecture.md), [schema](docs/database-schema.md), and
 [roadmap](docs/backend-roadmap.md).
 **Milestone 2A** adds reproducible GeoNames imports and improved Balkan place search;
@@ -44,6 +45,15 @@ Use `/profile` and `/profile/edit` after signing in, or `/users/:userId` for a p
 Birth year is optional/private; email and roles never appear in public profile responses.
 The real game catalog is read-only and separate from existing event mocks. See
 [profile implementation and setup](docs/profiles.md).
+
+**Milestone 4A** adds real PostgreSQL-backed event discovery/details and authenticated
+host-only create/edit/delete at `/api/events`. Discovery is paginated and public/scheduled
+only; private details and exact addresses are host-only. React event CRUD/attendance still
+uses numeric mocks and does not call these endpoints. No join/leave API, uploads, private
+codes or admin privileges are added. See [event API contracts](docs/events-api.md) and
+[executed verification](docs/events-api-verification.md). Apply the two additive migrations
+with `pnpm exec supabase db push --local`; no new environment variables or dependencies
+are needed, and existing local data must be preserved.
 
 ## Setup
 
@@ -143,13 +153,15 @@ frontend/
   src/components/ui/         Starter shadcn primitives
   src/components/layout/     Navigation and app layout
   src/lib/                   Mock helpers, reference IDs, utilities
-backend/                     Fastify API, verified bearer identity, geography data access and tests
+backend/                     Fastify geography/Auth/profile/event API, repositories and tests
   scripts/geography/         Local GeoNames download/validation/import tooling
 supabase/                    Local CLI config, SQL migrations, development seed and DB tests
 docs/entities.md             Frontend mock contracts and implemented backend API boundary
 docs/backend-architecture.md Data access, authorization and service architecture
 docs/database-schema.md      Relational model, privacy, constraints and ER diagram
 docs/backend-roadmap.md      Milestone boundaries and future integration
+docs/events-api.md           Persistent backend event contracts and privacy model
+docs/events-api-verification.md Executed Milestone 4A checks and remaining boundaries
 docs/geographic-import.md    GeoNames scope, attribution, safe reruns and search behavior
 .claude/                     Preserved rules, commands, design skill, reviewer, format hook
 ```

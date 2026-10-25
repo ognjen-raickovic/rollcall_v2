@@ -15,8 +15,35 @@ and backend search. Milestone 2B connects country/city selection to the frontend
 event CRUD, participation, users, games and authentication remained mocked. Milestone 3A
 now adds real Supabase Auth and verified backend identity. Milestone 3B adds real profiles,
 private optional age information and per-game experience, keeping event/demo mocks separate.
+Milestone 4A implements persistent backend event APIs; the frontend continues using mocks.
 
-## Current Milestone 3B: profiles and per-game experience
+## Current Milestone 4A: persistent event backend API
+
+Fastify provides PostgreSQL-backed `GET /api/events`, `GET /api/events/:eventId`,
+`POST /api/events`, `PATCH /api/events/:eventId` and `DELETE /api/events/:eventId`.
+Discovery returns safe public/scheduled summaries in enabled ME/RS/BA/HR countries,
+with title/country/city/game/date/availability filters and bounded chronological cursor
+pagination. Country derives from city. Default covers use existing local game illustrations;
+custom cover paths, URLs and data URLs are rejected until Storage integration.
+
+Creation requires a real verified UUID account. Updates/deletion require the verified host,
+with no admin override. Public/unlisted detail responses omit protected addresses; private
+details and all exact addresses are host-only, even for existing participants. Inaccessible
+and missing events return the same 404. Strict payloads reject client actors, host changes,
+attendance counters and privileged fields. PostgreSQL validates final merged fields and
+applies event/address changes atomically; edits preserve attendance. Hard deletion cascades
+event locations/memberships while preserving referenced profiles, games and geography.
+
+Runtime clients remain unprivileged. Raw event/location/attendance tables stay closed to
+clients; checked functions use explicit grants, owner RLS and a non-bypass executor.
+No remote operations, resets or geographic imports are needed. See
+[event API contracts](docs/events-api.md) and [verification](docs/events-api-verification.md).
+
+React event APIs, numeric IDs, forms, covers and demo participation remain unchanged mocks.
+Real attendance is Milestone 4B, frontend UUID integration 4C, Storage 4D, and private
+invitation codes/role-authorized access Milestone 5. No such features are delivered in 4A.
+
+## Milestone 3B: profiles and per-game experience
 
 Registered accounts have one Auth-linked UUID profile. Users can edit their own display name,
 optional biography, country/city and optional private self-declared birth year. Creation date
@@ -35,9 +62,10 @@ they never expose email, birth year, age-declaration timestamps, roles or privil
 Focused grants/RLS enforce the same ownership and field restrictions through the Data API.
 Public profiles are `/users/:userId`; own view/edit are `/profile` and `/profile/edit`.
 
-Real profile/game APIs remain separate from numeric demo identities/catalogs. Event CRUD and
-attendance still use mock data and require explicit development demo mode. No persistent
-events, profile-picture uploads, private codes, invitations or administration are added.
+Real profile/game APIs remain separate from numeric demo identities/catalogs. Frontend event
+CRUD and attendance still use mock data and require explicit development demo mode. This
+3B delivery added no persistent events, profile pictures, codes, invitations or administration;
+the separate 4A event backend is described above.
 See [profile implementation](docs/profiles.md) for contracts, setup and verification.
 
 ## Milestone 3A: real authentication

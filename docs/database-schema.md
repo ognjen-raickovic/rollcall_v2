@@ -9,10 +9,11 @@ only a small development place/game dataset; geographic imports are explicit mai
 commands. There are no Auth users, profiles or events
 in the development seed; frontend demo users are not migrated into real accounts.
 
-This document describes schema foundations and the implemented profile access boundary;
-event HTTP routes remain future work. Through 3A only geography had client grants. Milestone
+This document describes schema foundations and implemented profile/event access boundaries.
+Through 3A only geography had client grants. Milestone
 3B adds public profile/game/experience reads and owner-only profile/private-age/experience writes.
-All application tables retain RLS; event and role access remains denied by default.
+Milestone 4A adds checked event RPCs without raw client event/location/attendance grants.
+All application tables retain RLS; raw event and role access remains denied by default.
 The `private` schema is not exposed by the local Data API.
 
 ## Relationships
@@ -228,8 +229,8 @@ verified through `/api/me`. Milestone 3B adds scoped profile permissions below. 
 Event ID, host and creation time are immutable after insert. A new event cannot carry a
 nonzero participant counter. A write trigger enforces future starts on new or materially
 edited records; internal attendance counter/timestamp updates do not revalidate old start
-times. Database ownership is not API authorization: later create/edit routes still need
-verified actors, ownership checks and strict allowlisted payloads.
+times. Database ownership is not API authorization: 4A create/edit routes use verified
+actors, host checks and strict allowlisted payloads, with equivalent SQL enforcement.
 
 Canonical tags mirror the frontend: Beginner friendly, Veterans only, Casual, Competitive,
 One-shot, Campaign, Bring your own deck, Equipment provided. Tags cannot contain nulls,
@@ -240,13 +241,13 @@ to the final merged database row.
 `private.event_locations` has an event UUID PK/FK, required trimmed address of 3–200
 characters, `share_publicly` default false, and updated timestamp. Deferred constraint
 triggers require an address record for each in-person event by transaction end, so a
-future create transaction can insert event and protected location together. Exact addresses
+4A create transaction can insert event and protected location together. Exact addresses
 are never columns on public event records. The opt-in flag itself grants no access and
 must never expose a private event before authorization.
 
 Host/game/city FK indexes and a partial scheduled-public `(starts_at, id)` index support
-future event ownership and discovery reads. No discovery/event HTTP query is implemented
-against these tables yet.
+event ownership and discovery reads. Milestone 4A adds a partial public/scheduled title
+GIN trigram index and bounded keyset discovery. No table or existing record is replaced.
 
 ## Attendance and transactional capacity
 
@@ -263,7 +264,8 @@ duplicate members. The count/capacity CHECK also prevents an edit below current 
 Deletion decrements the counter only for an available event; event deletion's cascading
 membership cleanup is exempt. Future API transactions must still enforce private-event
 authorization and actor identity before performing writes. No client can currently edit
-the counter, insert membership or call an event mutation through the Data API.
+the counter or insert membership through the Data API. Only checked host event mutations
+are exposed in 4A; attendance HTTP/RPC operations remain deferred.
 
 This is database integrity groundwork, not a completed join API. Concurrent multi-connection
 integration tests must remain part of delivering real attendance endpoints.
@@ -307,8 +309,39 @@ The database owner remains an administrative trust boundary and must not become 
 ordinary request identity.
 
 Trigger/helpers use schema-qualified objects and hardened empty search paths. There is
-no security-definer event/role shortcut or general-purpose privileged RPC. Later grants,
-RLS and any narrowly scoped trusted functions must ship with actor-specific tests.
+no general-purpose privileged RPC or role-management shortcut. The focused event functions
+below ship with actor-specific allow/deny tests.
+
+### Milestone 4A event migrations
+
+`20261025000200_events_api.sql` adds the title index, `rollcall_events_executor` role,
+reference/event/location policies and private validation/DTO/checked entry functions.
+The executor is NOLOGIN, NOINHERIT and NOBYPASSRLS, does not own event tables, and has
+no membership writes, participant-count updates or host reassignment privileges. Mutable
+column grants and RLS limit event/location writes to `auth.uid()` ownership. Raw event,
+location and attendance permissions stay closed to anon/authenticated clients.
+
+Public `discover_events(jsonb)`, `get_event(uuid)`, `create_event(jsonb)`,
+`update_event(uuid,jsonb)` and `delete_event(uuid)` are SECURITY INVOKER wrappers for
+checked private entry points owned by the executor. Execution ACLs allow public reads,
+authenticated writes and no unbounded/internal helper calls. Private schema USAGE allows
+naming explicitly executable functions only, without exposing the schema via PostgREST.
+
+`20261025000300_event_executor_identity.sql` adds the argument-free migration-role-owned
+`private.event_api_actor()`: it only calls `auth.uid()`, reads no tables and is executable
+only by the executor. This bridges Supabase's separately owned Auth schema without broad
+runtime privileges. Four event helpers and owner RLS policies use that resolver. Timestamp
+and input conversion helpers are STABLE. Temporary ownership-transfer membership is revoked
+at migration end; PostgreSQL may retain non-inheritable administrative membership for the
+trusted migration role, never API roles.
+
+Creation/update atomically persist the protected address and event DTO. Updates lock the
+event, validate merged values and reject capacity below attendance. Deferred address
+constraints execute inside the executor context. Deletion cascades locations/memberships;
+profiles/geography/catalog remain intact. Private details and addresses are host-only in 4A,
+regardless of sharing flags, participation or roles. All public DTOs explicitly omit them.
+The two additive migrations change no geography/profile records or registration initializer.
+See [event API](events-api.md) and [verification](events-api-verification.md).
 
 Invitation secrets have no table/column in Milestone 1. A later dedicated, non-exposed
 table must support verification hashes, authenticated encrypted retrieval, rotation and

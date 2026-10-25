@@ -6,7 +6,8 @@ started as the frontend MVP for AI-DEV 2026 Workshop 3, based on
 foundation; Milestone 2A adds GeoNames imports and backend place search. Milestone 2B
 connects frontend country/city selection to that API. Milestone 3A adds real Supabase Auth
 and verified backend identity. Milestone 3B adds real editable UUID profiles and per-game
-experience; event CRUD/attendance and their numeric demo catalogs remain separate mocks.
+experience. Milestone 4A adds persistent event backend APIs; React event CRUD/attendance
+and their numeric demo catalogs remain separate mocks until Milestone 4C.
 
 ## Shared rules
 
@@ -43,7 +44,7 @@ Keep foundation routes simple until finished pages are requested.
   changes, preserve teammates' work, and coordinate shared contract/router/token/lock files.
 - Do not commit, push, or merge without explicit user approval. Never expose secrets or env files.
 - Keep database credentials and privileged keys server-side. The runtime API uses only an
-  unprivileged Supabase key with focused grants/RLS for geography and profiles. Never add a
+  unprivileged Supabase key with focused grants/RLS for geography, profiles and checked event RPCs. Never add a
   service-role bypass as a shortcut. Do not create, alter, reset, link, or deploy a remote
   Supabase project without explicit approval. Local reset scripts must remain explicitly local.
 - Geographic imports are separate local maintenance commands, never API request paths.
@@ -52,10 +53,11 @@ Keep foundation routes simple until finished pages are requested.
   database without checking what must be preserved. Keep downloaded datasets out of Git.
 - Milestone 3A implements registration/login/logout, confirmation, recovery and verified
   `GET /api/me`. Read `docs/authentication.md`. Only Auth uses a browser Supabase client
-  with a publishable/anon key; never expose privileged keys. Keep event CRUD/attendance
+  with a publishable/anon key; never expose privileged keys. Keep frontend event CRUD/attendance
   mocked. Demo selection requires both Vite development mode and explicit opt-in, and
   production builds cannot impersonate fixtures. Milestone 3B adds real profiles/experience;
-  persistent UUID event integration is Milestone 4. No invitations or administration.
+  persistent UUID event APIs are Milestone 4A; attendance is 4B and frontend integration is 4C.
+  No invitations or administration.
   Read `docs/location-ui.md` before changing location controls or event-location adapters.
 - Read `docs/profiles.md` for real profile contracts. Profile writes derive identity from the
   verified bearer token, use an isolated unprivileged user context and preserve owner RLS.
@@ -65,6 +67,11 @@ Keep foundation routes simple until finished pages are requested.
 - Geography owns its API/hooks and controls. Routes compose them into event render slots;
   shared `src/lib/location.ts` defines the location reference without cross-feature imports.
   Never invent geographic IDs or silently select an ambiguous legacy fixture location.
+- Read `docs/events-api.md` before real event work. Discovery is bounded, public/scheduled
+  only; private details and exact addresses are host-only in 4A. Derive host identity from
+  verified tokens; never accept submitted actors. Preserve closed client event tables,
+  executor RLS, explicit function ACLs and empty search paths. Real attendance (4B), frontend
+  adapters (4C), Storage (4D) and private codes/role authorization (5) require separate work.
 - Event forms require a confirmed city suggestion, clear it on country/text changes, and
   allow an empty venue. Exact addresses render only for the host/current participants;
   this is a demo UI safeguard, not server-side privacy or authorization.

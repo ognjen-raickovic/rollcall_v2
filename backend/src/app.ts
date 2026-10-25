@@ -11,6 +11,9 @@ import type { TokenVerifier } from './modules/auth/types.js'
 import { registerProfileRoutes } from './modules/profiles/profile-routes.js'
 import { createProfileRepository } from './modules/profiles/profile-repository.js'
 import type { ProfileRepository } from './modules/profiles/types.js'
+import { registerEventRoutes } from './modules/events/event-routes.js'
+import { createEventRepository } from './modules/events/event-repository.js'
+import type { EventRepository } from './modules/events/types.js'
 
 export function buildApp(
   env: Environment,
@@ -18,6 +21,7 @@ export function buildApp(
     geography?: GeographyRepository
     verifyToken?: TokenVerifier
     profiles?: (accessToken?: string) => ProfileRepository
+    events?: (accessToken?: string) => EventRepository
     logger?: boolean
   } = {},
 ) {
@@ -48,6 +52,11 @@ export function buildApp(
     verify,
     repository:
       options.profiles ?? ((token) => createProfileRepository(createDatabaseClient(env, fetch, token))),
+  })
+  registerEventRoutes(app, {
+    verify,
+    repository:
+      options.events ?? ((token) => createEventRepository(createDatabaseClient(env, fetch, token))),
   })
   app.get('/health', async () => ({ status: 'ok', service: 'rollcall-api' }))
   const repository = options.geography ?? createGeographyRepository(createDatabaseClient(env))

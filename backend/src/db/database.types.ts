@@ -58,6 +58,11 @@ export type Database = {
       update_my_profile: { Args: { p_patch: Json }; Returns: Json }
       set_my_game_experience: { Args: { p_game_id: number; p_experience: string }; Returns: Json }
       remove_my_game_experience: { Args: { p_game_id: number }; Returns: undefined }
+      discover_events: { Args: { p_filters: Json }; Returns: Json }
+      get_event: { Args: { p_event_id: string }; Returns: Json }
+      create_event: { Args: { p_input: Json }; Returns: Json }
+      update_event: { Args: { p_event_id: string; p_patch: Json }; Returns: Json }
+      delete_event: { Args: { p_event_id: string }; Returns: undefined }
     }
     Enums: Record<string, never>
     CompositeTypes: Record<string, never>

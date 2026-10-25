@@ -33,7 +33,7 @@ select is((select count(*)::integer from pg_class c join pg_namespace n on n.oid
   ('countries', 'cities', 'profiles', 'games', 'user_game_experience', 'events',
    'event_participants', 'profile_private', 'account_roles', 'event_locations')
   and c.relrowsecurity), 10, 'RLS enabled on every application table');
-select ok(not has_schema_privilege('anon', 'private', 'usage'), 'private schema is unavailable to anon');
+select ok(has_schema_privilege('anon', 'private', 'usage'), 'anon can name only explicitly executable event wrappers in the unexposed private schema');
 select ok(has_schema_privilege('authenticated', 'private', 'usage'), 'private invoker age functions have narrow authenticated schema usage');
 select ok(not has_table_privilege('anon', 'public.events', 'select'), 'no public event table read yet');
 select ok(not has_table_privilege('authenticated', 'public.events', 'insert'), 'no client event writes yet');
@@ -68,7 +68,7 @@ select is((select count(*)::integer from public.search_cities('ZZ', '', 4)), 0, 
 select is((select count(*)::integer from public.search_cities('US', '', 4)), 0, 'unknown country returns an empty result');
 select throws_ok($$select * from public.search_cities('ME', '', 21)$$, '22023', 'Invalid city search parameters.', 'database enforces maximum limit');
 select throws_ok($$select * from public.search_cities('ME', repeat('x', 81), 4)$$, '22023', 'Invalid city search parameters.', 'database bounds query length');
-select throws_ok($$select * from public.events$$, '42501', 'permission denied for table events', 'event details remain unavailable to anon');
+select throws_ok($$select * from public.events$$, '42501', 'permission denied for table events', 'raw event table remains unavailable to anon');
 select throws_ok($$insert into public.countries(iso_code, name) values ('XX', 'Unauthorized')$$,
   '42501', 'permission denied for table countries', 'anonymous clients cannot write geography');
 reset role;

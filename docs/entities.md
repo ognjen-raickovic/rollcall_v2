@@ -1,6 +1,6 @@
 ﻿# RollCall entities and API contract
 
-Shared contract for Workshop 3 mocks, Milestone 2B location integration and the backend foundation.
+Shared contract for Workshop 3 mocks and implemented backend milestones through 4A.
 Feature types live in `frontend/src/features/<domain>/types.ts`; APIs and fixtures live in
 that feature's `api/`. Real profiles and per-game experience use owner-scoped APIs; the
 database game catalog is read-only. Separate numeric demo catalogs and mock events remain
@@ -8,7 +8,7 @@ available in explicit development demo mode. Geography/profiles/catalog use real
 users also integrates with Supabase Auth. The backend model intentionally
 differs where stated below.
 
-## Backend Milestones 1 through 3B: implemented API
+## Backend Milestones 1 through 4A: implemented API
 
 Only the following HTTP endpoints are implemented. All other HTTP paths later in this
 document describe the Workshop 3 mock-shaped intended contract, not existing server routes.
@@ -26,6 +26,11 @@ document describe the Workshop 3 mock-shaped intended contract, not existing ser
 | `DELETE /api/me/game-experience/:gameId`   | 204, no body                                                            | Verified owner; idempotent removal           |
 | `GET /api/users/:userId`                   | `PublicProfile`                                                         | Public; UUID path                            |
 | `GET /api/games`                           | `Game[]` from the database catalog                                      | Public; read-only                            |
+| `GET /api/events`                          | `{ items: EventSummary[], pageInfo: { limit, nextCursor } }`             | Public/scheduled discovery only              |
+| `GET /api/events/:eventId`                 | `PublicEventDetails` or `HostEventDetails`                              | Public/unlisted; private host only           |
+| `POST /api/events`                        | 201 `HostEventDetails`, Location header                                | Verified UUID host derived from token        |
+| `PATCH /api/events/:eventId`               | Updated `HostEventDetails`                                             | Verified host only                           |
+| `DELETE /api/events/:eventId`              | 204, no body                                                          | Verified host; cascading hard delete         |
 
 `/api/me` returns no password, token, role, profile metadata, address or private age. Its
 identity comes from cryptographically verified claims and explicit issuer/audience/expiry/
@@ -59,7 +64,7 @@ enabled ME, RS, BA and HR rows. Disabled/unsupported/unknown countries and no ma
 descending (null last), normalized name and ID. Empty input uses that prominence ordering
 without a match rank. Results contain each city ID at most once.
 
-Success returns arrays directly, without an envelope. Errors use
+Geography success returns arrays directly; event discovery uses a bounded page envelope. Errors use
 `{ code, message, fields: Record<string, string[]> }`: `VALIDATION_ERROR` (400),
 `NOT_FOUND` (404), `DEPENDENCY_UNAVAILABLE` (503), and `INTERNAL_ERROR` (500).
 Invalid upstream rows and unavailable Supabase calls fail safely rather than returning
@@ -86,7 +91,8 @@ constraints, delete behavior and the ER diagram are in [database schema](databas
 
 Only geography had Data API read grants through Milestone 3A. Milestone 3B adds public-safe
 profile/game/experience reads, mutable-column owner updates and owner-only private age access
-through invoker functions. Event and role data remain denied; RLS stays enabled.
+through invoker functions. Milestone 4A adds checked event RPCs, while raw event/location/
+attendance tables and role data remain denied to clients; RLS stays enabled.
 `/api/me` reads verified Auth identity, not an application table. The additive 3A migration creates a
 minimal profile on Auth registration and backfills missing rows with `RollCall player`.
 It copies no email/editable metadata/role and preserves existing profiles and table grants.
@@ -94,22 +100,58 @@ It copies no email/editable metadata/role and preserves existing profiles and ta
 Frontend integration must deliberately adopt UUID profile/event IDs and selected city IDs
 through feature API adapters; never cast UUIDs to numbers or equate a numeric demo profile
 with an Auth account. Keep catalog/geography numeric identifiers as IDs, not display names.
-Milestone 2B changes only the frontend location adapter and optional venue. Future REST event/profile
+Milestone 2B changes only the frontend location adapter and optional venue. Real event/profile
 DTOs must omit private age, roles, invitation secrets and exact addresses unless the
 specific actor is authorized for an explicit protected response.
 
 Existing host/attendance, capacity 1–100, future scheduling, EUR price, tag/experience and
-visibility rules remain the basis for future endpoints. Venue is optional in the frontend
+visibility rules inform the real event API below. Venue is optional in the frontend
 and backend model; an in-person address remains required in its protected relationship.
 Supabase Storage is planned for covers, but no bucket, upload API or persisted image
 transport exists in Milestone 1. Mock data URLs are never production database payloads.
 
-Public discovery, direct-link unlisted access and private-code access are separate future
-read/join contracts. Private event details and addresses must be withheld before
+Public discovery and direct-link unlisted access are implemented in 4A; private-code joining
+remains future work. Private event details and addresses must be withheld before
 authorization. Codes will require cryptographic generation, rate-limited validation/joining,
 rotation/revocation and separate server-managed encrypted retrieval plus verification hashes.
 Ordinary participants never receive a code. No invitation workflow or role-management
 endpoint is implemented now; see [authorization design](backend-architecture.md).
+
+## Persistent backend events: Milestone 4A
+
+The backend types live in `backend/src/modules/events/types.ts`; they are separate from
+the numeric frontend `Event` below. Accounts/events use UUIDs; catalog/city/country IDs
+remain positive PostgreSQL integers. No mock actor, email or numeric demo identity is accepted.
+
+`EventSummary` includes id/title, game `{id,name,category}`, city `{id,name,administrativeDivision}`,
+country `{id,isoCode,name}`, nullable venue, startsAt/endsAt, capacity/participantCount/
+availableSlots, tags, visibility/status and default cover `{kind,imageUrl}`. Public details
+add description, host `{id,displayName}`, minimumAge, experienceLevel, EUR price/currency and
+timestamps. Only host details contain `address`. Email, private age, roles, participant
+identities and future codes never appear. Private details are host-only in 4A; participants
+and privileged roles get no additional access. Missing/inaccessible events share one 404.
+
+Create requires title 3–100, description 10–5000, existing gameId/cityId, address 3–200,
+future ISO start and later end, capacity 1–100, and all-levels/beginner/experienced expectation.
+Defaults: venue null (blank accepted; otherwise 2–120), minimumAge 0 (0–99), price 0
+(EUR 0–10000, two decimals), tags [], public visibility and null coverStoragePath. Up to six
+unique curated tags obey the existing compatibility rules. Country derives from an enabled
+supported city's FK. Strict nonempty PATCH accepts those fields plus scheduled/cancelled
+status, validates merged state and preserves host/attendance/creation time. Capacity below
+attendance returns 409. Even address-only edits require a future final schedule. Event and
+protected-address writes are atomic. Hard deletion cascades memberships/location only.
+
+Discovery defaults to upcoming public scheduled events; supports search, country, cityId,
+gameId, startsAfter/startsBefore, upcomingOnly, availableOnly, scheduled status, limit (12,
+max 50) and cursor. Availability always requires a future open event. Literal title substring
+search and `(starts_at,id)` keyset ordering preserve timestamp precision. No filter exposes
+private/unlisted/cancelled discovery. Exact contracts and errors are in
+[events API](events-api.md). Only default local illustrations are returned; uploads and
+custom persistent cover paths are deferred. Checked functions, explicit ACLs and non-bypass
+executor RLS enforce host/privacy rules through the Data API too.
+
+React event APIs/DTOs below remain mocks until 4C. Real attendance/participant address
+authorization is 4B; Storage is 4D; private codes/role-authorized access is 5.
 
 ## Real profiles and per-game experience: Milestone 3B
 
@@ -364,10 +406,11 @@ can update/remove; a different known user receives 403. There is no global defau
 Exact address rendering is separately limited to the host/current participants. Anonymous
 and non-participating viewers see a neutral address-sharing explanation, including public
 or unlisted events. Mock API objects still contain the address in browser memory, so this
-is a UI safeguard, not server-side privacy. A future event API must omit protected addresses
-from unauthorized DTOs and enforce identity/attendance on the server.
-The demo session supplies the selected user ID to attendance through route props. A future backend must derive the actor from a verified session,
-never trust a client-supplied user ID. Mock actor objects are not HTTP request bodies.
+is a UI safeguard, not server-side privacy. The separate 4A event API omits protected addresses
+from unauthorized DTOs and enforces verified host identity. Real attendance authorization
+is deferred to 4B. The demo session supplies its selected user ID through route props;
+real backend operations derive actors from verified sessions, never client-supplied user IDs.
+Mock actor objects are not HTTP request bodies.
 
 Any known non-organizer may join/leave only a scheduled event that has not started. Canceled
 or started events return 409. Organizers cannot join/leave their own events (409) and never
@@ -552,4 +595,5 @@ A later frontend/backend integration should preserve working journeys and compat
 semantics while explicitly adapting the changed UUID/city/address model described above.
 No HTTP server was implemented in Workshop 3. Backend Milestone 1 adds only the health/
 geography server routes; Milestone 3A adds real Supabase Auth and `/api/me`. Milestone 3B
-implements profile/experience routes; persistent events remain Milestone 4.
+implements profile/experience routes; 4A adds the separate persistent event API above.
+The following mock examples do not imply that real attendance endpoints exist.
