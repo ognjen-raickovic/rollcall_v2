@@ -118,3 +118,7 @@ Keep foundation routes simple until finished pages are requested.
 
 Claude's commands, format hook, and UI reviewer remain in `.claude/`. Codex performs equivalent
 checks using available tools; Claude hooks do not automatically run for Codex edits.
+
+## Milestone 5A
+
+5A invitations are implemented: read docs/private-invitations.md. Never log/persist codes or weaken checked-RPC capability, encryption, durable attempt commits, event-lock rechecks or existing attendance triggers. Code management is host-only; administration remains 5B.

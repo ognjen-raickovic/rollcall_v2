@@ -313,3 +313,7 @@ release requirements. This milestone does not deploy or modify a remote Supabase
 - [Supabase API security, grants and RLS](https://supabase.com/docs/guides/api/securing-your-api)
 - [Supabase row level security](https://supabase.com/docs/guides/database/postgres/row-level-security)
 - [Supabase local CLI development](https://supabase.com/docs/guides/local-development/cli/getting-started)
+
+## Milestone 5A
+
+5A uses authenticated encryption, domain-separated keyed verification and backend-capability-protected RPCs. Failed attempts commit durable account limits; process-local IP limits supplement them. Event locks and existing attendance triggers provide atomic admission. See [architecture and verification](private-invitations.md).

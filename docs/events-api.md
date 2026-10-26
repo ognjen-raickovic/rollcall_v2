@@ -268,3 +268,7 @@ forms retain their existing custom-cover behavior under isolated development rou
 Backend endpoints, migrations and database permissions are unchanged. See
 [action verification](event-actions-verification.md) and historical
 [read verification](event-frontend-verification.md).
+
+## Milestone 5A
+
+5A adds host GET /api/events/:id/invitation and POST invitation/rotate or invitation/revoke, plus authenticated POST /api/private-events/join with only {code}. UUID-only private admission remains denied. See [contracts and security](private-invitations.md).

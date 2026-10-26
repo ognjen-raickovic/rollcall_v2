@@ -153,4 +153,5 @@ its original gaming palette in both themes. Never invert uploaded photographs.
   ornamental animation, or invented activity counts. Hover/focus and pending indicators have a purpose.
 - No heavy gaming fonts, emoji icons, or everything inside shadowed cards.
 - No raw color/font/radius values in components; add and document tokens first.
-- No recurring events, invitations, cloud uploads, or advanced administrative UI in event management.
+- Private-code controls/modal use existing tokens and native dialogs in 5A. Hide codes until deliberate reveal and explain exact-address access.
+- No recurring events or advanced administrative UI in event management.

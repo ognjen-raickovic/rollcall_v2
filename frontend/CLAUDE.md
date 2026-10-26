@@ -137,3 +137,7 @@ Dependency direction: shared code -> features -> app, never the other way around
 - Editor access and update operations require the host. Private event reads require the host
   or existing participants. Event detail cache keys include the current demo user ID.
 - If Playwright MCP is unavailable, use local Playwright if available and report skipped checks.
+
+## Milestone 5A
+
+Read ../docs/private-invitations.md. Codes remain only in local controller memory and no-store responses, never query caches, URLs, logs or storage. Clear inputs on close/account change, preserve session checks, and compose real session at routes. Use existing tokens/native dialogs.

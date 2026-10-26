@@ -11,7 +11,7 @@ with inline validation and host authorization.
 The final polish adds optional custom event covers, curated multi-select tags, and a
 matching light theme alongside the default dark theme.
 
-**Current milestone: 4D.** Homepage/discovery/details and event creation,
+**Milestone 4D (completed).** Homepage/discovery/details and event creation,
 editing, deletion, joining and leaving use Fastify/PostgreSQL and real Supabase UUID
 accounts. Host-only forms use the real games/geography catalogs; participants gain and
 lose address access through verified membership. Numeric workflows remain isolated at
@@ -346,3 +346,7 @@ reference; users/games intentionally expose only reads. Codex performs equivalen
 with available tools; Claude hooks do not automatically run for Codex edits.
 `.mcp.json` retains Playwright, shadcn, and Context7; these depend on each developer's tool
 configuration, not the running app. MCP servers use `npx` as in the starter.
+
+## Milestone 5A
+
+Current delivery: Milestone 5A adds encrypted private room codes, host management and atomic authenticated admission. Apply local migrations, run pnpm invitations:setup (after covers:setup), and restart Fastify. See [contracts and verification](docs/private-invitations.md). Earlier milestone descriptions are historical; admin work remains 5B.

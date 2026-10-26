@@ -728,3 +728,7 @@ No HTTP server was implemented in Workshop 3. Backend Milestone 1 adds only the 
 geography server routes; Milestone 3A adds real Supabase Auth and `/api/me`. Milestone 3B
 implements profile/experience routes; 4A adds the separate persistent event API above.
 The following mock examples do not imply that real attendance endpoints exist.
+
+## Milestone 5A
+
+5A adds private event_invitations (event FK, unique HMAC, authenticated ciphertext, creation/expiry/revocation) and invitation_attempts (profile FK, window/count). No event DTO/PATCH carries codes. Host invitation GET/rotate/revoke and authenticated POST /api/private-events/join are documented in [the consolidated guide](private-invitations.md).

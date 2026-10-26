@@ -43,6 +43,10 @@ const environmentSchema = z
       .string()
       .regex(/^[A-Za-z0-9_-]{43,128}$/)
       .optional(),
+    EVENT_INVITATION_KEY: z
+      .string()
+      .regex(/^[A-Za-z0-9_-]{43}$/)
+      .optional(),
     CITY_SEARCH_DEFAULT_LIMIT: integer(1, 20, 4),
     CITY_SEARCH_MAX_LIMIT: integer(1, 20, 20),
   })

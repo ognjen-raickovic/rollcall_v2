@@ -453,3 +453,7 @@ Official references: [PostgreSQL transaction isolation](https://www.postgresql.o
 [Supabase API security](https://supabase.com/docs/guides/api/securing-your-api),
 [Supabase local configuration](https://supabase.com/docs/guides/local-development/cli/config),
 and [GeoNames export/license](https://www.geonames.org/export/).
+
+## Milestone 5A
+
+The additive 20261026000200_private_invitations.sql creates private invitation and attempt tables, RLS/ACLs and a non-login/non-bypass executor. Parent-event locks serialize code changes with admission; existing membership triggers alone update counts. No plaintext codes or client role assumption. See [details](private-invitations.md).
