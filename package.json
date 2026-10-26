@@ -4,6 +4,7 @@
   "packageManager": "pnpm@12.14.0",
   "scripts": {
     "test:suspensions": "pnpm --filter frontend test:suspensions",
+    "staging:prepare": "pnpm --filter backend staging:prepare",
     "test:moderation": "pnpm --filter frontend test:moderation",
     "admin:bootstrap": "pnpm --filter backend admin:bootstrap",
     "dev": "pnpm --filter frontend dev",

@@ -469,3 +469,14 @@ The additive 20261026000500_event_moderation.sql creates private RLS-protected r
 ## Milestone 5B-2B
 
 20261026000600_account_suspensions.sql adds private RLS-protected state/audit tables, a narrow NOLOGIN/NOBYPASSRLS executor, live subject guard, reviewed RPC preludes and owner-write/private-age RLS enforcement. Existing event/admin/Storage subject resolution now rejects suspended callers. Guarded reads are VOLATILE; role-first/account-shared/existing-domain locks coordinate target-exclusive status transitions. Role mutation keeps its exclusive-role-first ordering. No Auth Admin API, role-write grant or data reset is added. See [security design](account-suspensions.md).
+
+## Staging operator provisioning (6A-1)
+
+Additive migration `20261026000700_staging_provisioning.sql` adds
+`private.staging_provisioning`: singleton key, fixed `staging` environment, cover-operation
+SHA-256 fingerprint, domain-separated invitation-key fingerprint and provisioning timestamp.
+RLS is enabled with no client/executor policies; all privileges are revoked from public,
+anon, authenticated and service_role. Only the maintenance operator accesses it. No raw
+secret, email, account identity or public API response is stored here. Exact retries preserve
+the existing roots; conflicts refuse rotation. Existing `private.event_cover_config` retains
+the runtime cover verification hash. See [staging setup](hosted-supabase-staging.md).

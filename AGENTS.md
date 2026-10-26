@@ -134,3 +134,11 @@ Read docs/event-moderation.md for 5B-2A. Only checked reported-event cancellatio
 ## Milestone 5B-2B
 
 Read docs/account-suspensions.md before protected application work. All new protected RPCs must use the live SQL active-account guard before domain locks, with role/account ordering preserved. Keep identity/self-status/logout/recovery available and public anonymous browsing safe. Preserve state/audit atomicity, explicit role eligibility, raw-table/Storage enforcement and UUID-keyed status/private-cache cleanup. Never bypass suspension with an old JWT, stale UI role or a service-role client.
+
+## Milestone 6A-1: staging preparation
+
+Read [the staging procedure](docs/hosted-supabase-staging.md) before hosted work. Preparation does not authorize
+remote mutations, CLI linking or deployment. Keep ordinary local env/config/data unchanged;
+use separate ignored operator configuration and dry-run defaults. Preserve local-only guards
+and unprivileged runtime access. Full reviewed 5B-2B source is a rollout prerequisite; do not
+copy just its SQL to bypass the audit. 6A-2 requires separate explicit deployment approval.

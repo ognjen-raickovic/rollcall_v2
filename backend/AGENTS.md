@@ -87,3 +87,11 @@ Read ../docs/event-moderation.md. The separate moderation executor gets only bou
 ## Milestone 5B-2B
 
 Read ../docs/account-suspensions.md. Runtime Auth guards require fresh status; only identity/self-status routes explicitly allow suspended callers. SQL protects all exposed authenticated actions and Storage operations independently. Guard before domain locks, preserve role-first ordering and the special exclusive-first role-change workflow. Return safe ACCOUNT_SUSPENDED 403s without notes. Test fixtures inject the active-check dependency explicitly; production never skips it.
+
+## Milestone 6A-1: staging preparation
+
+Read [the staging procedure](../docs/hosted-supabase-staging.md) before hosted work. Preparation does not authorize
+remote mutations, CLI linking or deployment. Keep ordinary local env/config/data unchanged;
+use separate ignored operator configuration and dry-run defaults. Preserve local-only guards
+and unprivileged runtime access. Full reviewed 5B-2B source is a rollout prerequisite; do not
+copy just its SQL to bypass the audit. 6A-2 requires separate explicit deployment approval.

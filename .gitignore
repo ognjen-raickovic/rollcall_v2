@@ -58,6 +58,9 @@ backend/.tmp/
 # Downloaded geographic extracts and local import reports
 backend/.geography/
 
+# Operator-only staging targets, credentials, key backups and reports
+backend/.staging/
+
 # Browser verification artifacts
 frontend/test-results/
 frontend/playwright-report/
