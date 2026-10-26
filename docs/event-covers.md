@@ -183,3 +183,7 @@ departure removes it and navigates away. No tokens or signed URLs enter query ke
 analytics or persistent browser storage. Demo numeric forms/caches remain separate.
 
 See [verification](event-cover-verification.md) for executed tests and remaining boundaries.
+
+## Milestone 5B-2B
+
+5B-2B adds live suspension guards to reservation/commit/removal/cleanup/access RPCs and the actor resolver used by Storage RLS. A pre-existing pending reservation cannot authorize new writes after suspension commits. Existing images remain; multi-request uploads may leave recoverable pending work. Previously authorized/in-flight signing and signed read URLs retain the bounded lifetime described in [account suspension](account-suspensions.md).

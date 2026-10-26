@@ -465,3 +465,7 @@ Two additive 5B-1 migrations reuse account_roles, add RLS-protected role_audit a
 ## Milestone 5B-2A
 
 The additive 20261026000500_event_moderation.sql creates private RLS-protected reports, attempt counters and append-only audits, with a separate NOLOGIN/NOBYPASSRLS executor. Event privileges are column-limited reads and UPDATE(status) only; no locations, codes, ages, raw Auth or role writes. Checked RPCs enforce current roles and event access. Shared role locks, parent-first event/report locks and atomic audit/state writes coordinate demotion, attendance and deletion. A guarded status trigger prevents reactivation of audited moderator cancellations. See [security design](event-moderation.md).
+
+## Milestone 5B-2B
+
+20261026000600_account_suspensions.sql adds private RLS-protected state/audit tables, a narrow NOLOGIN/NOBYPASSRLS executor, live subject guard, reviewed RPC preludes and owner-write/private-age RLS enforcement. Existing event/admin/Storage subject resolution now rejects suspended callers. Guarded reads are VOLATILE; role-first/account-shared/existing-domain locks coordinate target-exclusive status transitions. Role mutation keeps its exclusive-role-first ordering. No Auth Admin API, role-write grant or data reset is added. See [security design](account-suspensions.md).

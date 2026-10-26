@@ -358,3 +358,7 @@ Milestone 5B-1 implements current-role permissions, superadmin-only user/admin m
 ## Milestone 5B-2A
 
 Milestone 5B-2A adds private event reports and an admin/superadmin review queue at `/admin/reports`, with audited dismissal and reported-event cancellation. It grants no general editing or private-data access. Read [setup, contracts and verification](docs/event-moderation.md). `pnpm test:moderation` runs focused frontend client checks; no new configuration/dependency is required.
+
+## Milestone 5B-2B
+
+Milestone 5B-2B adds application-level account suspension/reinstatement, an exact-lookup account-access page at `/admin/accounts`, safe self status and immutable audits. Existing Auth sessions cannot bypass SQL/RLS enforcement; records and roles remain intact. Read [setup, contracts and verification](docs/account-suspensions.md). Run `pnpm test:suspensions` for focused frontend checks. No new configuration or dependency is needed.

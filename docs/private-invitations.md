@@ -92,3 +92,7 @@ commit-eligible files. Milestone 5A is ready for PR review, subject to the deplo
 Limits: first host reveal lazily initializes codes; no auto-issuance during event creation.
 Production key provisioning/rotation and shared IP limits need coordinated rollout. Revoking
 a code is not participant removal. Administrative roles are deferred to 5B.
+
+## Milestone 5B-2B
+
+5B-2B guards invitation management/redemption and Storage/event subject resolution against suspended callers, including old JWTs and direct RPCs. Suspension alone does not revoke codes or remove memberships; it blocks the suspended actor. Reinstatement restores normal scoped permissions. See [account suspension](account-suspensions.md).

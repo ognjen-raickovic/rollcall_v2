@@ -4,6 +4,8 @@ import { registerInvitationRoutes } from './modules/events/event-invitations.js'
 import type { Environment } from './config/env.js'
 import { registerAdminRoutes } from './modules/administration/admin-routes.js'
 import { registerModerationRoutes } from './modules/moderation/moderation-routes.js'
+import { registerSuspensionRoutes } from './modules/administration/suspension-routes.js'
+import { readAccountStatus,suspendedError } from './modules/auth/account-status.js'
 import { createAdminRepository } from './modules/administration/admin-repository.js'
 import { createDatabaseClient } from './db/supabase.js'
 import { installErrorHandler } from './middleware/error-handler.js'
@@ -34,6 +36,7 @@ export function buildApp(
     events?: (accessToken?: string) => EventRepository
     covers?: (accessToken?: string) => EventCoverRepository
     logger?: boolean
+    assertActiveAccount?: (token:string)=>Promise<void>
   } = {},
 ) {
   const app = Fastify({
@@ -58,10 +61,15 @@ export function buildApp(
     trustProxy: false,
   })
   installErrorHandler(app)
+  app.decorate('assertActiveAccount',options.assertActiveAccount??(async(token:string)=>{
+    const status=await readAccountStatus(createDatabaseClient(env,fetch,token))
+    if(status.status==='suspended')throw suspendedError()
+  }))
   void app.register(multipart, { limits: { fileSize: 3 * 1024 * 1024, files: 1, fields: 0, parts: 1 } })
   const verify = options.verifyToken ?? createTokenVerifier(env)
   const covers = options.covers ?? ((token?: string) => createEventCoverRepository(env, token))
   registerAuthRoutes(app, verify)
+  registerSuspensionRoutes(app,env,verify)
   registerAdminRoutes(app, { verify, repository: (token) => createAdminRepository(createDatabaseClient(env, fetch, token)) })
   registerProfileRoutes(app, {
     verify,

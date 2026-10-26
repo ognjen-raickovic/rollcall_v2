@@ -1,3 +1,4 @@
+import { throwIfSuspended } from '../auth/account-status.js'
 import { z } from 'zod'
 import type { DatabaseClient } from '../../db/supabase.js'
 import { ApiError } from '../../shared/api-error.js'
@@ -42,6 +43,7 @@ const auditsSchema = z.object({
 
 function result<T>(value: { data: unknown; error: { code?: string } | null }, schema: z.ZodType<T>): T {
   if (value.error) {
+    throwIfSuspended(value.error)
     const code = value.error.code
     if (code === '42501') throw new ApiError(403, 'FORBIDDEN', 'You do not have permission for this action.')
     if (code === 'P0002') throw new ApiError(404, 'NOT_FOUND', 'Account not found.')

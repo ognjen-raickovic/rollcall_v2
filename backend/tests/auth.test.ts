@@ -136,6 +136,7 @@ test('protected API rejects missing/invalid credentials and isolates concurrent 
   }
   let calls = 0
   const app = buildApp(testEnvironment(), {
+    assertActiveAccount: async () => {},
     logger: false,
     geography: { listCountries: async () => [], searchCities: async () => [] },
     verifyToken: async (token) => {

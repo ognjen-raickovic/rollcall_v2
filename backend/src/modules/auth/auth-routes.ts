@@ -5,7 +5,7 @@ import type { TokenVerifier } from './types.js'
 
 export function registerAuthRoutes(app: FastifyInstance, verify: TokenVerifier): void {
   app.decorateRequest('account', null)
-  app.get('/api/me', { preHandler: createAuthGuard(verify) }, async (request) => {
+  app.get('/api/me', { preHandler: createAuthGuard(verify,true) }, async (request) => {
     if (!request.account) throw unauthenticated()
     return { id: request.account.id, email: request.account.email }
   })

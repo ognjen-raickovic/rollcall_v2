@@ -140,3 +140,7 @@ readiness or hosted provisioning is implied.
 5B-2B or later: account/user reports, suspension/bans, notifications, broader investigation,
 moderation restoration/appeals, hosted abuse controls, provisioning and deployment. No such
 capability is implicitly granted by this milestone.
+
+## Milestone 5B-2B
+
+All report submission/review/decision paths now require an active account through both shared HTTP checks and checked SQL/actor resolution. A suspended moderator retains its role assignment but cannot moderate with an existing JWT. Suspension itself does not resolve reports, cancel events or erase audits. Existing moderation locks and privacy projections remain intact. See [suspension enforcement](account-suspensions.md).

@@ -137,6 +137,7 @@ test('cover validation rejects oversize, corrupt, unsafe, mismatched and excessi
 test('cover routes derive actors from verified tokens and reject malformed paths, fields and auth', async (t) => {
   const calls: { operation: string; actor?: string; token?: string }[] = []
   const app = Fastify()
+  app.decorate('assertActiveAccount',async()=>{})
   installErrorHandler(app)
   app.register(multipart, {
     limits: { files: 1, fields: 0, fileSize: MAX_COVER_BYTES },

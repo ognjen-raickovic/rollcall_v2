@@ -1,3 +1,4 @@
+import { throwIfSuspended, suspendedError } from '../auth/account-status.js'
 import { createClient } from '@supabase/supabase-js'
 import { z, type ZodType } from 'zod'
 import type { Environment } from '../../config/env.js'
@@ -34,6 +35,7 @@ function unavailable(): ApiError {
 }
 
 function mapError(error: RpcError): ApiError {
+  throwIfSuspended(error)
   if (error.code === 'P0002') return eventNotFound()
   if (error.code === '42501') return new ApiError(403, 'FORBIDDEN', 'You cannot change this event image.')
   if (error.code.startsWith('22') || ['23503', '23514'].includes(error.code))
@@ -169,6 +171,7 @@ export function createEventCoverRepository(
           upsert: false,
           cacheControl: '0',
         })
+        if (stored.error?.message === 'ACCOUNT_SUSPENDED') throw suspendedError()
         if (stored.error) throw unavailable()
         const result = await rpc(
           'commit_event_cover',
@@ -216,6 +219,7 @@ export function createEventCoverRepository(
         const signed = await client(false, true)
           .storage.from(BUCKET)
           .createSignedUrl(item.path, COVER_URL_LIFETIME_SECONDS)
+        if (signed.error?.message === 'ACCOUNT_SUSPENDED') throw suspendedError()
         if (signed.error || !signed.data?.signedUrl) throw unavailable()
         const url = new URL(signed.data.signedUrl)
         if (

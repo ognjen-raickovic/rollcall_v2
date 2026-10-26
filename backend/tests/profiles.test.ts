@@ -25,6 +25,7 @@ test('profile routes use verified identity and strictly validate writes before r
   const calls: { operation: string; token?: string }[] = []
   const { birthYear: _birthYear, ageDeclaredAt: _ageDeclaredAt, ...safe } = fixture
   const app = buildApp(testEnvironment(), {
+    assertActiveAccount: async () => {},
     logger: false,
     geography: { listCountries: async () => [], searchCities: async () => [] },
     verifyToken: async () => ({ id: userId, email: 'private@example.test' }),

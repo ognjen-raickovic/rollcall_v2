@@ -7,11 +7,17 @@ import { useAdminUsers, useChangeAdminRole, usePermissions, useRoleAudit } from 
 import type { AdminAccount } from '../api/administration-api'
 import { useAuth } from '../api/use-auth'
 import { ModerationDashboard } from './moderation-dashboard'
+import { useAccountStatus } from '../api/use-account-status'
+import { AccountAccess } from './account-access'
 
 export function AdminNavigation() {
   const auth = useAuth(),
     permissions = usePermissions()
-  return auth.data && !permissions.isError && permissions.data?.capabilities.accessAdmin ? (
+  const status = useAccountStatus(auth.data?.id ?? null)
+  return auth.data &&
+    status.data?.status === 'active' &&
+    !permissions.isError &&
+    permissions.data?.capabilities.accessAdmin ? (
     <Link to="/admin" className="text-sm font-medium hover:text-primary">
       Admin
     </Link>
@@ -38,7 +44,7 @@ function Feedback({
     )
   return null
 }
-export function AdminArea({ section }: { section: 'home' | 'users' | 'audit' | 'reports' }) {
+export function AdminArea({ section }: { section: 'home' | 'users' | 'audit' | 'reports' | 'accounts' }) {
   const auth = useAuth(),
     permissions = usePermissions()
   const allowed = permissions.data?.capabilities.accessAdmin
@@ -71,7 +77,9 @@ export function AdminArea({ section }: { section: 'home' | 'users' | 'audit' | '
                 ? 'Role audit history'
                 : section === 'reports'
                   ? 'Event reports'
-                  : 'Administration'}
+                  : section === 'accounts'
+                    ? 'Account access'
+                    : 'Administration'}
           </h1>
           <p className="text-muted-foreground">
             Your current role:{' '}
@@ -81,6 +89,7 @@ export function AdminArea({ section }: { section: 'home' | 'users' | 'audit' | '
         <nav aria-label="Administration" className="flex flex-wrap gap-4 text-primary">
           <Link to="/admin">Overview</Link>
           <Link to="/admin/reports">Event reports</Link>
+          <Link to="/admin/accounts">Account access</Link>
           {permissions.data?.capabilities.manageAdminRoles && (
             <>
               <Link to="/admin/users">Accounts and roles</Link>
@@ -100,6 +109,8 @@ export function AdminArea({ section }: { section: 'home' | 'users' | 'audit' | '
               suspension and broader moderation remain deferred.
             </p>
           </div>
+        ) : section === 'accounts' ? (
+          <AccountAccess key={auth.data?.id} />
         ) : section === 'reports' ? (
           <ModerationDashboard key={auth.data?.id} />
         ) : section === 'users' ? (

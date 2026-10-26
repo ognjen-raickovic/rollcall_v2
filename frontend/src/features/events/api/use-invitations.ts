@@ -56,6 +56,7 @@ export function useInvitations(session: EventActionSession) {
         method,
         body,
         token,
+        viewerId:actor,
         signal: controller.signal,
         resource: 'event',
       })

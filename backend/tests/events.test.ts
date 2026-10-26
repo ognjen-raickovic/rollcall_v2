@@ -72,6 +72,7 @@ type Call = { operation: string; token: string | undefined; input?: unknown; act
 function routeApp() {
   const calls: Call[] = []
   const app = buildApp(testEnvironment(), {
+    assertActiveAccount: async () => {},
     logger: false,
     geography: { listCountries: async () => [], searchCities: async () => [] },
     verifyToken: async (token) => {

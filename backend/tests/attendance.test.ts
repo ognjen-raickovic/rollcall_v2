@@ -60,6 +60,7 @@ test('attendance routes require verified identity and reject submitted actors, q
     return Response.json({ ...attendance, hasJoined: path.endsWith('/join_event') })
   }
   const app = buildApp(testEnvironment(), {
+    assertActiveAccount: async () => {},
     logger: false,
     verifyToken: async (token) => {
       if (token !== 'e30.e30.verified') throw new ApiError(401, 'UNAUTHENTICATED', 'Invalid test token')

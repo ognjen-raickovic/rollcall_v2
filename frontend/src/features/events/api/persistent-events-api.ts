@@ -54,6 +54,7 @@ export const persistentEventsApi = {
     if (signal?.aborted) throw signal.reason
     const event = await httpRequest(`/api/events/${encodeURIComponent(eventId)}`, eventDetailsSchema, {
       token: token ?? undefined,
+      viewerId,
       signal,
       resource: 'event',
     })

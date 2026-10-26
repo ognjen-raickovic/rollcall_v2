@@ -54,6 +54,7 @@ async function request<T>(
     method,
     body,
     token: await token(session, signal),
+    viewerId:session.viewerId,
     signal,
     resource: 'event',
   })

@@ -1,8 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback } from 'react'
-import { ADMIN_QUERY_KEY, EVENT_COVER_QUERY_KEY, EVENT_DETAILS_QUERY_KEY } from '@/lib/query-keys'
+import {
+  ACCOUNT_STATUS_QUERY_KEY,
+  ADMIN_QUERY_KEY,
+  EVENT_COVER_QUERY_KEY,
+  EVENT_DETAILS_QUERY_KEY,
+} from '@/lib/query-keys'
 
 import { authApi } from './auth-api'
+import { useAccountStatus } from './use-account-status'
 
 export const authKey = ['auth-account'] as const
 export const recoveryKey = ['auth-recovery'] as const
@@ -13,13 +19,20 @@ export function useAuth() {
 
 export function useApiSession() {
   const account = useAuth()
-  const viewerId = account.data?.id ?? null
-  const getAccessToken = useCallback(() => authApi.accessToken(viewerId), [viewerId])
+  const actor = account.data?.id ?? null,
+    status = useAccountStatus(actor)
+  const suspended = status.data?.status === 'suspended'
+  const viewerId = status.data?.status === 'active' ? actor : null
+  const getAccessToken = useCallback(
+    () => (actor && !viewerId ? Promise.resolve(null) : authApi.accessToken(viewerId)),
+    [viewerId, actor],
+  )
   return {
     viewerId,
     getAccessToken,
-    ready: !account.isPending && !account.error,
-    error: account.error,
+    ready:
+      !account.isPending && !account.error && (!actor || suspended || (!status.isPending && !status.error)),
+    error: account.error ?? status.error,
   }
 }
 
@@ -39,6 +52,7 @@ export function useAuthLogin() {
   return useMutation({
     mutationFn: authApi.login,
     onSuccess: (account) => {
+      client.removeQueries({ queryKey: ACCOUNT_STATUS_QUERY_KEY })
       client.removeQueries({ queryKey: ADMIN_QUERY_KEY })
       client.removeQueries({ queryKey: EVENT_DETAILS_QUERY_KEY })
       client.removeQueries({ queryKey: EVENT_COVER_QUERY_KEY })
@@ -66,6 +80,7 @@ export function useAuthLogout() {
   return useMutation({
     mutationFn: authApi.logout,
     onSuccess: () => {
+      client.removeQueries({ queryKey: ACCOUNT_STATUS_QUERY_KEY })
       client.removeQueries({ queryKey: ADMIN_QUERY_KEY })
       client.removeQueries({ queryKey: EVENT_DETAILS_QUERY_KEY })
       client.removeQueries({ queryKey: EVENT_COVER_QUERY_KEY })

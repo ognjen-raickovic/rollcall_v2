@@ -1,3 +1,4 @@
+import { throwIfSuspended } from '../auth/account-status.js'
 import { z, type ZodType } from 'zod'
 import type { DatabaseClient } from '../../db/supabase.js'
 import { ApiError } from '../../shared/api-error.js'
@@ -11,6 +12,7 @@ import type { ProfileRepository } from './types.js'
 
 type DatabaseError = { code: string }
 function databaseError(error: DatabaseError): ApiError {
+  throwIfSuspended(error)
   if (error.code === 'P0002')
     return new ApiError(404, 'NOT_FOUND', 'The requested profile or game was not found.')
   if (['22023', '22003', '22P02', '23514', '23503'].includes(error.code))

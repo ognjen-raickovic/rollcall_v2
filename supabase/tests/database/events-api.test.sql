@@ -51,6 +51,8 @@ select is((select count(*)::integer from pg_proc p join pg_namespace n on n.oid=
 insert into auth.users(id,email) values
   ('50000000-0000-4000-8000-000000000001','event-sql-one@example.invalid'),
   ('50000000-0000-4000-8000-000000000002','event-sql-two@example.invalid');
+-- Protected actions below simulate confirmed Auth sessions.
+update auth.users set email_confirmed_at=now() where id in ('50000000-0000-4000-8000-000000000001','50000000-0000-4000-8000-000000000002');
 create temporary table event_api_fixtures(kind text primary key, id uuid, body jsonb);
 grant select,insert,update on event_api_fixtures to anon,authenticated;
 insert into event_api_fixtures(kind,body) select 'base',jsonb_build_object(

@@ -12,9 +12,14 @@ const links = [
   { to: '/events/new', label: 'Host an event' },
 ]
 
-type AppLayoutProps = { account: ReactNode; showDemoEvents?: boolean }
+type AppLayoutProps = {
+  account: ReactNode
+  showDemoEvents?: boolean
+  content?: ReactNode
+  notice?: ReactNode
+}
 
-export function AppLayout({ account, showDemoEvents = false }: AppLayoutProps) {
+export function AppLayout({ account, showDemoEvents = false, content, notice }: AppLayoutProps) {
   return (
     <div className="flex min-h-dvh flex-col">
       <a
@@ -83,7 +88,8 @@ export function AppLayout({ account, showDemoEvents = false }: AppLayoutProps) {
             </p>
           }
         >
-          <Outlet />
+          {notice}
+          {content ?? <Outlet />}
         </Suspense>
       </main>
       <footer className="border-t">
