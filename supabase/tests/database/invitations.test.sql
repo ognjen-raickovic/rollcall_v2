@@ -1,0 +1,18 @@
+begin;
+create extension if not exists pgtap with schema extensions;
+set local search_path=public,extensions;
+select plan(12);
+select has_table('private','event_invitations','Invitation table exists');
+select has_table('private','invitation_attempts','Attempt table exists');
+select ok((select relrowsecurity from pg_class where oid='private.event_invitations'::regclass),'Invitation RLS enabled');
+select ok((select relrowsecurity from pg_class where oid='private.invitation_attempts'::regclass),'Attempt RLS enabled');
+select is(has_table_privilege('authenticated','private.event_invitations','SELECT'),false,'No direct secret reads');
+select is(has_table_privilege('authenticated','private.event_invitations','UPDATE'),false,'No manufactured invitations');
+select is((select rolcanlogin from pg_roles where rolname='rollcall_invitation_executor'),false,'Executor cannot log in');
+select is((select rolbypassrls from pg_roles where rolname='rollcall_invitation_executor'),false,'Executor cannot bypass RLS');
+select is(has_function_privilege('anon','public.redeem_event_invitation(text)','EXECUTE'),false,'Anonymous redemption forbidden');
+select is(pg_has_role('authenticated','rollcall_invitation_executor','member'),false,'Clients cannot assume executor');
+select is((select prosecdef from pg_proc where oid='public.redeem_event_invitation(text)'::regprocedure),false,'Public wrapper is invoker');
+select is((select count(*)::integer from information_schema.columns where table_schema='private' and table_name='event_invitations' and column_name='code'),0,'No plaintext code column');
+select * from finish();
+rollback;

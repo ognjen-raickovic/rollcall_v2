@@ -49,6 +49,11 @@ export type Database = {
     }
     Views: Record<string, never>
     Functions: {
+      manage_event_invitation: {
+        Args: { p_event_id: string; p_hash: string; p_sealed: string; p_expires: string; p_action: string }
+        Returns: Json
+      }
+      redeem_event_invitation: { Args: { p_hash: string }; Returns: Json }
       search_cities: {
         Args: { country_code: string; search_query: string; result_limit: number }
         Returns: CityRow[]

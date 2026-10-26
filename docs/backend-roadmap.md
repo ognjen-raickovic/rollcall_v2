@@ -173,3 +173,7 @@ must be separately prioritized rather than added implicitly.
 Source references: [GeoNames data and attribution](https://www.geonames.org/export/),
 [Supabase Auth](https://supabase.com/docs/guides/auth), and
 [Supabase Storage](https://supabase.com/docs/guides/storage).
+
+## Milestone 5A
+
+5A host-only codes and private admission are implemented locally. [Verification and limits](private-invitations.md) describe the delivered scope. Admin/superadmin management remains 5B and is not implemented.

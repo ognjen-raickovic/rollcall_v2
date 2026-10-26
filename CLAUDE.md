@@ -129,3 +129,7 @@ You may talk to me in any language.
   required suggestion selection, legacy compatibility and the optional venue/address boundary.
 - Report executed backend/database checks and unavailable checks separately. Prepared SQL
   and mocked repository tests are not proof that a migration or live endpoint succeeded.
+
+## Milestone 5A
+
+5A invitations are implemented: read docs/private-invitations.md. Preserve host authorization, encrypted recovery, backend-only verification, durable throttling and event-row serialization. Keep codes out of DTOs, URLs, logs and persistent caches. Administration remains 5B.

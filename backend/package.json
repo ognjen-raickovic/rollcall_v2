@@ -15,6 +15,7 @@
     "test": "tsx --test tests/*.test.ts",
     "test:integration": "node --env-file-if-exists=.env --import tsx --test tests/integration/*.test.ts",
     "covers:setup": "node --env-file-if-exists=.env --import tsx scripts/setup-event-covers.ts",
+    "invitations:setup": "node --env-file-if-exists=.env --import tsx scripts/setup-invitations.ts",
     "geography:import": "node --env-file-if-exists=.env --import tsx scripts/geography/import.ts",
     "geography:benchmark": "node --env-file-if-exists=.env --import tsx scripts/check-geography-performance.ts"
   },

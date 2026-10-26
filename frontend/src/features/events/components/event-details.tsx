@@ -13,6 +13,7 @@ import { EventDetailsView } from './event-details-view'
 import { EventParticipationSummary } from './event-participation-summary'
 import { DeleteEventDialog } from './delete-event-dialog'
 import { EventNotice } from './event-notice'
+import { InvitationPanel } from './invitation-panel'
 import { PersistentEventImage } from './persistent-event-image'
 import {
   usePersistentDeleteEvent,
@@ -256,6 +257,9 @@ export function EventDetails({
           />
         }
       />
+      {event.visibility === 'private' && event.viewer.isHost && (
+        <InvitationPanel id={event.id} session={session} />
+      )}
       {deleteDialog}
     </>
   )

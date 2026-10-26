@@ -8,6 +8,7 @@ const errorCodes: Record<number, string> = {
   409: 'CONFLICT',
   413: 'VALIDATION_ERROR',
   415: 'VALIDATION_ERROR',
+  429: 'RATE_LIMITED',
   500: 'INTERNAL_ERROR',
   503: 'DEPENDENCY_UNAVAILABLE',
 }
@@ -130,19 +131,21 @@ export async function httpRequest<T>(
     throw new HttpError(
       response.status,
       conflict ??
-        (response.status === 401
-          ? 'Your session could not be verified. Log in again to continue.'
-          : response.status === 404
-            ? resource === 'event'
-              ? 'This event could not be found or is not available to this account.'
-              : 'This profile or game could not be found.'
-            : [400, 413, 415].includes(response.status)
-              ? 'Check the highlighted fields and try again.'
-              : response.status === 409
-                ? 'This event changed or is no longer available. Check the latest details and try again.'
-                : response.status === 403 && resource === 'event'
-                  ? 'This account does not have access to this event.'
-                  : `The ${resource} service could not complete this request. Please try again.`),
+        (response.status === 429
+          ? 'Too many attempts. Try again later.'
+          : response.status === 401
+            ? 'Your session could not be verified. Log in again to continue.'
+            : response.status === 404
+              ? resource === 'event'
+                ? 'This event could not be found or is not available to this account.'
+                : 'This profile or game could not be found.'
+              : [400, 413, 415].includes(response.status)
+                ? 'Check the highlighted fields and try again.'
+                : response.status === 409
+                  ? 'This event changed or is no longer available. Check the latest details and try again.'
+                  : response.status === 403 && resource === 'event'
+                    ? 'This account does not have access to this event.'
+                    : `The ${resource} service could not complete this request. Please try again.`),
       fields,
       code,
     )

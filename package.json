@@ -25,6 +25,7 @@
     "test:event-actions": "pnpm --filter frontend test:event-actions",
     "test:event-covers": "pnpm --filter frontend test:event-covers",
     "covers:setup": "pnpm --filter backend covers:setup",
+    "invitations:setup": "pnpm --filter backend invitations:setup",
     "test:ui": "pnpm --filter frontend test:ui",
     "format": "pnpm --filter frontend format"
   },

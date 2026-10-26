@@ -71,3 +71,7 @@ for both assistants. Read `../SPEC.md`, `../docs/entities.md`,
   destructive local reset, inspect whether application/imported data needs preserving.
 - Report database tests actually executed separately from prepared SQL/static review.
   A repository stub test is not a live database integration test. Document unavailable checks.
+
+## Milestone 5A
+
+Read ../docs/private-invitations.md before invitation work. Failed validation outcomes must commit limiter writes; recheck code state after the event lock. Reuse attendance triggers, verified UUID and checked backend capability. No plaintext codes, service-role bypass or administrative override.
