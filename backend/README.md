@@ -7,8 +7,11 @@ profiles and per-game experience, plus the real read-only game catalog. React us
 and Supabase Auth. Milestone 4A adds persistent event discovery/details and host-only CRUD.
 Milestone 4B adds persistent transactional attendance and participant-aware details.
 React event reads and CRUD/attendance use the real API in 4C-1/4C-2; numeric catalogs/events
-remain isolated development demos. See [frontend action verification](../docs/event-actions-verification.md). Storage uploads
-and private codes remain deferred. See [profiles](../docs/profiles.md) and
+remain isolated development demos. Milestone 4D adds private-bucket persistent cover images,
+bounded backend processing and authorized signed access. Apply pending local migrations,
+run `pnpm covers:setup`, then restart Fastify. No service-role key is required. See
+[cover setup/security](../docs/event-covers.md), [verification](../docs/event-cover-verification.md),
+[profiles](../docs/profiles.md) and
 [event contracts/setup](../docs/events-api.md).
 
 ## Prerequisites

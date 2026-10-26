@@ -1,5 +1,23 @@
 # RollCall backend architecture
 
+## Milestone 4D cover boundary
+
+Real covers now use a private Supabase bucket and backend-mediated multipart endpoints.
+Sharp validates bounded image content, strips metadata and produces canonical WebP. A
+server-only operation capability complements the existing verified caller JWT; SQL/RLS
+require both for exact reserved-path writes. Runtime uses no service-role key or privileged
+database connection. Operation-aware Storage policies deny listing, direct writes and
+arbitrary signing. Read/sign authorization follows current event visibility/membership.
+
+Checked cover RPCs maintain a protected application manifest and the existing event
+reference. Replacement commits a new association before retiring the old file; event
+deletion queues cleanup. Supported Storage removals, bounded retries and tombstones handle
+partial failure across the database/Storage boundary. Responses contain stable cover
+metadata; short-lived authorized URLs come from a separate no-store endpoint and never
+enter event list caches. See [cover architecture/setup](event-covers.md) and
+[executed verification](event-cover-verification.md). Earlier milestone descriptions below
+retain their historical delivery boundaries.
+
 ## Current delivery boundary
 
 Workshop 3 is the completed React mock MVP. Backend Milestone 1 is a separate Node.js/

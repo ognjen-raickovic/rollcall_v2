@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback } from 'react'
-import { EVENT_DETAILS_QUERY_KEY } from '@/lib/query-keys'
+import { EVENT_COVER_QUERY_KEY, EVENT_DETAILS_QUERY_KEY } from '@/lib/query-keys'
 
 import { authApi } from './auth-api'
 
@@ -40,6 +40,7 @@ export function useAuthLogin() {
     mutationFn: authApi.login,
     onSuccess: (account) => {
       client.removeQueries({ queryKey: EVENT_DETAILS_QUERY_KEY })
+      client.removeQueries({ queryKey: EVENT_COVER_QUERY_KEY })
       client.setQueryData(authKey, account)
       client.setQueryData(['session'], null)
     },
@@ -52,6 +53,7 @@ export function useRegister() {
     mutationFn: authApi.register,
     onSuccess: ({ account }) => {
       client.removeQueries({ queryKey: EVENT_DETAILS_QUERY_KEY })
+      client.removeQueries({ queryKey: EVENT_COVER_QUERY_KEY })
       if (account) client.setQueryData(authKey, account)
       client.setQueryData(['session'], null)
     },
@@ -64,6 +66,7 @@ export function useAuthLogout() {
     mutationFn: authApi.logout,
     onSuccess: () => {
       client.removeQueries({ queryKey: EVENT_DETAILS_QUERY_KEY })
+      client.removeQueries({ queryKey: EVENT_COVER_QUERY_KEY })
       client.setQueryData(authKey, null)
       client.setQueryData(['session'], null)
       client.setQueryData(recoveryKey, false)
@@ -88,6 +91,7 @@ export function useUpdatePassword() {
     mutationFn: authApi.updatePassword,
     onSuccess: () => {
       client.removeQueries({ queryKey: EVENT_DETAILS_QUERY_KEY })
+      client.removeQueries({ queryKey: EVENT_COVER_QUERY_KEY })
       client.setQueryData(authKey, null)
       client.setQueryData(recoveryKey, false)
     },

@@ -1,6 +1,48 @@
 ﻿# RollCall entities and API contract
 
 Shared contract for Workshop 3 mocks, backend milestones through 4B and frontend 4C-1/4C-2.
+Milestone 4D extends this contract with persistent event covers below; earlier milestone
+sections retain their historical delivery boundaries.
+
+## Persistent event covers: Milestone 4D
+
+| Endpoint | Contract and permissions |
+| --- | --- |
+| `POST /api/events/:eventId/cover` | Verified host; multipart with exactly one `file`; `{eventId,cover,cleanupPending}` |
+| `DELETE /api/events/:eventId/cover` | Verified host; no payload; same result with default cover |
+| `GET /api/events/:eventId/cover-url` | Existing event read permissions; `{eventId,version,imageUrl,expiresAt,visibility}` or null for default; inaccessible/missing 404 |
+| `POST /api/events/:eventId/cover/cleanup` | Verified original manifest owner plus backend capability; bounded `{eventId,cleanupPending}` retry, including after event deletion |
+
+Event `cover` metadata is either `{kind:'default',imageUrl:<local illustration>}` or
+`{kind:'custom',version:UUID,imageUrl:<local fallback illustration>}`. Neither contains
+Storage paths or signed URLs. The separate access response is ephemeral, authorized and
+valid for 60 seconds. Ordinary users cannot mint a longer signed URL directly through Storage.
+Public/unlisted access matches event details; private access requires host/current membership.
+Previously issued URLs may remain usable until expiry after access changes.
+
+Only backend-authorized operations may reserve/attach/remove generated paths. Normal event
+create/edit still reject non-null `coverStoragePath`; its legacy null marker preserves any
+existing cover during content updates. Country, host, attendance, event UUID and address
+contracts are unchanged. Files accept JPEG/PNG/WebP up to 3 MiB, require matching declared
+format/extension/decoded content, and become metadata-free WebP within 1600px. Sources are
+limited to 8192px per edge, 16 million pixels and a single frame; decoder concurrency/time
+are bounded. SVG, corrupt content, oversized and arbitrary files are rejected.
+
+`private.event_cover_config` stores only a server operation-key hash. Protected
+`private.event_cover_objects` records path, event/host/version UUIDs, timestamps and lifecycle
+state (`pending`, `active`, `cleanup`, `deleted`). The event's existing cover reference gains
+a manifest FK. Paths are `<eventUUID>/<randomVersionUUID>.webp`, never original filenames.
+Only current active associations are readable. Replacement establishes the new association
+before retiring the old object; deletion queues cleanup without HTTP calls inside SQL.
+Cleanup uses supported Storage APIs, preserves failed work and keeps scoped late-upload
+tombstones. See [Storage architecture and recovery](event-covers.md).
+
+Real forms stage event save then optional cover upload. Image failure retains the saved UUID
+and draft, offers retry/view actions and never repeats event creation. Shared presentation
+keeps demo data URLs separate from real multipart uploads. Cover query keys include event,
+viewer and version; signed access refreshes after 45 seconds, is discarded when inactive,
+and clears on auth/access mutations. Tokens and signed URLs never enter persistent browser
+storage or query keys. See [verification](event-cover-verification.md).
 Feature types live in `frontend/src/features/<domain>/types.ts`; APIs and fixtures live in
 that feature's `api/`. Real profiles and per-game experience use owner-scoped APIs; the
 database game catalog is read-only. Separate numeric demo catalogs and mock events remain

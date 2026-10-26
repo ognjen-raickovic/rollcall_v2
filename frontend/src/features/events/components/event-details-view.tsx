@@ -39,9 +39,18 @@ type EventDetailsViewProps = {
   host: ReactNode
   attendance: ReactNode
   notice?: ReactNode
+  cover?: ReactNode
 }
 
-export function EventDetailsView({ event, backLink, game, host, attendance, notice }: EventDetailsViewProps) {
+export function EventDetailsView({
+  event,
+  backLink,
+  game,
+  host,
+  attendance,
+  notice,
+  cover,
+}: EventDetailsViewProps) {
   const start = new Date(event.startsAt)
   const end = new Date(event.endsAt)
   const experience = {
@@ -79,12 +88,14 @@ export function EventDetailsView({ event, backLink, game, host, attendance, noti
           {event.venue && <> · {event.venue}</>}
         </p>
       </header>
-      <EventImage
-        src={event.imageUrl}
-        title={event.title}
-        priority
-        className="aspect-[16/7] max-h-64 w-full rounded-xl border"
-      />
+      {cover ?? (
+        <EventImage
+          src={event.imageUrl}
+          title={event.title}
+          priority
+          className="aspect-[16/7] max-h-64 w-full rounded-xl border"
+        />
+      )}
       <div className="grid items-start gap-8 lg:grid-cols-3">
         <div className="order-2 min-w-0 space-y-8 lg:order-1 lg:col-span-2">
           <section aria-label="Game information" className="rounded-xl border bg-card p-6">

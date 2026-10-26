@@ -5,6 +5,11 @@ join/leave and participant-aware details. React reads/actions consume these endp
 4C-1/4C-2, with numeric mocks isolated under development-only demo routes. Uploads, private
 codes and administration remain deferred.
 
+Milestone 4D now adds persistent cover endpoints described in
+[event cover contracts](event-covers.md). The original 4A/4B boundary below is retained;
+4D extends cover metadata to a custom version marker with a local fallback illustration.
+Signed URLs are returned only by the separate authorized access endpoint.
+
 ## HTTP contract
 
 | Method/path | Access/result |
@@ -141,7 +146,7 @@ a host's visibility change. After leaving they cannot rejoin or repeat leave wit
 authorized admission mechanism; subsequent private operations return 404 to conceal existence.
 Room-code admission and role overrides are not implemented. No participant lists are exposed.
 
-### Interim covers
+### Original 4A cover boundary (extended by 4D)
 
 Only null/omitted `coverStoragePath` is accepted in 4A. Arbitrary paths, image data URLs,
 external/signed URLs and mock `imageUrl` payloads are rejected. Returned cover information

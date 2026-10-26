@@ -39,6 +39,10 @@ const environmentSchema = z
       .min(1)
       .refine(isUnprivilegedKey, 'Use a publishable or legacy anon key; privileged keys are not permitted.'),
     SUPABASE_TIMEOUT_MS: integer(100, 30000, 5000),
+    EVENT_COVER_OPERATION_KEY: z
+      .string()
+      .regex(/^[A-Za-z0-9_-]{43,128}$/)
+      .optional(),
     CITY_SEARCH_DEFAULT_LIMIT: integer(1, 20, 4),
     CITY_SEARCH_MAX_LIMIT: integer(1, 20, 20),
   })

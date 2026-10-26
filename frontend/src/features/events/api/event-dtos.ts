@@ -9,6 +9,18 @@ const tags = z
   .array(z.enum(EVENT_TAGS))
   .max(6)
   .refine((value) => new Set(value).size === value.length)
+const defaultImage = z.enum([
+  '/images/role-playing.svg',
+  '/images/trading-card.svg',
+  '/images/board-games.svg',
+  '/images/social-deduction.svg',
+])
+export const eventCoverSchema = z.discriminatedUnion('kind', [
+  z.object({ kind: z.literal('default'), imageUrl: defaultImage }),
+  // This is a stable reference and fallback, never a retained signed capability.
+  z.object({ kind: z.literal('custom'), version: z.uuid(), imageUrl: defaultImage }),
+])
+export type EventCover = z.infer<typeof eventCoverSchema>
 const summaryFields = {
   id: z.uuid(),
   title: z.string().min(3).max(100),
@@ -28,15 +40,7 @@ const summaryFields = {
   tags,
   visibility: z.enum(['public', 'unlisted', 'private']),
   status: z.enum(['scheduled', 'cancelled']),
-  cover: z.object({
-    kind: z.literal('default'),
-    imageUrl: z.enum([
-      '/images/role-playing.svg',
-      '/images/trading-card.svg',
-      '/images/board-games.svg',
-      '/images/social-deduction.svg',
-    ]),
-  }),
+  cover: eventCoverSchema,
 }
 
 function validSummary(value: {

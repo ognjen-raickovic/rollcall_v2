@@ -27,6 +27,8 @@ You may talk to me in any language.
 - `pnpm test:profiles`: frontend profile client account-isolation/public-projection checks
 - `pnpm test:events`: real event read client, pagination and viewer-privacy checks
 - `pnpm test:event-actions`: real event mutation/cache/session and form/date mapping checks
+- `pnpm test:event-covers`: signed cover access, multipart and cache/account checks
+- `pnpm covers:setup`: local-only server operation-key setup; never prints credentials
 - `pnpm test:integration`: opt-in local Supabase geography integration checks
 - `pnpm db:start` / `pnpm db:stop`: local Supabase stack
 - `pnpm db:reset`: reset the local database and apply migrations/development seeds
@@ -53,10 +55,11 @@ You may talk to me in any language.
   Milestones 4A/4B add persistent event backend APIs and transactional attendance. React event CRUD/attendance and numeric
   demo catalogs remain separate. 4C-1 connects homepage/discovery/UUID details to real reads;
   4C-2 connects real frontend CRUD/participation. Numeric demos are development-only `/demo/events` paths.
-- Optional event covers are prepared in the browser and passed through mock APIs as bounded
-  data URLs. Do not persist images in browser storage or connect cloud uploads during geography work.
-  Supabase Storage is the planned backend provider; transport, ownership and lifecycle will
-  be implemented later. Curated tags/experience rules live in events.
+- Real event covers use the 4D private Storage image API; read @docs/event-covers.md and
+  @docs/event-cover-verification.md. Browser drafts stay in memory and become multipart
+  files after event save. Numeric demos retain bounded data URLs. Never persist drafts or
+  signed URLs in browser storage, and never submit images through normal event JSON.
+  Curated tags/experience rules live in events.
 - Light/dark themes share semantic tokens. Dark is the default; the theme preference
   persists in localStorage (`rollcall.theme`), independent of the tab-scoped demo session
   and the SDK-managed real Auth session.
@@ -104,7 +107,7 @@ You may talk to me in any language.
   Attendance uses verified subjects, event row locks and the existing membership/counter
   infrastructure; private outsiders cannot join. Raw tables stay closed to API roles; use
   checked RPCs, non-bypass executor/trigger roles, explicit ACLs/RLS and empty search paths.
-  No self-declared eligibility checks, uploads, codes or admin override. Keep numeric demo
+  No self-declared eligibility checks, codes or admin override. Keep numeric demo
   controllers isolated from real UUID records. See @docs/attendance-verification.md for
   backend checks, @docs/event-frontend-verification.md for 4C-1 and
   @docs/event-actions-verification.md for 4C-2 mutation/browser verification.
@@ -115,7 +118,11 @@ You may talk to me in any language.
   fallback. Real mutation hooks capture the initiating UUID/session, abort on account changes,
   cancel stale reads and recheck identity before cache effects/navigation. Use acknowledged
   server state, no optimistic attendance. Leave hides addresses and removes private details;
-  inactive mutation data is discarded. Real forms use default covers, no data URLs or Storage.
+  inactive mutation data is discarded. Real cover writes/signing require a server-only
+  operation capability alongside verified ownership/access, not a service-role bypass.
+  Storage RLS restricts exact reserved paths/current association; only backend requests sign
+  for 60 seconds. Clear cover caches on access changes. Retain saved UUIDs for partial-upload
+  retries; clean retired files through supported Storage APIs with bounded recoverable work.
   Public filters use bounded cursor pages;
   category filters apply to loaded pages with Load More until exhausted.
 - Follow @docs/location-ui.md for shared location references, route-composed geography controls,

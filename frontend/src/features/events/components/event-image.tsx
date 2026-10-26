@@ -9,9 +9,17 @@ type EventImageProps = {
   category?: string
   className?: string
   priority?: boolean
+  onSourceError?: () => void
 }
 
-export function EventImage({ src, title, category, className, priority = false }: EventImageProps) {
+export function EventImage({
+  src,
+  title,
+  category,
+  className,
+  priority = false,
+  onSourceError,
+}: EventImageProps) {
   const [failedSrc, setFailedSrc] = useState<string | null>(null)
   return (
     <div className={cn('flex items-center justify-center overflow-hidden bg-secondary', className)}>
@@ -21,7 +29,10 @@ export function EventImage({ src, title, category, className, priority = false }
           alt={`Event cover for ${title}`}
           loading={priority ? 'eager' : 'lazy'}
           className="h-full w-full object-cover"
-          onError={() => setFailedSrc(src)}
+          onError={() => {
+            setFailedSrc(src)
+            onSourceError?.()
+          }}
         />
       ) : (
         <div

@@ -1,5 +1,38 @@
 # RollCall database schema
 
+## Milestone 4D additions
+
+`20261026000100_event_covers.sql` configures the private `event-covers` bucket (3 MiB,
+JPEG/PNG/WebP MIME allowlist) and its operation-aware Storage RLS. No file metadata is
+fabricated or deleted through SQL; runtime file operations use the supported Storage API.
+
+`private.event_cover_config` has a singleton primary key and a 64-character SHA-256
+`operation_key_hash`. Its random preimage exists only in server configuration. There are
+no client-role table grants. The existing non-login/non-bypass event executor can read the
+hash only through hardened functions, with explicit schema/digest permissions.
+
+`private.event_cover_objects` has primary-key `path`, required event/host UUIDs, a unique
+version UUID, state and created/updated timestamps. A check enforces
+`path = event_id/version.webp`; a partial unique index permits one active object per event.
+The existing `events.cover_storage_path` gains a manifest FK. Host/event identities remain
+recorded after event deletion to authorize narrowly scoped recovery. Retired files may be
+`cleanup` or `deleted`; deleted tombstones detect late interrupted uploads. There is no
+unbounded global cleanup job. Synthetic verification records are removed only after actual
+Storage cleanup succeeds.
+
+Checked RPCs reserve, commit, abort, remove, read and retry/complete cleanup. Association
+changes lock the parent event and verify its authenticated host plus the backend operation
+capability. Commit additionally verifies actual canonical object metadata. Normal event PATCH
+cannot attach arbitrary paths and its legacy null cover marker preserves the association.
+An event-delete trigger queues associated paths rather than contacting Storage from SQL.
+
+Storage INSERT/DELETE require the verified host, backend key and appropriate manifest state.
+UPDATE/upsert, listing, copies and signed uploads have no policy. Downloads require the
+current event association plus public/unlisted visibility or host/current membership;
+signing additionally requires backend authorization to enforce short URL lifetimes. Existing
+event/profile/location/attendance grants and policies remain intact. See
+[cover implementation](event-covers.md) and [executed checks](event-cover-verification.md).
+
 ## Scope and reproducibility
 
 Supabase PostgreSQL 17 is configured locally in `supabase/config.toml`. Versioned SQL
@@ -219,7 +252,7 @@ verified through `/api/me`. Milestone 3B adds scoped profile permissions below. 
 | `participant_count`             | Integer default 0; always 0..capacity; maintained by membership triggers, never a future client-editable field                            |
 | `experience_level`              | `all-levels`, `beginner`, or `experienced`                                                                                                |
 | `price`, `currency`             | Nonnegative numeric ≤10000, at most two decimals; currency fixed to EUR; invalid extra precision is rejected rather than silently rounded |
-| `cover_storage_path`            | Nullable future Supabase Storage object path, 1–500 characters when set; no data URLs or signed URLs should be stored here                |
+| `cover_storage_path`            | Nullable registered private Storage object path with a manifest FK in 4D; no data URLs or signed URLs are stored here                  |
 | `tags`                          | Required text array, default empty; 0–6 unique canonical values and compatibility checks below                                            |
 | `minimum_age`                   | Integer 0–99; 0 means all ages; informational guidance                                                                                    |
 | `visibility`                    | `public`, `private`, or `unlisted`, default public                                                                                        |

@@ -21,7 +21,7 @@ registration/reset, inline errors and visible pending/status feedback. Use appro
 autocomplete values and keep long email addresses/messages inside the 375px viewport.
 Login links to registration and recovery; confirmation has clear next steps and resend.
 The explicitly enabled development-only demo page retains selectable mock-player profiles,
-with a visible demo label. Real login never implies access to persistent event participation.
+with a visible demo label. Real login never grants numeric demo privileges.
 
 Real profiles use a readable identity/biography/location summary and separate My Games list.
 Own profiles offer clear Edit profile and public-view links; a new account gets friendly
@@ -36,7 +36,7 @@ Milestone 4C-1 keeps this layout while connecting event reads. Public cards use 
 summary fields and omit price because summaries do not contain it. Discovery shows loaded
 matches and a clear Load More action, with retry/empty guidance; it never invents counts or
 substitutes fixture cards. Details show confirmed viewer state and authorized addresses only.
-Pending join/leave/edit controls are visibly disabled with short explanatory copy. Numeric
+Real join/leave/edit controls use confirmed permissions and pending feedback. Numeric
 development demos have separate routes and labels. Seat progress uses primary/secondary
 tokens in both themes, including native progress fill. No new palette or redesign is introduced.
 
@@ -137,12 +137,15 @@ its original gaming palette in both themes. Never invert uploaded photographs.
 - Favor borders/spacing over shadows. Use existing shadcn components before adding primitives.
 - Semantic links/buttons, labeled inputs, visible focus, skip link, and text contrast at least 4.5:1.
 - Data views include loading, empty, error, and not-found states. Inspect at 375 px and 1440 px.
-- Real event forms share the existing two-column form/sidebar layout and use default game
-  illustrations; the custom-cover picker remains demo-only until Storage. Keep drafts on failed
+- Real event forms share the existing two-column form/sidebar layout and use the existing
+  cover picker with a preview/default illustration. Keep drafts on failed
   saves, label the private address clearly and place validation feedback beside its field.
 - Host deletion uses a modal confirmation with a descriptive heading, participation-removal
   explanation, initially focused Cancel and keyboard dismissal. Pending writes disable repeated
   actions; success/error feedback uses status/alert semantics in both themes.
+- If event details save but the image fails, clearly explain the partial result and offer
+  Retry cover/View saved event. Image preparation/upload has a useful pending state. Preserve
+  cover aspect ratios and a local fallback on failed loads; no redesign or new palette is needed.
 
 ## Don't
 

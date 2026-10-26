@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { eventCursorSchema } from './event-pagination.js'
 import { EVENT_TAGS, tagsMatchExperience } from './event-tags.js'
+import { eventCoverSchema } from './event-cover-schema.js'
 
 const id = z.number().int().min(1).max(2147483647)
 const instant = z.iso.datetime({ offset: true })
@@ -40,28 +41,45 @@ const writableFields = {
   price,
   tags,
   visibility,
-  // Custom image transport/ownership is deliberately deferred to Storage integration.
+  // Only the dedicated validated cover API may change the stored object association.
   coverStoragePath: z.null(),
 }
 
 function checkEditableValues(
-  value: { startsAt?: string; endsAt?: string; tags?: readonly string[]; experienceLevel?: string },
+  value: {
+    startsAt?: string
+    endsAt?: string
+    tags?: readonly string[]
+    experienceLevel?: string
+  },
   context: z.RefinementCtx,
 ): void {
   if (value.startsAt !== undefined && Date.parse(value.startsAt) <= Date.now())
-    context.addIssue({ code: 'custom', path: ['startsAt'], message: 'Choose a future start time.' })
+    context.addIssue({
+      code: 'custom',
+      path: ['startsAt'],
+      message: 'Choose a future start time.',
+    })
   if (
     value.startsAt !== undefined &&
     value.endsAt !== undefined &&
     Date.parse(value.endsAt) <= Date.parse(value.startsAt)
   )
-    context.addIssue({ code: 'custom', path: ['endsAt'], message: 'End time must be after the start.' })
+    context.addIssue({
+      code: 'custom',
+      path: ['endsAt'],
+      message: 'End time must be after the start.',
+    })
   if (
     value.tags !== undefined &&
     value.experienceLevel !== undefined &&
     !tagsMatchExperience(value.tags, value.experienceLevel)
   )
-    context.addIssue({ code: 'custom', path: ['tags'], message: 'Choose tags compatible with experience.' })
+    context.addIssue({
+      code: 'custom',
+      path: ['tags'],
+      message: 'Choose tags compatible with experience.',
+    })
 }
 
 export const newEventSchema = z
@@ -118,7 +136,10 @@ export const eventDiscoverySchema = z
       !value.startsAfter ||
       !value.startsBefore ||
       Date.parse(value.startsAfter) <= Date.parse(value.startsBefore),
-    { path: ['startsBefore'], message: 'End of the date range must not precede its start.' },
+    {
+      path: ['startsBefore'],
+      message: 'End of the date range must not precede its start.',
+    },
   )
   .transform(({ cursor, ...filters }) => ({
     ...filters,
@@ -133,8 +154,16 @@ const summaryFields = {
   id: z.uuid(),
   title: z.string().min(3).max(100),
   game: z.object({ id, name: z.string().min(2).max(100), category }),
-  city: z.object({ id, name: z.string().min(1).max(200), administrativeDivision: z.string().nullable() }),
-  country: z.object({ id, isoCode: z.string().regex(/^[A-Z]{2}$/), name: z.string() }),
+  city: z.object({
+    id,
+    name: z.string().min(1).max(200),
+    administrativeDivision: z.string().nullable(),
+  }),
+  country: z.object({
+    id,
+    isoCode: z.string().regex(/^[A-Z]{2}$/),
+    name: z.string(),
+  }),
   venue: z.string().min(2).max(120).nullable(),
   startsAt: instant,
   endsAt: instant,
@@ -144,15 +173,7 @@ const summaryFields = {
   tags,
   visibility,
   status,
-  cover: z.object({
-    kind: z.literal('default'),
-    imageUrl: z.enum([
-      '/images/role-playing.svg',
-      '/images/trading-card.svg',
-      '/images/board-games.svg',
-      '/images/social-deduction.svg',
-    ]),
-  }),
+  cover: eventCoverSchema,
 }
 
 function checkSummary(
@@ -166,14 +187,26 @@ function checkSummary(
   context: z.RefinementCtx,
 ): void {
   if (value.availableSlots !== value.capacity - value.participantCount)
-    context.addIssue({ code: 'custom', path: ['availableSlots'], message: 'Invalid event availability.' })
+    context.addIssue({
+      code: 'custom',
+      path: ['availableSlots'],
+      message: 'Invalid event availability.',
+    })
   if (Date.parse(value.endsAt) <= Date.parse(value.startsAt))
-    context.addIssue({ code: 'custom', path: ['endsAt'], message: 'Invalid event schedule.' })
+    context.addIssue({
+      code: 'custom',
+      path: ['endsAt'],
+      message: 'Invalid event schedule.',
+    })
 }
 
 export const eventSummarySchema = z.object(summaryFields).superRefine(checkSummary)
 export const discoverySummarySchema = z
-  .object({ ...summaryFields, visibility: z.literal('public'), status: z.literal('scheduled') })
+  .object({
+    ...summaryFields,
+    visibility: z.literal('public'),
+    status: z.literal('scheduled'),
+  })
   .superRefine(checkSummary)
 const detailFields = {
   ...summaryFields,
@@ -194,7 +227,11 @@ const publicViewer = z.object({
 export const databaseEventDetailsSchema = z
   .object({
     ...detailFields,
-    viewer: z.object({ userId: z.uuid().nullable(), isHost: z.boolean(), hasJoined: z.boolean() }),
+    viewer: z.object({
+      userId: z.uuid().nullable(),
+      isHost: z.boolean(),
+      hasJoined: z.boolean(),
+    }),
   })
   .superRefine(checkSummary)
 export const publicEventDetailsSchema = z
@@ -203,14 +240,22 @@ export const publicEventDetailsSchema = z
 export const hostEventDetailsSchema = z
   .object({
     ...detailFields,
-    viewer: z.object({ userId: z.uuid(), isHost: z.literal(true), hasJoined: z.literal(false) }),
+    viewer: z.object({
+      userId: z.uuid(),
+      isHost: z.literal(true),
+      hasJoined: z.literal(false),
+    }),
     address: z.string().min(3).max(200),
   })
   .superRefine(checkSummary)
 export const participantEventDetailsSchema = z
   .object({
     ...detailFields,
-    viewer: z.object({ userId: z.uuid(), isHost: z.literal(false), hasJoined: z.literal(true) }),
+    viewer: z.object({
+      userId: z.uuid(),
+      isHost: z.literal(false),
+      hasJoined: z.literal(true),
+    }),
     address: z.string().min(3).max(200),
   })
   .superRefine(checkSummary)

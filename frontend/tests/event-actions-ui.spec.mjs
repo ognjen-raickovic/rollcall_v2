@@ -209,7 +209,7 @@ test('two real accounts create, persist, join, leave, edit and confirm deletion 
   await expect(page.getByRole('alert').first()).toBeVisible()
   const title = `${prefix} public Podgorica`
   const { expectedStart } = await fillForm(page, title)
-  await expect(page.locator('input[type="file"]')).toHaveCount(0)
+  await expect(page.locator('input[type="file"]')).toHaveCount(1)
   await expect(page.locator('#event-venue')).toHaveValue('')
   await capture(page, info.outputPath('real-create-form.png'))
   const createdResponse = page.waitForResponse(

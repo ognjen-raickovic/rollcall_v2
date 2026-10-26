@@ -8,6 +8,8 @@ import type { EventFormValues } from '../api/event-form-values'
 import type { CreateEventInput, HostEventDetails } from '../api/event-write-dtos'
 import type { EventActionSession } from '../api/persistent-event-actions-api'
 import { usePersistentCreateEvent, usePersistentUpdateEvent } from '../api/use-persistent-event-actions'
+import { usePersistentCoverMutation } from '../api/use-persistent-event-covers'
+import { preparedCoverFile } from '../api/persistent-event-covers-api'
 
 type UsePersistentEventFormOptions = {
   event?: HostEventDetails
@@ -21,6 +23,14 @@ export function usePersistentEventForm({ event, session, games }: UsePersistentE
   const mounted = useRef(true)
   const saving = useRef(false)
   const [requiresLogin, setRequiresLogin] = useState(false)
+  const [coverDraft, setCoverDraft] = useState<string | null | undefined>(undefined)
+  const [imagePending, setImagePending] = useState(false)
+  const [imageError, setImageError] = useState<string | null>(null)
+  const [selectionError, setSelectionError] = useState(false)
+  const [savedEvent, setSavedEvent] = useState<HostEventDetails | undefined>(event)
+  const [partialSavedId, setPartialSavedId] = useState<string | null>(null)
+  const persisted = useRef<HostEventDetails | undefined>(event)
+  const lastSavedInput = useRef<string | null>(null)
   useEffect(() => {
     mounted.current = true
     return () => {
@@ -29,6 +39,7 @@ export function usePersistentEventForm({ event, session, games }: UsePersistentE
   }, [])
   const create = usePersistentCreateEvent(session)
   const update = usePersistentUpdateEvent(session)
+  const cover = usePersistentCoverMutation(session)
   const schema = persistentEventFormSchema(initialEvent).superRefine((value, context) => {
     if (!games.some((game) => game.id === value.gameId))
       context.addIssue({
@@ -42,24 +53,81 @@ export function usePersistentEventForm({ event, session, games }: UsePersistentE
     defaultValues: persistentEventFormDefaults(initialEvent),
     reValidateMode: 'onChange',
   })
-  const pending = create.isPending || update.isPending || form.formState.isSubmitting
+  const pending =
+    create.isPending || update.isPending || cover.isPending || form.formState.isSubmitting || imagePending
+  async function saveCover(id: string) {
+    if (coverDraft === undefined) return
+    const result =
+      coverDraft === null
+        ? await cover.mutateAsync({ id })
+        : await cover.mutateAsync({ id, file: preparedCoverFile(coverDraft) })
+    if (mounted.current) {
+      setImageError(null)
+      setCoverDraft(undefined)
+      setSavedEvent((previous) => (previous ? { ...previous, cover: result.cover } : previous))
+    }
+  }
+  async function finish(id: string) {
+    await session.getAccessToken()
+    if (!mounted.current) return
+    await navigate(`/events/${id}`, {
+      replace: true,
+      state: { eventNotice: event ? 'Your event has been updated.' : 'Your event has been created.' },
+    })
+  }
+  function coverFailed(error: unknown, id: string) {
+    if (!mounted.current) return
+    const message =
+      error instanceof HttpError && error.fields.image?.length
+        ? error.fields.image.join(' ')
+        : error instanceof Error
+          ? error.message
+          : 'The image could not be saved. Please try again.'
+    setImageError(message)
+    setPartialSavedId(id)
+    setRequiresLogin(error instanceof HttpError && error.status === 401)
+    form.setError('root.server', {
+      message:
+        'Your event was saved, but its cover was not confirmed saved. Retry the cover or view your saved event.',
+    })
+  }
+  async function retryCover() {
+    if (saving.current || imagePending || selectionError || !persisted.current) return
+    saving.current = true
+    try {
+      await saveCover(persisted.current.id)
+      await finish(persisted.current.id)
+    } catch (error) {
+      coverFailed(error, persisted.current.id)
+    } finally {
+      saving.current = false
+    }
+  }
   const submit = form.handleSubmit(async (input) => {
-    if (saving.current) return
+    if (saving.current || imagePending || selectionError) return
     saving.current = true
     setRequiresLogin(false)
     form.clearErrors('root')
     try {
-      const saved = event
-        ? await update.mutateAsync({ id: event.id, input })
-        : await create.mutateAsync(input)
-      await session.getAccessToken()
+      const serialized = JSON.stringify(input)
+      const previous = persisted.current
+      const saved =
+        previous && lastSavedInput.current === serialized
+          ? previous
+          : previous
+            ? await update.mutateAsync({ id: previous.id, input })
+            : await create.mutateAsync(input)
+      persisted.current = saved
+      lastSavedInput.current = serialized
       if (!mounted.current) return
-      await navigate(`/events/${saved.id}`, {
-        replace: true,
-        state: {
-          eventNotice: event ? 'Your event has been updated.' : 'Your event has been created.',
-        },
-      })
+      setSavedEvent(saved)
+      try {
+        await saveCover(saved.id)
+      } catch (error) {
+        coverFailed(error, saved.id)
+        return
+      }
+      await finish(saved.id)
     } catch (error) {
       if (!mounted.current) return
       setRequiresLogin(error instanceof HttpError && error.status === 401)
@@ -88,5 +156,23 @@ export function usePersistentEventForm({ event, session, games }: UsePersistentE
       saving.current = false
     }
   })
-  return { form, submit, pending, requiresLogin }
+  return {
+    form,
+    submit,
+    pending,
+    requiresLogin,
+    coverDraft,
+    setCoverDraft,
+    imagePending,
+    setImagePending,
+    imageError,
+    setImageError: (message: string | null) => {
+      setImageError(message)
+      setSelectionError(Boolean(message))
+    },
+    savedEvent,
+    partialSavedId,
+    retryCover,
+    coverPending: cover.isPending,
+  }
 }

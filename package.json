@@ -23,6 +23,8 @@
     "test:profiles": "pnpm --filter frontend test:profiles",
     "test:events": "pnpm --filter frontend test:events",
     "test:event-actions": "pnpm --filter frontend test:event-actions",
+    "test:event-covers": "pnpm --filter frontend test:event-covers",
+    "covers:setup": "pnpm --filter backend covers:setup",
     "test:ui": "pnpm --filter frontend test:ui",
     "format": "pnpm --filter frontend format"
   },

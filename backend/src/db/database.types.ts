@@ -65,6 +65,13 @@ export type Database = {
       delete_event: { Args: { p_event_id: string }; Returns: undefined }
       join_event: { Args: { p_event_id: string }; Returns: Json }
       leave_event: { Args: { p_event_id: string }; Returns: Json }
+      reserve_event_cover: { Args: { p_event_id: string }; Returns: Json }
+      commit_event_cover: { Args: { p_event_id: string; p_path: string }; Returns: Json }
+      abort_event_cover: { Args: { p_event_id: string; p_path: string }; Returns: undefined }
+      remove_event_cover: { Args: { p_event_id: string }; Returns: Json }
+      get_event_cover: { Args: { p_event_id: string }; Returns: Json }
+      pending_event_cover_cleanup: { Args: { p_event_id: string }; Returns: Json }
+      complete_event_cover_cleanup: { Args: { p_path: string }; Returns: undefined }
     }
     Enums: Record<string, never>
     CompositeTypes: Record<string, never>

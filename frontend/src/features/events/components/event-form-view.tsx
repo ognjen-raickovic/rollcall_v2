@@ -49,6 +49,9 @@ type EventFormViewProps<TOutput extends FieldValues> = {
   setImagePending?: (pending: boolean) => void
   reportImageError?: (message: string | null) => void
   loginLink?: ReactNode
+  coverControl?: ReactNode
+  saveNotice?: ReactNode
+  submitLabel?: string
 }
 
 export function EventFormView<TOutput extends FieldValues>({
@@ -68,6 +71,9 @@ export function EventFormView<TOutput extends FieldValues>({
   setImagePending = () => {},
   reportImageError = () => {},
   loginLink,
+  coverControl,
+  saveNotice,
+  submitLabel,
 }: EventFormViewProps<TOutput>) {
   const { field: tagsField } = useController({ name: 'tags', control: form.control })
   const { field: imageField } = useController({ name: 'imageUrl', control: form.control })
@@ -126,6 +132,7 @@ export function EventFormView<TOutput extends FieldValues>({
             </div>
           )}
           {loginLink}
+          {saveNotice}
           {status === 'cancelled' && (
             <p role="status" className="rounded-lg border bg-accent p-4 text-sm text-accent-foreground">
               This event is canceled. Saving edits keeps it canceled.
@@ -420,41 +427,42 @@ export function EventFormView<TOutput extends FieldValues>({
               >
                 <Tag className="size-5 text-primary" aria-hidden="true" /> Make it yours
               </h2>
-              {customCovers ? (
-                <EventFormField
-                  name="imageUrl"
-                  label="Event cover image"
-                  error={errors.imageUrl?.message}
-                  help="Optional. JPG, PNG, or WebP, up to 3 MB. Images are resized for display and reset with event data on reload."
-                >
-                  {(attributes) => (
-                    <EventCoverInput
-                      {...attributes}
-                      inputRef={imageField.ref}
-                      value={imageField.value}
-                      fallback={fallback}
-                      pending={pending}
-                      processing={imagePending}
-                      onChange={imageField.onChange}
-                      onPendingChange={setImagePending}
-                      onError={reportImageError}
+              {coverControl ??
+                (customCovers ? (
+                  <EventFormField
+                    name="imageUrl"
+                    label="Event cover image"
+                    error={errors.imageUrl?.message}
+                    help="Optional. JPG, PNG, or WebP, up to 3 MB. Images are resized for display and reset with event data on reload."
+                  >
+                    {(attributes) => (
+                      <EventCoverInput
+                        {...attributes}
+                        inputRef={imageField.ref}
+                        value={imageField.value}
+                        fallback={fallback}
+                        pending={pending}
+                        processing={imagePending}
+                        onChange={imageField.onChange}
+                        onPendingChange={setImagePending}
+                        onError={reportImageError}
+                      />
+                    )}
+                  </EventFormField>
+                ) : (
+                  <div className="space-y-3">
+                    <p className="text-sm font-medium">Event cover image</p>
+                    <EventImage
+                      src={fallback}
+                      title="Your selected game"
+                      category={games.find((game) => game.id === gameId)?.category}
+                      className="aspect-video w-full rounded-lg border"
                     />
-                  )}
-                </EventFormField>
-              ) : (
-                <div className="space-y-3">
-                  <p className="text-sm font-medium">Event cover image</p>
-                  <EventImage
-                    src={fallback}
-                    title="Your selected game"
-                    category={games.find((game) => game.id === gameId)?.category}
-                    className="aspect-video w-full rounded-lg border"
-                  />
-                  <p className="text-sm text-muted-foreground">
-                    Your event uses the standard game illustration. Custom cover uploads are coming later.
-                  </p>
-                </div>
-              )}
+                    <p className="text-sm text-muted-foreground">
+                      Your event uses the standard game illustration. Custom cover uploads are coming later.
+                    </p>
+                  </div>
+                ))}
               <EventFormField
                 name="tags"
                 label="Tags"
@@ -524,9 +532,7 @@ export function EventFormView<TOutput extends FieldValues>({
                   ? 'Preparing image...'
                   : pending
                     ? 'Saving...'
-                    : editing
-                      ? 'Save changes'
-                      : 'Create Event'}
+                    : (submitLabel ?? (editing ? 'Save changes' : 'Create Event'))}
               </Button>
             </div>
           </div>
