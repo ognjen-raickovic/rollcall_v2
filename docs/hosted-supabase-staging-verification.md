@@ -28,6 +28,40 @@ offline staging source audit passed with no blockers. Historical migrations and 
 code were unchanged. Full regression/database/browser suites were not rerun for this
 documentation/package conflict resolution; no database connection or hosted operation occurred.
 
+## Final integrated review after rebase
+
+Reviewed `49ad69f` on `feat/hosted-supabase-setup` against `main` (`8516684`). All 5B-2B
+application code, tests and historical migrations are unchanged from that base. The staging
+provisioning migration is the only migration added by 6A-1, follows account suspensions,
+and grants no runtime/client access. Existing RLS, Auth and Storage policies were not edited.
+The rollout guide describes the integrated source correctly; its hosted prerequisites remain.
+
+| Focused integration check | Result |
+| --- | --- |
+| Root typecheck, lint and build | Passed for frontend/backend, including feature boundaries. |
+| Staging/suspension backend unit checks | Six tests passed, including explicit integrated-source success and missing-prerequisite refusal. |
+| Frontend suspension API checks (`pnpm test:suspensions`) | Four tests passed; client privacy, initiating-viewer attribution and stale response protection. No browser suite run. |
+| Source audit and catalog/key previews | Passed offline with no source blockers; no actual staging keys generated or hosted connection attempted. |
+| Fresh integrated migration replay | All 16 repository migrations applied in order on a new, seedless disposable local project. No existing database reset. |
+| Staging PostgreSQL integration | Both tests passed: catalog identity/retry, private provisioning/key conflicts, tiny import identity/alias stability, confirmed/active bootstrap and concurrent suspension/role-lock handling. |
+| Suspension integration | Seven TAP tests passed (parent plus six scenarios), using real local Auth, Fastify, PostgREST and Storage. Verified old-JWT denial, direct Data API/raw-table protections, preservation/reinstatement, privileged actor denial, both suspension/admission commit orders, reserved-upload rejection after suspension, role eligibility serialization and audit rollback/immutability. |
+| Targeted SQL security suites | Four files / 115 assertions passed: suspensions, staging, administration and event covers. |
+| Disposable schema lint | No schema errors at warning/fail-on-warning level. |
+
+Only the staging audit regression test and this consolidated verification report were changed
+for this review; no application or migration implementation changed. Test fixtures and
+temporary runtime keys were confined to the isolated local project/process. No local `.env`
+file was edited, no full geographic dataset was imported, and no hosted resource was changed.
+The disposable project was stopped after verification. Historical full-suite results below
+remain original evidence, not a claim that those full suites were rerun here.
+
+6A-1 is ready for PR review with no integration/security failure found in these checks.
+Before 6A-2, obtain separate authorization and verify the intended hosted project's scope,
+migration history, extension placement/digest and Storage helper availability, managed-role/
+Auth-trigger/Storage-policy privileges, Data API exposure/RLS settings and TLS maintenance
+connection. Actual hosted Auth email delivery, Storage operations and the complete hosted
+security acceptance checklist remain unexecuted. Final application hosting/origins remain 6B.
+
 ## Changed deliverables
 
 - `backend/scripts/staging/`: source/hash audit, fail-closed target validation, essential catalog,

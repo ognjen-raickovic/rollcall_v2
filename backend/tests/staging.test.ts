@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { mkdtemp, writeFile, rm } from 'node:fs/promises'
+import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
@@ -118,16 +118,38 @@ test('staging geography dry run validates all countries, exact source checksums 
     await rm(directory, { recursive: true, force: true })
   }
 })
-test('offline migration audit detects the actual missing suspension prerequisite without modifying the branch', async () => {
+test('offline migration audit validates the integrated suspension and staging prerequisites', async () => {
   const audit = await migrationAudit()
   assert.equal(
     audit.migrations.some((item) => item.file.endsWith('staging_provisioning.sql')),
     true,
   )
-  const hasSuspension = audit.migrations.some((item) => item.file.endsWith('account_suspensions.sql'))
-  if (!hasSuspension) {
-    assert.equal(audit.readyForRollout, false)
-    assert.ok(audit.blockers.some((item) => item.includes('5B-2B')))
-  }
+  const suspension = audit.migrations.findIndex((item) => item.file.endsWith('account_suspensions.sql'))
+  const provisioning = audit.migrations.findIndex((item) => item.file.endsWith('staging_provisioning.sql'))
+  assert.ok(suspension >= 0 && provisioning > suspension)
+  assert.equal(audit.readyForRollout, true)
+  assert.deepEqual(audit.blockers, [])
   assert.ok(audit.migrations.every((item) => /^[a-f0-9]{64}$/.test(item.sha256)))
+})
+
+test('offline migration audit still refuses missing suspension source and route wiring', async () => {
+  const directory = await mkdtemp(path.join(tmpdir(), 'rollcall-staging-audit-'))
+  try {
+    await mkdir(path.join(directory, 'supabase/migrations'), { recursive: true })
+    await mkdir(path.join(directory, 'backend/src'), { recursive: true })
+    await writeFile(
+      path.join(directory, 'supabase/migrations/20261026000700_staging_provisioning.sql'),
+      '-- Audit fixture only',
+    )
+    await writeFile(path.join(directory, 'backend/src/app.ts'), '// Missing suspension wiring')
+    const audit = await migrationAudit(pathToFileURL(directory + path.sep))
+    assert.equal(audit.readyForRollout, false)
+    assert.equal(audit.blockers.length, 4)
+    assert.ok(audit.blockers.some((item) => item.includes('5B-2B migration')))
+    assert.ok(audit.blockers.some((item) => item.includes('account-status.ts')))
+    assert.ok(audit.blockers.some((item) => item.includes('account-suspensions.md')))
+    assert.ok(audit.blockers.some((item) => item.includes('Fastify suspension enforcement')))
+  } finally {
+    await rm(directory, { recursive: true, force: true })
+  }
 })
