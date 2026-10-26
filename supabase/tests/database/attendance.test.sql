@@ -54,6 +54,8 @@ insert into auth.users(id,email) values
   ('60000000-0000-4000-8000-000000000001','attendance-host@example.invalid'),
   ('60000000-0000-4000-8000-000000000002','attendance-player@example.invalid'),
   ('60000000-0000-4000-8000-000000000003','attendance-other@example.invalid');
+-- Protected actions below simulate confirmed Auth sessions.
+update auth.users set email_confirmed_at=now() where id in ('60000000-0000-4000-8000-000000000001','60000000-0000-4000-8000-000000000002','60000000-0000-4000-8000-000000000003');
 create temporary table attendance_fixtures(kind text primary key, id uuid, body jsonb, stamp timestamptz);
 grant select,insert,update on attendance_fixtures to anon,authenticated,rollcall_events_executor;
 insert into attendance_fixtures(kind,body) select 'base',jsonb_build_object(

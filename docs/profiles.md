@@ -135,3 +135,7 @@ Official references: [Supabase RLS](https://supabase.com/docs/guides/database/po
 ## Milestone 5B-1
 
 Public and own profile contracts remain unchanged. Role fields remain non-editable through profiles. New permission/administrative projections are separate authenticated endpoints, not public profile fields; administrators gain no private age access. See [administration](administration.md).
+
+## Milestone 5B-2B
+
+Profile/experience modifications and private own-profile access require an active account, including direct RPC/table writes through RLS. Public-safe profile/catalog reads remain public. Suspensions do not delete profiles or game experience, and reinstatement does not change roles. See [enforcement](account-suspensions.md).

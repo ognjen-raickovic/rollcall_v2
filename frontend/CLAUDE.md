@@ -149,3 +149,7 @@ Read ../docs/administration.md. Users owns permission/admin API hooks and UI; ro
 ## Milestone 5B-2A
 
 Read ../docs/event-moderation.md. Events owns real report submission/dialog; users owns moderator APIs/hooks/review UI, with shared reason labels in lib. Never cross-import features or add reporting to numeric demos. Administrative queries use the existing viewer-keyed prefix and Auth cleanup. Recheck sessions before cache effects; discard event/cover detail queries and invalidate discovery/admin after acknowledged decisions. Render all submitted text as escaped text, never trusted HTML.
+
+## Milestone 5B-2B
+
+Read ../docs/account-suspensions.md. Users owns UUID-keyed account status, exact admin access lookup/audit and the suspended screen. Routes compose notice/content slots; events receive anonymous scope for public browsing while suspended. HTTP calls attribute suspension notifications to the initiating viewer without sending that ID as authority. Clear status on Auth changes and private event/cover/profile/admin queries on detection; ignore old-account errors. Keep logout/recovery usable and avoid redirect loops.

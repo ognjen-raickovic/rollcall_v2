@@ -3,11 +3,14 @@ import { Link, Navigate, useLocation } from 'react-router'
 import { Button } from '@/components/ui/button'
 import { loginPath } from '@/lib/auth-navigation'
 import { useAuth } from '../api/use-auth'
+import { useAccountStatus } from '../api/use-account-status'
+import { SuspendedAccount } from './suspended-account'
 
 type RequireAccountProps = { children: ReactNode }
 
 export function RequireAccount({ children }: RequireAccountProps) {
   const auth = useAuth()
+  const status=useAccountStatus(auth.data?.id??null)
   const location = useLocation()
   if (auth.isPending)
     return (
@@ -29,5 +32,8 @@ export function RequireAccount({ children }: RequireAccountProps) {
       </section>
     )
   if (!auth.data) return <Navigate to={loginPath(`${location.pathname}${location.search}`)} replace />
+  if(status.isPending)return <p role="status">Checking account access…</p>
+  if(status.error)return <section className="space-y-3"><p role="alert">We could not verify your account access.</p><Button onClick={()=>void status.refetch()}>Retry account access</Button></section>
+  if(status.data.status==='suspended')return <SuspendedAccount/>
   return children
 }

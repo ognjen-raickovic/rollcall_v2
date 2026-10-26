@@ -9,7 +9,7 @@ never "RollCall v2" in the UI.
 
 ## Delivery stages
 
-Current delivery is Milestone 5B-2A; see docs/event-moderation.md. Earlier sections record historical boundaries.
+Current delivery is Milestone 5B-2B; see docs/account-suspensions.md. Earlier sections record historical boundaries.
 
 ## Current Milestone 4D: persistent event covers
 
@@ -486,3 +486,7 @@ Milestone 5B-1 implements user/admin/superadmin permissions from private trusted
 ## Milestone 5B-2A
 
 Milestone 5B-2A implements authenticated event reporting, database-enforced open-report deduplication/account throttling, moderator review, dismissal and atomic reported-event cancellation. Private-event reports require the host/current participant; moderator context excludes reporter identities, protected addresses, covers and codes. Host reactivation after moderation is blocked, while ordinary editing/deletion otherwise remains host-only. See [policy and verification](docs/event-moderation.md). Account suspensions, user reports, invitations overrides and deployment remain outside scope.
+
+## Milestone 5B-2B
+
+5B-2B implements active/suspended account state separately from roles, active-moderator policy, audited indefinite suspension/reinstatement, central HTTP and SQL enforcement, protected Storage checks, account-access UI and safe suspended-user public browsing. Data is retained and existing memberships still consume seats. Auth bans/deletion, user reports, appeals, expiry, notifications and hosted deployment remain outside scope. See [implementation and verification](docs/account-suspensions.md).

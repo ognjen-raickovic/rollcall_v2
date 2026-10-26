@@ -49,6 +49,7 @@ async function request<T>(
   try {
     const result = await httpRequest(path, schema, {
       token,
+      viewerId:viewer,
       signal,
       method: body === undefined ? 'GET' : 'POST',
       body,
@@ -58,6 +59,7 @@ async function request<T>(
       throw new Error('Your account changed. Try again.')
     return result
   } catch (error) {
+    if (error instanceof HttpError && error.code === 'ACCOUNT_SUSPENDED') throw error
     if (error instanceof HttpError && error.status === 403)
       throw new HttpError(403, 'Your account no longer has moderation access. Refresh your permissions.')
     if (error instanceof HttpError && error.status === 409)

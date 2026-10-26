@@ -34,6 +34,7 @@ async function request<T>(
   if (!token) throw new HttpError(401, 'Log in to continue.')
   const result = await httpRequest(path, schema, {
     token,
+    viewerId:viewer,
     signal,
     method: body === undefined ? 'GET' : 'PATCH',
     body,

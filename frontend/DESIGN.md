@@ -163,3 +163,7 @@ Administrative pages retain the current tokens and restrained cards: one heading
 ## Milestone 5B-2A
 
 Event safety uses a restrained Report Event control and native dialog with reason selector, bounded optional plain text, privacy guidance and explicit pending/error/success states. Admin reports use token-based cards, status filters, limited context/history and native confirmation focusing Cancel. Wrap mobile controls and long text; add no fake metrics, new palette or private-content previews.
+
+## Milestone 5B-2B
+
+Account access uses exact UUID lookup, clear role/status labels, eligible actions, native confirmation focused on Cancel, private internal reason and bounded history. Suspended users get a readable explanation, Check access, public browsing and logout; no confidential note or deletion claim. Reuse existing semantic tokens, wrap mobile controls, and preserve light/dark themes.

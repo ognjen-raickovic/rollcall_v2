@@ -98,6 +98,7 @@ export const persistentEventCoversApi = {
   async get(id: string, version: string, session: EventActionSession, signal?: AbortSignal) {
     if (!isEventId(version)) throw invalid()
     const value = await httpRequest(`${path(id)}/cover-url`, coverAccessSchema.nullable(), {
+      viewerId:session.viewerId,
       token: await sessionToken(session, false, signal),
       signal,
       resource: 'event',
@@ -115,6 +116,7 @@ export const persistentEventCoversApi = {
     const result = await httpRequest(endpoint, coverMutationSchema, {
       method: 'POST',
       body,
+      viewerId:session.viewerId,
       token: await sessionToken(session, true, signal),
       signal,
       resource: 'event',
@@ -126,6 +128,7 @@ export const persistentEventCoversApi = {
   async remove(id: string, session: EventActionSession, signal?: AbortSignal) {
     const result = await httpRequest(`${path(id)}/cover`, coverMutationSchema, {
       method: 'DELETE',
+      viewerId:session.viewerId,
       token: await sessionToken(session, true, signal),
       signal,
       resource: 'event',

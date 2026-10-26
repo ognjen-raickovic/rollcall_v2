@@ -130,3 +130,7 @@ Read docs/administration.md before role work. Reuse private.account_roles and ve
 ## Milestone 5B-2A
 
 Read docs/event-moderation.md for 5B-2A. Only checked reported-event cancellation expands moderator writes; ordinary host editing/deletion and private-data boundaries remain unchanged. Preserve durable report attempt commits, current-role checks, shared role locks, parent-first event/report serialization, append-only atomic audits and anti-reactivation protection. Never expose reporter identities or protected fields in report projections. Keep numeric demos isolated.
+
+## Milestone 5B-2B
+
+Read docs/account-suspensions.md before protected application work. All new protected RPCs must use the live SQL active-account guard before domain locks, with role/account ordering preserved. Keep identity/self-status/logout/recovery available and public anonymous browsing safe. Preserve state/audit atomicity, explicit role eligibility, raw-table/Storage enforcement and UUID-keyed status/private-cache cleanup. Never bypass suspension with an old JWT, stale UI role or a service-role client.

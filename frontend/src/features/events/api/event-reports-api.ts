@@ -27,7 +27,7 @@ export async function submitEventReport(
   const result = await httpRequest(
     `/api/events/${eventId}/reports`,
     z.object({ id: z.uuid(), created: z.boolean() }),
-    { method: 'POST', token, body, signal, resource: 'event' },
+    { method: 'POST', token, viewerId:session.viewerId, body, signal, resource: 'event' },
   )
   if (!(await session.getAccessToken()) || signal.aborted) throw new Error('Your account changed. Try again.')
   return result

@@ -83,3 +83,7 @@ Read ../docs/administration.md. Administration uses verified UUIDs/current datab
 ## Milestone 5B-2A
 
 Read ../docs/event-moderation.md. The separate moderation executor gets only bounded report operations and event status cancellation. Private RPCs enforce real current actors/roles and event access independently of Fastify. Shared role locks precede event/report locks; audit and successful state changes commit atomically. Failed report verification must commit durable attempts. Preserve restricted helper grants, catalog RLS, existing event constraints and anti-reactivation protection; never broaden event PATCH.
+
+## Milestone 5B-2B
+
+Read ../docs/account-suspensions.md. Runtime Auth guards require fresh status; only identity/self-status routes explicitly allow suspended callers. SQL protects all exposed authenticated actions and Storage operations independently. Guard before domain locks, preserve role-first ordering and the special exclusive-first role-change workflow. Return safe ACCOUNT_SUSPENDED 403s without notes. Test fixtures inject the active-check dependency explicitly; production never skips it.

@@ -9,13 +9,15 @@ export function AdministrationRoute() {
     <AdminArea
       key={auth.data?.id ?? 'anonymous'}
       section={
-        pathname === '/admin/reports'
-          ? 'reports'
-          : pathname === '/admin/users'
-            ? 'users'
-            : pathname === '/admin/role-audit'
-              ? 'audit'
-              : 'home'
+        pathname === '/admin/accounts'
+          ? 'accounts'
+          : pathname === '/admin/reports'
+            ? 'reports'
+            : pathname === '/admin/users'
+              ? 'users'
+              : pathname === '/admin/role-audit'
+                ? 'audit'
+                : 'home'
       }
     />
   )

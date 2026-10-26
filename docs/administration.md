@@ -130,3 +130,7 @@ remain separate work. No blanket admin override was added.
 ## Milestone 5B-2A
 
 5B-2A now extends accessAdmin to the reported-event review/dismiss/cancel workflow at /admin/reports. This is an explicit narrow cancellation policy, not a general event/privacy override. Current roles are checked again inside SQL; role locks coordinate demotion with pending decisions. Role-management permissions remain superadmin-only. See [moderation scope and verification](event-moderation.md); suspension, broader investigation and deployment remain deferred.
+
+## Milestone 5B-2B
+
+5B-2B adds `/admin/accounts`: exact UUID lookup for active admins/superadmins, eligible suspend/reinstate controls and bounded target audits. Admins affect ordinary users; superadmins may also affect admins. Self/superadmin targets are protected. Suspended moderators cannot use any admin permission; underlying roles remain unchanged. No broad directory is granted to admins. See [contracts and policy](account-suspensions.md).

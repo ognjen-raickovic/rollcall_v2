@@ -15,6 +15,8 @@ select no_plan();
 insert into auth.users(id, email) values
   ('40000000-0000-4000-8000-000000000001','profiles-one@example.invalid'),
   ('40000000-0000-4000-8000-000000000002','profiles-two@example.invalid');
+-- Protected actions below simulate confirmed Auth sessions.
+update auth.users set email_confirmed_at=now() where id in ('40000000-0000-4000-8000-000000000001','40000000-0000-4000-8000-000000000002');
 insert into public.countries(iso_code,name,enabled) values ('ZZ','Disabled profile fixture',false);
 
 select ok(not (select prosecdef from pg_proc where oid='public.update_my_profile(jsonb)'::regprocedure),

@@ -1,3 +1,4 @@
+import { throwIfSuspended } from '../auth/account-status.js'
 import { createCipheriv, createDecipheriv, createHmac, hkdfSync, randomBytes } from 'node:crypto'
 import { createClient } from '@supabase/supabase-js'
 import { z } from 'zod'
@@ -88,6 +89,7 @@ export function invitationRepository(env: Environment, token: string) {
           p_expires: new Date(Math.min(Date.now() + 7 * 86400000, Date.parse(event.startsAt))).toISOString(),
           p_action: action,
         })
+        throwIfSuspended(result.error)
         if (result.error?.code === '23505') continue
         if (result.error) {
           if (result.error.code === 'P0002') throw new ApiError(404, 'NOT_FOUND', 'Event not found.')
@@ -115,6 +117,7 @@ export function invitationRepository(env: Environment, token: string) {
     async redeem(raw: string) {
       const code = normalizeInvitation(raw)
       const result = await client.rpc('redeem_event_invitation', { p_hash: crypto.hash(code) })
+      throwIfSuspended(result.error)
       if (result.error) throw unavailable()
       const parsed = outcome.safeParse(result.data)
       if (!parsed.success) throw unavailable()

@@ -141,3 +141,7 @@ Read @docs/administration.md for implemented 5B-1 current-role permissions, supe
 ## Milestone 5B-2A
 
 Read @docs/event-moderation.md. 5B-2A implements private event reports and narrow checked admin/superadmin dismissal/cancellation. Preserve DB authorization, durable limiter commits, parent-first event locks, demotion coordination, atomic immutable audits and limited snapshots. No ordinary host-control override, private addresses/codes/covers, reporter identity exposure or account suspension.
+
+## Milestone 5B-2B
+
+Read @docs/account-suspensions.md. 5B-2B separates suspension from roles and enforces current status in Fastify and SQL/RLS/Storage. Guard new protected RPCs before domain locks; preserve exclusive role-change ordering and target account locks. No Auth ban/delete or automatic event/membership removal. UI status is presentation only; clear private caches on detection and account changes.

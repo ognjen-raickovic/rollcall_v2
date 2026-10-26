@@ -185,3 +185,7 @@ Source references: [GeoNames data and attribution](https://www.geonames.org/expo
 ## Milestone 5B-2A
 
 5B-2A event reports, moderator dismissal and narrow audited cancellation are implemented locally; see [verification](event-moderation.md). 5B-2B or later covers user/account reports, suspension/bans, restoration/appeals, notifications and separately reviewed investigatory access. Hosted controls and deployment remain deferred.
+
+## Milestone 5B-2B
+
+5B-2B application suspension/reinstatement is implemented locally with trusted role restrictions, direct Data API/Storage enforcement and immutable audits. [Verification and limits](account-suspensions.md) distinguish database boundaries from in-flight external work. Deferred: user reports, appeals, notifications, expiry, Auth bans/deletion, hosted recovery and deployment.

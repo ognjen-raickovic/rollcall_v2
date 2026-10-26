@@ -325,3 +325,7 @@ Administration owns current trusted permissions, a reusable capability guard and
 ## Milestone 5B-2A
 
 Moderation owns strict report/review/decision routes and checked RPCs, using existing verified caller-scoped unprivileged clients and capability guards. Database access independently enforces current admin/superadmin roles, legitimate reporting access, durable throttles and atomic decisions. No blanket admin event editing or private-content retrieval is added. Parent event locks coordinate attendance, moderation and FK deletion; role-change locks serialize demotion with moderation. See [contracts and tests](event-moderation.md).
+
+## Milestone 5B-2B
+
+The shared Auth guard checks fresh account status after verifying credentials, except explicitly allowed identity/self-status paths. PT403/ACCOUNT_SUSPENDED is preserved as a safe 403 application error even for races after the initial check. SQL wrappers, actor resolvers, raw profile-write policies and Storage policies independently enforce the current state. All future protected RPCs must guard before domain locks. See [lock order, failure handling and limits](account-suspensions.md).

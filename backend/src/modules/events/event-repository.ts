@@ -1,3 +1,4 @@
+import { throwIfSuspended } from '../auth/account-status.js'
 import { z, type ZodType } from 'zod'
 import type { DatabaseClient } from '../../db/supabase.js'
 import { ApiError } from '../../shared/api-error.js'
@@ -27,6 +28,7 @@ function unavailable(): ApiError {
 }
 
 function databaseError(error: DatabaseError): ApiError {
+  throwIfSuspended(error)
   if (error.code === 'P0002') return eventNotFound()
   if (error.code === 'RM001') return new ApiError(409, 'CONFLICT', 'Administratively cancelled events cannot be reactivated.')
   if (error.code === 'RA001')

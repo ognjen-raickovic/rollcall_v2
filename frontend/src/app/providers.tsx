@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthSessionSync } from '@/features/users/components/auth-session-sync'
+import { AccountStatusSync } from '@/features/users/components/account-status-sync'
 
 const queryClient = new QueryClient()
 
@@ -13,6 +14,7 @@ export function Providers({ children }: ProvidersProps) {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthSessionSync />
+      <AccountStatusSync />
       {children}
     </QueryClientProvider>
   )

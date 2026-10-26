@@ -280,3 +280,7 @@ Administrative roles do not bypass event ownership, visibility, capacity, protec
 ## Milestone 5B-2A
 
 POST /api/events/:eventId/reports accepts only reason/description from a real verified viewer; private host/current participants may report. The dedicated /api/admin/event-reports queue/detail/dismiss/take-action endpoints permit current admins/superadmins to cancel only the reported event, never edit arbitrary fields or retrieve private content. Cancellation removes scheduled discovery/joining, revokes invitations and prevents host reactivation. Hosts retain cancelled metadata editing/deletion. See [full contracts](event-moderation.md).
+
+## Milestone 5B-2B
+
+5B-2B rejects suspended callers for event writes, attendance, reporting, private admission/invitation management and protected reads/capabilities, including direct RPCs. Existing events/memberships remain unchanged; anonymous public discovery continues. Account locks precede existing event locks, and reinstatement restores the same account’s permitted operations. See [boundary and tests](account-suspensions.md).

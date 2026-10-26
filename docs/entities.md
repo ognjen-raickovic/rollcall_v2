@@ -740,3 +740,7 @@ The existing private account_roles assignment remains authoritative (missing row
 ## Milestone 5B-2A
 
 Private event_reports stores report UUID, nullable live event/reporter FKs (SET NULL on deletion), immutable target UUID, reason, optional 1000-character description, safe title/game/start/visibility snapshot, open/dismissed/actioned status, timestamps and internal resolution metadata. A partial unique index permits one open report per reporter/event. event_report_attempts stores durable 15-minute account windows. Append-only moderation_audit stores actor/report/target UUIDs, action, previous/new report status, explanation, eventChanged and timestamp; event deletion never cascades audit history. No report DTO includes reporter identities or protected event/profile fields. See [API/validation/access contracts](event-moderation.md).
+
+## Milestone 5B-2B
+
+Private account_suspensions uses the profile UUID PK/FK, active/suspended state, last suspend/reinstate times, verified moderator UUIDs and internal 5–500-character reasons. Missing state = active; no public profile role/status/note fields are added. Append-only suspension_audit stores actor/target UUID snapshots, transition, action, reason and timestamp. Self status returns only {status}; exact moderator lookup returns minimal account/role/status/canManage data. State/audit writes are atomic and idempotent. See [HTTP/validation/privacy contracts](account-suspensions.md).

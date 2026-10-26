@@ -58,6 +58,8 @@ insert into auth.users(id,email) values
   ('61000000-0000-4000-8000-000000000001','cover-sql-host@example.invalid'),
   ('61000000-0000-4000-8000-000000000002','cover-sql-participant@example.invalid'),
   ('61000000-0000-4000-8000-000000000003','cover-sql-outsider@example.invalid');
+-- Protected actions below simulate confirmed Auth sessions.
+update auth.users set email_confirmed_at=now() where id in ('61000000-0000-4000-8000-000000000001','61000000-0000-4000-8000-000000000002','61000000-0000-4000-8000-000000000003');
 create temporary table cover_fixtures(kind text primary key, id uuid, body jsonb, reservation jsonb);
 grant select,insert,update on cover_fixtures to anon,authenticated;
 insert into cover_fixtures(kind,body) select 'base',jsonb_build_object(

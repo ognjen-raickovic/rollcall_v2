@@ -3,12 +3,15 @@ import type { AccountIdentity, TokenVerifier } from './types.js'
 import { unauthenticated } from './token-verifier.js'
 
 declare module 'fastify' {
+  interface FastifyInstance {
+    assertActiveAccount: (token: string) => Promise<void>
+  }
   interface FastifyRequest {
     account: AccountIdentity | null
   }
 }
 
-export function createAuthGuard(verify: TokenVerifier): preHandlerHookHandler {
+export function createAuthGuard(verify: TokenVerifier, allowSuspended = false): preHandlerHookHandler {
   return async (request, reply) => {
     reply.header('Cache-Control', 'no-store')
     reply.header('Vary', 'Authorization')
@@ -25,5 +28,6 @@ export function createAuthGuard(verify: TokenVerifier): preHandlerHookHandler {
       reply.header('WWW-Authenticate', 'Bearer error="invalid_token"')
       throw unauthenticated()
     }
+    if (!allowSuspended) await request.server.assertActiveAccount(token)
   }
 }

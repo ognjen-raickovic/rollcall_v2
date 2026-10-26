@@ -39,6 +39,7 @@ export class HttpError extends Error {
 }
 
 type HttpOptions = {
+  viewerId?: string | null
   method?: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE'
   body?: unknown
   token?: string
@@ -99,6 +100,22 @@ export async function httpRequest<T>(
       try {
         const payload: unknown = await response.json()
         if (typeof payload === 'object' && payload !== null) {
+          if (response.status === 403 && 'code' in payload && payload.code === 'ACCOUNT_SUSPENDED') {
+            if (
+              options.viewerId &&
+              typeof window !== 'undefined' &&
+              typeof window.dispatchEvent === 'function'
+            )
+              window.dispatchEvent(
+                new CustomEvent('rollcall:account-suspended', { detail: { viewerId: options.viewerId } }),
+              )
+            throw new HttpError(
+              403,
+              'Your RollCall application access is suspended.',
+              {},
+              'ACCOUNT_SUSPENDED',
+            )
+          }
           if ('code' in payload && payload.code === errorCodes[response.status]) code = payload.code
           if (
             resource === 'event' &&
@@ -125,7 +142,8 @@ export async function httpRequest<T>(
             }
           }
         }
-      } catch {
+      } catch (error) {
+        if (error instanceof HttpError && error.code === 'ACCOUNT_SUSPENDED') throw error
         /* Malformed error bodies never replace a safe message. */
       }
     }
