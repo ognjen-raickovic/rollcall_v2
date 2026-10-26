@@ -9,7 +9,7 @@ never "RollCall v2" in the UI.
 
 ## Delivery stages
 
-Current delivery is Milestone 5A; see docs/private-invitations.md. Earlier sections record historical boundaries.
+Current delivery is Milestone 5B-1; see docs/administration.md. Earlier sections record historical boundaries.
 
 ## Current Milestone 4D: persistent event covers
 
@@ -478,3 +478,7 @@ See [location UI](docs/location-ui.md) for contracts, setup and migration consid
 ## Milestone 5A
 
 Milestone 5A implements encrypted host-only private invitations, authenticated code admission, durable account limits and connection-IP throttling. Admission/rotation share event locks and existing attendance counters. Private discovery/address/cover rules remain intact. See [scope and verification](docs/private-invitations.md); administrative roles remain 5B.
+
+## Milestone 5B-1
+
+Milestone 5B-1 implements user/admin/superadmin permissions from private trusted assignments, local first-superadmin bootstrap, bounded account lookup, user/admin transitions and atomic append-only audits. Admins receive only a landing page; superadmins manage roles/audits. Existing private ages, event host controls, invitation secrets, addresses and Storage permissions gain no administrative override. See [contracts and verification](docs/administration.md). Moderation is 5B-2.

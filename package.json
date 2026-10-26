@@ -3,6 +3,7 @@
   "private": true,
   "packageManager": "pnpm@12.14.0",
   "scripts": {
+    "admin:bootstrap": "pnpm --filter backend admin:bootstrap",
     "dev": "pnpm --filter frontend dev",
     "dev:backend": "pnpm --filter backend dev",
     "typecheck": "pnpm -r --filter frontend --filter backend typecheck",

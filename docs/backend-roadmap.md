@@ -177,3 +177,7 @@ Source references: [GeoNames data and attribution](https://www.geonames.org/expo
 ## Milestone 5A
 
 5A host-only codes and private admission are implemented locally. [Verification and limits](private-invitations.md) describe the delivered scope. Admin/superadmin management remains 5B and is not implemented.
+
+## Milestone 5B-1
+
+5B-1 administrative role management is implemented locally; see [administration and verification](administration.md). 5B-2 remains content moderation/reporting/suspension/takedown policy, with separately reviewed private-data permissions. Hosted provisioning/recovery and launch hardening are not implemented.

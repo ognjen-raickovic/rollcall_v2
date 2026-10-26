@@ -317,3 +317,7 @@ release requirements. This milestone does not deploy or modify a remote Supabase
 ## Milestone 5A
 
 5A uses authenticated encryption, domain-separated keyed verification and backend-capability-protected RPCs. Failed attempts commit durable account limits; process-local IP limits supplement them. Event locks and existing attendance triggers provide atomic admission. See [architecture and verification](private-invitations.md).
+
+## Milestone 5B-1
+
+Administration owns current trusted permissions, a reusable capability guard and bounded superadmin role/audit APIs. Requests use the existing verified bearer-scoped unprivileged Data API client. RPCs independently authorize callers, rechecking after the role-mutation transaction lock. Role updates/audits are atomic; existing feature authorization is unchanged. Local bootstrap uses a separate explicitly confirmed maintenance connection, never runtime credentials. See [administration](administration.md).

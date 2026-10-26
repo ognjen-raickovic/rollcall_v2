@@ -155,3 +155,7 @@ its original gaming palette in both themes. Never invert uploaded photographs.
 - No raw color/font/radius values in components; add and document tokens first.
 - Private-code controls/modal use existing tokens and native dialogs in 5A. Hide codes until deliberate reveal and explain exact-address access.
 - No recurring events or advanced administrative UI in event management.
+
+## Milestone 5B-1
+
+Administrative pages retain the current tokens and restrained cards: one heading, effective role, compact section navigation and bounded account/audit lists that wrap on phones. Exact UUID lookup is labeled; public emails/private data are absent. Native role-change confirmation focuses Cancel, supports Escape and returns focus. Provide loading, empty, restricted, error/retry and successful-save feedback. No decorative dashboard metrics, fake moderation controls or navbar redesign.

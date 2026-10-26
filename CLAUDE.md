@@ -107,7 +107,7 @@ You may talk to me in any language.
   Attendance uses verified subjects, event row locks and the existing membership/counter
   infrastructure; private outsiders cannot join. Raw tables stay closed to API roles; use
   checked RPCs, non-bypass executor/trigger roles, explicit ACLs/RLS and empty search paths.
-  No self-declared eligibility checks, codes or admin override. Keep numeric demo
+  Invitation admission follows 5A; no self-declared eligibility checks or admin override. Keep numeric demo
   controllers isolated from real UUID records. See @docs/attendance-verification.md for
   backend checks, @docs/event-frontend-verification.md for 4C-1 and
   @docs/event-actions-verification.md for 4C-2 mutation/browser verification.
@@ -132,4 +132,8 @@ You may talk to me in any language.
 
 ## Milestone 5A
 
-5A invitations are implemented: read docs/private-invitations.md. Preserve host authorization, encrypted recovery, backend-only verification, durable throttling and event-row serialization. Keep codes out of DTOs, URLs, logs and persistent caches. Administration remains 5B.
+5A invitations are implemented: read docs/private-invitations.md. Preserve host authorization, encrypted recovery, backend-only verification, durable throttling and event-row serialization. Keep codes out of DTOs, URLs, logs and persistent caches. Role management is 5B-1; moderation remains 5B-2.
+
+## Milestone 5B-1
+
+Read @docs/administration.md for implemented 5B-1 current-role permissions, superadmin-only role/audit operations and local-only explicit bootstrap. Keep private.account_roles authoritative, independent RPC authorization and append-only atomic audits. No metadata-derived permissions, self/superadmin changes, automatic personal provisioning or private event/profile/Storage override. 5B-2 moderation remains deferred.

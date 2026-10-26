@@ -457,3 +457,7 @@ and [GeoNames export/license](https://www.geonames.org/export/).
 ## Milestone 5A
 
 The additive 20261026000200_private_invitations.sql creates private invitation and attempt tables, RLS/ACLs and a non-login/non-bypass executor. Parent-event locks serialize code changes with admission; existing membership triggers alone update counts. No plaintext codes or client role assumption. See [details](private-invitations.md).
+
+## Milestone 5B-1
+
+Two additive 5B-1 migrations reuse account_roles, add RLS-protected role_audit and restricted current-role RPCs, and preserve all existing records. A NOLOGIN/NOBYPASSRLS executor has only profiles/roles and select/insert audit access, with no raw Auth/private age/event-secret access. Narrow internal confirmation helpers accommodate separate Supabase Auth ownership. Bootstrap and role updates serialize and audit atomically; no public bootstrap or superadmin-assignment RPC. See [details](administration.md).

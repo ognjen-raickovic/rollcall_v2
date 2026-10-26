@@ -7,6 +7,7 @@
     "node": ">=22.12.0"
   },
   "scripts": {
+    "admin:bootstrap": "node --env-file-if-exists=.env --import tsx scripts/bootstrap-superadmin.ts",
     "dev": "node --env-file-if-exists=.env --import tsx --watch src/server.ts",
     "start": "node --env-file-if-exists=.env dist/server.js",
     "typecheck": "tsc --noEmit && tsc -p tsconfig.tests.json",

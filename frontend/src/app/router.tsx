@@ -8,6 +8,9 @@ import { RequireAccount } from '@/features/users/components/require-account'
 import { demoModeEnabled } from '@/features/users/api/auth-client'
 
 const Home = lazy(() => import('@/app/routes/home').then((module) => ({ default: module.Home })))
+const AdministrationRoute = lazy(() =>
+  import('@/app/routes/admin').then((module) => ({ default: module.AdministrationRoute })),
+)
 const Login = lazy(() => import('@/app/routes/login').then((module) => ({ default: module.Login })))
 const Register = lazy(() => import('@/app/routes/register').then((module) => ({ default: module.Register })))
 const ForgotPassword = lazy(() =>
@@ -58,6 +61,14 @@ export const router = createBrowserRouter([
     element: <RootLayout />,
     children: [
       { path: '/', element: <Home /> },
+      ...['/admin', '/admin/users', '/admin/role-audit'].map((path) => ({
+        path,
+        element: (
+          <RequireAccount>
+            <AdministrationRoute />
+          </RequireAccount>
+        ),
+      })),
       { path: '/events', element: <Events /> },
       {
         path: '/events/new',

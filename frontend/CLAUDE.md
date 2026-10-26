@@ -68,7 +68,7 @@ Dependency direction: shared code -> features -> app, never the other way around
 - Read `../SPEC.md` for scope. Homepage, demo login, discovery/details, and shared create/edit
   forms, optional browser-side covers, curated tags, and light/dark themes are implemented.
   Milestone 4D adds persistent event cover uploads; profile pictures, recurring events,
-  invitations and advanced administration remain out of scope.
+  invitations are implemented in 5A and role management in 5B-1; moderation remains out of scope.
 - Real profiles expose owner editing and game-experience mutations; the real game catalog is read-only.
   Separate numeric demo user/game catalogs expose reads only. Events expose CRUD and join/leave, applying the scoped
   CRUD guidance in `.claude/rules/data.md`. Use events as the feature implementation reference.
@@ -141,3 +141,7 @@ Dependency direction: shared code -> features -> app, never the other way around
 ## Milestone 5A
 
 Read ../docs/private-invitations.md. Codes remain only in local controller memory and no-store responses, never query caches, URLs, logs or storage. Clear inputs on close/account change, preserve session checks, and compose real session at routes. Use existing tokens/native dialogs.
+
+## Milestone 5B-1
+
+Read ../docs/administration.md. Users owns permission/admin API hooks and UI; routes compose them. Backend roles are presentation data only on the client. Administration keys include viewer UUID, reads/writes recheck identity, Auth transitions remove the shared administration prefix and mutations retain no inactive data. Refresh permissions on focus/interval and after changes; 403 hides data. Native role-change dialogs focus Cancel. Preserve tokens, numeric-demo isolation and all existing feature permissions.

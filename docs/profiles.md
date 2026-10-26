@@ -131,3 +131,7 @@ invitations and administration remain future work.
 Official references: [Supabase RLS](https://supabase.com/docs/guides/database/postgres/row-level-security),
 [column privileges](https://supabase.com/docs/guides/database/postgres/column-level-security) and
 [database functions](https://supabase.com/docs/guides/database/functions).
+
+## Milestone 5B-1
+
+Public and own profile contracts remain unchanged. Role fields remain non-editable through profiles. New permission/administrative projections are separate authenticated endpoints, not public profile fields; administrators gain no private age access. See [administration](administration.md).
