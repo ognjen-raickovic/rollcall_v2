@@ -189,3 +189,12 @@ Source references: [GeoNames data and attribution](https://www.geonames.org/expo
 ## Milestone 5B-2B
 
 5B-2B application suspension/reinstatement is implemented locally with trusted role restrictions, direct Data API/Storage enforcement and immutable audits. [Verification and limits](account-suspensions.md) distinguish database boundaries from in-flight external work. Deferred: user reports, appeals, notifications, expiry, Auth bans/deletion, hosted recovery and deployment.
+
+## Hosted staging milestones
+
+6A-1 prepares the [controlled rollout](hosted-supabase-staging.md), independent operator
+configuration and focused local verification. It performs no hosted changes. The rebased
+source includes 5B-2B; the source audit continues to verify its prerequisites.
+6A-2 requires separate approval for migrations/reference data/Auth/Storage/secrets/
+bootstrap and hosted security acceptance. 6B handles application hosting, final origins,
+proxy/CORS decisions and deployment configuration. Neither stage is implied by 6A-1.

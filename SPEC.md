@@ -11,6 +11,13 @@ never "RollCall v2" in the UI.
 
 Current delivery is Milestone 5B-2B; see docs/account-suspensions.md. Earlier sections record historical boundaries.
 
+Milestone 6A-1 adds hosted staging preparation only: an offline migration inventory,
+explicitly gated operator catalog/geography/key/bootstrap procedures and a
+[rollout guide](docs/hosted-supabase-staging.md). It does not deploy or alter hosted resources.
+The rebased source includes the complete 5B-2B milestone; staging preparation preserves its
+runtime and migration security prerequisites. 6A-2 performs separately
+approved hosted setup; 6B finalizes frontend/backend hosting and origins.
+
 ## Current Milestone 4D: persistent event covers
 
 Hosts can select JPEG/PNG/WebP source images up to 3 MiB through the existing form picker.

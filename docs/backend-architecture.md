@@ -329,3 +329,14 @@ Moderation owns strict report/review/decision routes and checked RPCs, using exi
 ## Milestone 5B-2B
 
 The shared Auth guard checks fresh account status after verifying credentials, except explicitly allowed identity/self-status paths. PT403/ACCOUNT_SUSPENDED is preserved as a safe 403 application error even for races after the initial check. SQL wrappers, actor resolvers, raw profile-write policies and Storage policies independently enforce the current state. All future protected RPCs must guard before domain locks. See [lock order, failure handling and limits](account-suspensions.md).
+
+## Hosted staging preparation (6A-1)
+
+`backend/scripts/staging` is a separate operator entry point; it is never imported by Fastify.
+Offline inventory/catalog/geography previews do not connect. Applying requires complete
+5B-2B source, independently pinned staging reference/origin/database host, verified TLS,
+explicit write enablement and action-specific confirmation. A shared session lock serializes
+operator work; import transactions retain their existing country-level lock/bounds.
+Privileged maintenance credentials are isolated in ignored `.staging/operator.env`; the
+runtime remains publishable-key/caller-token only. Raw generated staging roots are isolated
+from ordinary local keys. [Rollout and pending hosted checks](hosted-supabase-staging.md).

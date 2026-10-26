@@ -744,3 +744,12 @@ Private event_reports stores report UUID, nullable live event/reporter FKs (SET 
 ## Milestone 5B-2B
 
 Private account_suspensions uses the profile UUID PK/FK, active/suspended state, last suspend/reinstate times, verified moderator UUIDs and internal 5–500-character reasons. Missing state = active; no public profile role/status/note fields are added. Append-only suspension_audit stores actor/target UUID snapshots, transition, action, reason and timestamp. Self status returns only {status}; exact moderator lookup returns minimal account/role/status/canManage data. State/audit writes are atomic and idempotent. See [HTTP/validation/privacy contracts](account-suspensions.md).
+
+## Staging provisioning metadata (6A-1)
+
+`private.staging_provisioning` is operator-only metadata, not a user/domain endpoint:
+`singleton=true`, `environment='staging'`, two 64-character hexadecimal key fingerprints,
+and read-only `provisioned_at`. No raw keys or user fields. No client or executor grants/RLS
+policies; the unprivileged runtime never queries it. Gated staging maintenance atomically
+checks it alongside `private.event_cover_config`, accepts exact retries and rejects root
+changes. No HTTP endpoint is added. [Procedure and limitations](hosted-supabase-staging.md).

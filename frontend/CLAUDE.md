@@ -153,3 +153,11 @@ Read ../docs/event-moderation.md. Events owns real report submission/dialog; use
 ## Milestone 5B-2B
 
 Read ../docs/account-suspensions.md. Users owns UUID-keyed account status, exact admin access lookup/audit and the suspended screen. Routes compose notice/content slots; events receive anonymous scope for public browsing while suspended. HTTP calls attribute suspension notifications to the initiating viewer without sending that ID as authority. Clear status on Auth changes and private event/cover/profile/admin queries on detection; ignore old-account errors. Keep logout/recovery usable and avoid redirect loops.
+
+## Milestone 6A-1: staging preparation
+
+Read [the staging procedure](../docs/hosted-supabase-staging.md) before hosted work. Preparation does not authorize
+remote mutations, CLI linking or deployment. Keep ordinary local env/config/data unchanged;
+use separate ignored operator configuration and dry-run defaults. Preserve local-only guards
+and unprivileged runtime access. Full reviewed 5B-2B source is a rollout prerequisite; do not
+copy just its SQL to bypass the audit. 6A-2 requires separate explicit deployment approval.

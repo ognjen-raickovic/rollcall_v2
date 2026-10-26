@@ -1,0 +1,15 @@
+begin;
+create extension if not exists pgtap with schema extensions;
+set local search_path=public,extensions;
+select plan(9);
+select has_table('private','staging_provisioning','Operator provisioning ledger exists');
+select ok((select relrowsecurity from pg_class where oid='private.staging_provisioning'::regclass),'Provisioning ledger has RLS');
+select is(has_table_privilege('anon','private.staging_provisioning','SELECT,INSERT,UPDATE,DELETE'),false,'Anonymous has no ledger privileges');
+select is(has_table_privilege('authenticated','private.staging_provisioning','SELECT,INSERT,UPDATE,DELETE'),false,'Authenticated has no ledger privileges');
+select is(has_table_privilege('service_role','private.staging_provisioning','SELECT,INSERT,UPDATE,DELETE'),false,'Service role has no ledger grants');
+select is(has_table_privilege('rollcall_events_executor','private.staging_provisioning','SELECT,INSERT,UPDATE,DELETE'),false,'Runtime event executor has no ledger privileges');
+select is(has_table_privilege('rollcall_invitation_executor','private.staging_provisioning','SELECT,INSERT,UPDATE,DELETE'),false,'Invitation executor has no ledger privileges');
+select is((select count(*)::int from pg_policy where polrelid='private.staging_provisioning'::regclass),0,'No client or executor ledger policy');
+select is((select count(*)::int from information_schema.columns where table_schema='private' and table_name='staging_provisioning' and column_name in ('operation_key','invitation_key','password','secret')),0,'Ledger contains no raw secret columns');
+select * from finish();
+rollback;

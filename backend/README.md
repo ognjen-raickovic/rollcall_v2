@@ -1,5 +1,14 @@
 # RollCall backend: geography, authentication, profiles and events
 
+Hosted staging is preparation-only in 6A-1. See the
+[operator rollout guide](../docs/hosted-supabase-staging.md) and
+[verification](../docs/hosted-supabase-staging-verification.md). Run
+`pnpm staging:prepare audit --target=staging` from the repository root to inspect source
+readiness. Commands default to offline dry-run, read separate ignored `.staging/operator.env`
+configuration, and never run during backend startup/build. Existing local setup commands
+retain their loopback restrictions. The rebased source includes 5B-2B; hosted preflight and
+separate 6A-2 approval remain required before rollout.
+
 Fastify REST API with TypeScript and Zod, backed by local Supabase PostgreSQL through
 Supabase's Data API. Health, countries, city search and authenticated `GET /api/me` are
 implemented. Milestone 3B adds owner-editable UUID profiles, private birth year, public-safe

@@ -145,3 +145,11 @@ Read @docs/event-moderation.md. 5B-2A implements private event reports and narro
 ## Milestone 5B-2B
 
 Read @docs/account-suspensions.md. 5B-2B separates suspension from roles and enforces current status in Fastify and SQL/RLS/Storage. Guard new protected RPCs before domain locks; preserve exclusive role-change ordering and target account locks. No Auth ban/delete or automatic event/membership removal. UI status is presentation only; clear private caches on detection and account changes.
+
+## Milestone 6A-1: staging preparation
+
+Read [the staging procedure](docs/hosted-supabase-staging.md) before hosted work. Preparation does not authorize
+remote mutations, CLI linking or deployment. Keep ordinary local env/config/data unchanged;
+use separate ignored operator configuration and dry-run defaults. Preserve local-only guards
+and unprivileged runtime access. Full reviewed 5B-2B source is a rollout prerequisite; do not
+copy just its SQL to bypass the audit. 6A-2 requires separate explicit deployment approval.

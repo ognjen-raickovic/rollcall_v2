@@ -7,6 +7,7 @@
     "node": ">=22.12.0"
   },
   "scripts": {
+    "staging:prepare": "node --env-file-if-exists=.staging/operator.env --import tsx scripts/staging/cli.ts",
     "admin:bootstrap": "node --env-file-if-exists=.env --import tsx scripts/bootstrap-superadmin.ts",
     "dev": "node --env-file-if-exists=.env --import tsx --watch src/server.ts",
     "start": "node --env-file-if-exists=.env dist/server.js",

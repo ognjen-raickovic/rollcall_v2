@@ -362,3 +362,16 @@ Milestone 5B-2A adds private event reports and an admin/superadmin review queue 
 ## Milestone 5B-2B
 
 Milestone 5B-2B adds application-level account suspension/reinstatement, an exact-lookup account-access page at `/admin/accounts`, safe self status and immutable audits. Existing Auth sessions cannot bypass SQL/RLS enforcement; records and roles remain intact. Read [setup, contracts and verification](docs/account-suspensions.md). Run `pnpm test:suspensions` for focused frontend checks. No new configuration or dependency is needed.
+
+## Hosted staging preparation (6A-1)
+
+See the [controlled staging rollout guide](docs/hosted-supabase-staging.md) and
+[local verification](docs/hosted-supabase-staging-verification.md). No hosted deployment has
+been performed. `pnpm staging:prepare audit --target=staging` checks rollout source;
+`pnpm staging:prepare catalog --target=staging` previews essential reference data without
+connecting. All operator actions default to dry-run and use a separate ignored
+`backend/.staging/operator.env`, never the ordinary local `.env` files.
+
+The rebased source includes 5B-2B account suspension/reinstatement alongside the staging
+preparation. The source audit still checks that prerequisite; hosted preflight and separate
+6A-2 approval remain required. Hosted application deployment and final origins remain 6B work.
