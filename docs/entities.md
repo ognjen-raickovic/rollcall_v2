@@ -732,3 +732,7 @@ The following mock examples do not imply that real attendance endpoints exist.
 ## Milestone 5A
 
 5A adds private event_invitations (event FK, unique HMAC, authenticated ciphertext, creation/expiry/revocation) and invitation_attempts (profile FK, window/count). No event DTO/PATCH carries codes. Host invitation GET/rotate/revoke and authenticated POST /api/private-events/join are documented in [the consolidated guide](private-invitations.md).
+
+## Milestone 5B-1
+
+The existing private account_roles assignment remains authoritative (missing row = user). New private role_audit stores immutable actor/target UUID snapshots, previous/new roles, controlled action/source and timestamp; snapshots survive account deletion. No client table grants. /api/me/permissions returns only the caller’s role/capabilities. Superadmin-only users/role/audit endpoints expose bounded safe projections, never email/age/Auth metadata. See [field/API/security contracts](administration.md). Public profile DTOs are unchanged.

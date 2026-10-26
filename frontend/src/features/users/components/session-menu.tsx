@@ -8,6 +8,7 @@ import { loginPath } from '@/lib/auth-navigation'
 import { useLogout, useSession } from '../api/use-session'
 import { UserAvatar } from './user-avatar'
 import { useAuth, useAuthLogout } from '../api/use-auth'
+import { AdminNavigation } from './administration'
 
 export function SessionMenu() {
   const session = useSession()
@@ -25,6 +26,7 @@ export function SessionMenu() {
   if (auth.data)
     return (
       <div className="flex items-center gap-2">
+        <AdminNavigation />
         <Link
           to="/profile"
           className="max-w-28 truncate text-sm font-medium hover:text-primary focus-visible:outline-2 focus-visible:outline-ring"

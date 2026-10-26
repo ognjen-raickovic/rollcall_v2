@@ -2,6 +2,8 @@ import Fastify from 'fastify'
 import multipart from '@fastify/multipart'
 import { registerInvitationRoutes } from './modules/events/event-invitations.js'
 import type { Environment } from './config/env.js'
+import { registerAdminRoutes } from './modules/administration/admin-routes.js'
+import { createAdminRepository } from './modules/administration/admin-repository.js'
 import { createDatabaseClient } from './db/supabase.js'
 import { installErrorHandler } from './middleware/error-handler.js'
 import { createGeographyRepository } from './modules/geography/geography-repository.js'
@@ -59,6 +61,7 @@ export function buildApp(
   const verify = options.verifyToken ?? createTokenVerifier(env)
   const covers = options.covers ?? ((token?: string) => createEventCoverRepository(env, token))
   registerAuthRoutes(app, verify)
+  registerAdminRoutes(app, { verify, repository: (token) => createAdminRepository(createDatabaseClient(env, fetch, token)) })
   registerProfileRoutes(app, {
     verify,
     repository:

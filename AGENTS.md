@@ -121,4 +121,8 @@ checks using available tools; Claude hooks do not automatically run for Codex ed
 
 ## Milestone 5A
 
-5A invitations are implemented: read docs/private-invitations.md. Never log/persist codes or weaken checked-RPC capability, encryption, durable attempt commits, event-lock rechecks or existing attendance triggers. Code management is host-only; administration remains 5B.
+5A invitations are implemented: read docs/private-invitations.md. Never log/persist codes or weaken checked-RPC capability, encryption, durable attempt commits, event-lock rechecks or existing attendance triggers. Code management is host-only; role management is 5B-1 and moderation remains 5B-2.
+
+## Milestone 5B-1
+
+Read docs/administration.md before role work. Reuse private.account_roles and verified current UUID permissions. Only superadmins manage user/admin transitions; no self/superadmin changes or private-data override. Preserve independent RPC checks, role-lock serialization and atomic append-only auditing. Bootstrap is operator-confirmed and literal-loopback-only; never provision a personal account automatically or expose a bootstrap endpoint. Clear viewer-scoped administration caches on Auth transitions.

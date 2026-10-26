@@ -350,3 +350,7 @@ configuration, not the running app. MCP servers use `npx` as in the starter.
 ## Milestone 5A
 
 Current delivery: Milestone 5A adds encrypted private room codes, host management and atomic authenticated admission. Apply local migrations, run pnpm invitations:setup (after covers:setup), and restart Fastify. See [contracts and verification](docs/private-invitations.md). Earlier milestone descriptions are historical; admin work remains 5B.
+
+## Milestone 5B-1
+
+Milestone 5B-1 implements current-role permissions, superadmin-only user/admin management, immutable role audits and minimal /admin pages. Read [administration setup and security](docs/administration.md), including the explicitly confirmed local-only `pnpm admin:bootstrap` command. No personal administrator is provisioned automatically; moderation and hosted provisioning remain deferred.

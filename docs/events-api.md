@@ -272,3 +272,7 @@ Backend endpoints, migrations and database permissions are unchanged. See
 ## Milestone 5A
 
 5A adds host GET /api/events/:id/invitation and POST invitation/rotate or invitation/revoke, plus authenticated POST /api/private-events/join with only {code}. UUID-only private admission remains denied. See [contracts and security](private-invitations.md).
+
+## Milestone 5B-1
+
+Administrative roles do not bypass event ownership, visibility, capacity, protected addresses, invitation management or cover authorization. The 5B-1 role-management APIs are separate; see [administration](administration.md).

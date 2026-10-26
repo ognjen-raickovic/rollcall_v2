@@ -12,8 +12,8 @@ for both assistants. Read `../SPEC.md`, `../docs/entities.md`,
   year, real catalog reads and per-game experience. Milestone 4A adds persistent event
   discovery/details and host-only create/update/delete. Milestone 4B adds persistent
   transactional join/leave and participant-aware details. Frontend reads/actions are
-  integrated in 4C-1/4C-2. Storage covers are implemented in 4D; private codes/role
-  authorization (5) remain deferred. Read `../docs/event-covers.md` for image work.
+  integrated in 4C-1/4C-2. Storage covers are implemented in 4D, private codes in 5A and
+  role management in 5B-1; moderation remains 5B-2. Read `../docs/event-covers.md` for image work.
 - Preserve the frontend's mocks, numeric IDs, routes and styling. Do not import frontend
   feature types into this package. Real frontend UUID DTOs stay separate from numeric demos.
 - Keep routes, Zod validation and data access within the owning module; common errors and
@@ -75,3 +75,7 @@ for both assistants. Read `../SPEC.md`, `../docs/entities.md`,
 ## Milestone 5A
 
 Read ../docs/private-invitations.md before invitation work. Failed validation outcomes must commit limiter writes; recheck code state after the event lock. Reuse attendance triggers, verified UUID and checked backend capability. No plaintext codes, service-role bypass or administrative override.
+
+## Milestone 5B-1
+
+Read ../docs/administration.md. Administration uses verified UUIDs/current database assignments, an unprivileged caller client, checked RPCs and a narrow executor. No raw Auth/private-profile/secret grants. Serialize role writes/bootstrap, authorize after the lock and audit atomically. No API superadmin assignment, self-edit, generic audit writer or public bootstrap. The bootstrap command requires explicit operator confirmation and literal loopback; hosted provisioning is separate.

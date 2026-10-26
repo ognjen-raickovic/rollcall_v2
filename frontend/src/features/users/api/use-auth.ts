@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback } from 'react'
-import { EVENT_COVER_QUERY_KEY, EVENT_DETAILS_QUERY_KEY } from '@/lib/query-keys'
+import { ADMIN_QUERY_KEY, EVENT_COVER_QUERY_KEY, EVENT_DETAILS_QUERY_KEY } from '@/lib/query-keys'
 
 import { authApi } from './auth-api'
 
@@ -39,6 +39,7 @@ export function useAuthLogin() {
   return useMutation({
     mutationFn: authApi.login,
     onSuccess: (account) => {
+      client.removeQueries({ queryKey: ADMIN_QUERY_KEY })
       client.removeQueries({ queryKey: EVENT_DETAILS_QUERY_KEY })
       client.removeQueries({ queryKey: EVENT_COVER_QUERY_KEY })
       client.setQueryData(authKey, account)
@@ -65,6 +66,7 @@ export function useAuthLogout() {
   return useMutation({
     mutationFn: authApi.logout,
     onSuccess: () => {
+      client.removeQueries({ queryKey: ADMIN_QUERY_KEY })
       client.removeQueries({ queryKey: EVENT_DETAILS_QUERY_KEY })
       client.removeQueries({ queryKey: EVENT_COVER_QUERY_KEY })
       client.setQueryData(authKey, null)
