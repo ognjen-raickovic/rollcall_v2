@@ -23,7 +23,17 @@ grant rollcall_admin_executor to current_user;
 create or replace function private.admin_actor() returns uuid
 language sql security invoker set search_path='' as $$ select private.confirmed_admin_actor(); $$;
 revoke select(id,email_confirmed_at) on auth.users from rollcall_admin_executor;
-revoke usage on schema auth from rollcall_admin_executor;
+-- Retain legacy local cleanup where delegation is available. Hosted postgres may
+-- not revoke managed schema grants; fail closed if unexpected access remains.
+do $$
+begin
+ if has_schema_privilege(current_user,'auth','USAGE WITH GRANT OPTION') then
+  revoke usage on schema auth from rollcall_admin_executor;
+ end if;
+ if has_schema_privilege('rollcall_admin_executor','auth','USAGE') then
+  raise exception 'Admin executor must not have managed Auth schema access.';
+ end if;
+end; $$;
 
 create or replace function private.admin_users(p_limit integer,p_after uuid,p_user_id uuid) returns jsonb
 language plpgsql security definer set search_path='' as $$

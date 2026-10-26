@@ -24,7 +24,9 @@ local database unchanged. See [local verification](hosted-supabase-staging-verif
 
 ## Migration audit in chronological order
 
-Historical migration files are unchanged. The following findings apply to a fresh Supabase
+Four historical files have an explicitly reviewed pre-first-hosted-rollout Auth compatibility
+correction; see the [dated verification and checksum inventory](hosted-supabase-staging-verification.md#hosted-auth-compatibility-correction-2026-10-27).
+The migration count/timestamps remain unchanged. The following findings apply to a fresh Supabase
 database with Auth and Storage installed, executed as the project's maintenance `postgres`
 role. The local replay establishes SQL behavior, not hosted ownership privileges.
 
@@ -35,14 +37,14 @@ role. The local replay establishes SQL behavior, not hosted ownership privileges
 | `20261024000300_balkan_geography` | `pg_trgm` in `extensions`, additive provenance/aliases/search indexes and read grants. Requires extension/schema privileges. |
 | `20261024000400_auth_profile_initialization` | Adds the `auth.users` insert trigger with idempotent profile/private initialization and safe existing-account backfill. Hosted Auth-table trigger privilege must be verified. |
 | `20261025000100_user_profiles` | Explicit public-safe catalog/profile grants, owner RLS, private birth year, checked profile/experience functions. No email/private fields in public DTOs. |
-| `20261025000200_events_api` | Creates NOLOGIN/NOBYPASSRLS event executor, checked invoker wrappers, private helpers, closed client event tables. Requires role creation, temporary membership and function-owner changes. |
-| `20261025000300_event_executor_identity` | Replaces direct Auth calls in executor functions with a narrow resolver; removes raw Auth-schema access. Preserves ACL/owner requirements. |
+| `20261025000200_events_api` | Creates NOLOGIN/NOBYPASSRLS event executor and postgres-owned argument-free subject resolver before executor functions/policies use it. No managed Auth grants. Requires role creation, temporary membership and function-owner changes. |
+| `20261025000300_event_executor_identity` | Reuses the early resolver with CREATE OR REPLACE, retains policy checks and timestamp volatility corrections. Preserves ACL/owner requirements. |
 | `20261025000400_event_attendance` | Narrow counter role, parent locks, transactional capacity and participant RLS; no blanket client DML. |
 | `20261025000500_attendance_private_recheck` | Rechecks private visibility under the event lock. No new infrastructure dependencies. |
 | `20261026000100_event_covers` | Private bucket upsert, restricted Storage policies, checked capabilities. Requires `extensions.digest(text,text)` **before this migration**, and `storage.allow_only_operation(text)`. Requires bucket/policy privileges without changing Storage owners. |
 | `20261026000200_private_invitations` | Narrow executor, encrypted payload storage, committed attempts and checked attendance admission; no client secret tables. Application encryption key is provisioned separately. |
-| `20261026000300_administrative_roles` | Narrow admin executor, current-role checks, shared serialization, immutable audit and operator bootstrap. Temporarily grants limited Auth columns. |
-| `20261026000400_admin_verified_identity` | Removes executor Auth-schema/column access in favor of a checked confirmed-account resolver; bootstrap remains maintenance-only. |
+| `20261026000300_administrative_roles` | Narrow admin executor, current-role checks, shared serialization, immutable audit and operator bootstrap. Confirmation helpers are postgres-owned from their first definition; no managed Auth grants. |
+| `20261026000400_admin_verified_identity` | Reasserts confirmed-account helpers, retains legacy column-grant cleanup, conditionally revokes legacy schema access only where delegation permits and rejects residual executor Auth-schema access. Bootstrap remains maintenance-only. |
 | `20261026000500_event_moderation` | Narrow report/moderation executor, durable limiter, serialized cancellation and immutable audits. Preserves protected data and host boundaries. |
 | `20261026000600_account_suspensions` | Included from updated `main`: confirmed active-account resolver, live-status RPC/Storage guards, private state and atomic audits, with runtime integration. The original 6A-1 disposable replay used SQL from `d29f46b`; hosted behavior remains unverified. |
 | `20261026000700_staging_provisioning` | New additive operator-only RLS table recording environment, time and two one-way key fingerprints. No API/runtime grants or raw secrets; does not repair earlier prerequisites. |
@@ -62,7 +64,36 @@ policy/bucket privileges. Preserve NOLOGIN/NOINHERIT/NOBYPASSRLS, empty security
 search paths, and final membership revocations. Do not change `auth`/`storage` ownership or
 grant executors broad Auth access. See [managed privileges](https://supabase.com/docs/guides/database/postgres/roles)
 and [custom-role migration permissions](https://supabase.com/docs/guides/deployment/managing-environments).
-These hosted-only privileges remain unproven until 6A-2; no historical rewrite is proposed.
+The corrected event/admin migrations do not attempt to delegate managed Auth privileges.
+Supabase documents that unsupported grants can warn and do nothing, leaving custom roles
+unable to reach Auth; they need not fail immediately during DDL. The earlier helpers remove
+that broken intermediate dependency. A later additive migration cannot make those earlier
+definitions independently usable. [Supported Auth helper pattern](https://supabase.com/kb/troubleshooting/permission-errors-when-granting-custom-roles-access-to-the-auth-schema).
+
+Storage policy creation has a supported Supabase exception to ordinary table ownership:
+`supautils.policy_grants` can allow `postgres` to manage policies on `storage.objects`.
+An owner-membership check returning false is not proof of incompatibility. Inspect the
+setting using the updated read-only preflight; it must authorize the actual migration role
+for `storage.objects`. This does not authorize unrelated ALTER TABLE or ownership changes.
+[Supautils policy support](https://github.com/supabase/supautils#manage-policies).
+
+The cover migration also delegates Storage schema USAGE, SELECT(bucket_id,name,metadata),
+and digest EXECUTE. Confirm grant options (or already-effective executor rights) separately;
+SELECT/INSERT/UPDATE for postgres and the policy exception do not prove delegation rights.
+Missing support is a hosted rollout blocker, not permission to grant managed owner roles,
+weaken policies or invent a Storage bypass. No Storage migration/policy was changed here.
+
+The supplied hosted `ensure_rls` evidence describes enable-only RLS on newly created public
+tables, without FORCE, policies, grants or rejecting creation; this is compatible with our
+explicit ENABLE statements. Leave it enabled. The apparent copied syntax fragment is not
+evidence that the installed function is invalid. No trigger investigation/change is required
+unless actual execution supplies contradictory evidence.
+
+Do not reset the populated local database or replay these historical files over it. Its
+already-applied final helper definitions are preserved by the corrected fresh sequence.
+Existing local version history is not a new execution/checksum attestation. Keep an approved
+Git revision/inventory of the old source; regenerate and review the new audit SHA-256 values
+and a fresh linked dry-run before hosted approval. Never use migration repair to hide drift.
 
 ## Data API settings and security
 
