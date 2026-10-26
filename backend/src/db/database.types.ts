@@ -49,6 +49,10 @@ export type Database = {
     }
     Views: Record<string, never>
     Functions: {
+      submit_event_report: { Args: { p_event_id: string; p_reason: string; p_description: string | null }; Returns: Json }
+      list_event_reports: { Args: { p_status: string; p_limit: number; p_before_time?: string; p_before_id?: string }; Returns: Json }
+      get_event_report: { Args: { p_report_id: string }; Returns: Json }
+      resolve_event_report: { Args: { p_report_id: string; p_action: string; p_note: string }; Returns: Json }
       my_permissions: { Args: Record<string, never>; Returns: Json }
       admin_users: { Args: { p_limit: number; p_after?: string; p_user_id?: string }; Returns: Json }
       change_admin_role: { Args: { p_target: string; p_role: string }; Returns: Json }

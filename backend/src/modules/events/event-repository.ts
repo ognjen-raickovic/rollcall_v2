@@ -28,6 +28,7 @@ function unavailable(): ApiError {
 
 function databaseError(error: DatabaseError): ApiError {
   if (error.code === 'P0002') return eventNotFound()
+  if (error.code === 'RM001') return new ApiError(409, 'CONFLICT', 'Administratively cancelled events cannot be reactivated.')
   if (error.code === 'RA001')
     return new ApiError(
       409,

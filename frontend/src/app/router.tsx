@@ -61,7 +61,7 @@ export const router = createBrowserRouter([
     element: <RootLayout />,
     children: [
       { path: '/', element: <Home /> },
-      ...['/admin', '/admin/users', '/admin/role-audit'].map((path) => ({
+      ...['/admin', '/admin/users', '/admin/role-audit', '/admin/reports'].map((path) => ({
         path,
         element: (
           <RequireAccount>

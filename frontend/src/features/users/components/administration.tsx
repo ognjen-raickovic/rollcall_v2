@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { useAdminUsers, useChangeAdminRole, usePermissions, useRoleAudit } from '../api/use-administration'
 import type { AdminAccount } from '../api/administration-api'
 import { useAuth } from '../api/use-auth'
+import { ModerationDashboard } from './moderation-dashboard'
 
 export function AdminNavigation() {
   const auth = useAuth(),
@@ -37,7 +38,7 @@ function Feedback({
     )
   return null
 }
-export function AdminArea({ section }: { section: 'home' | 'users' | 'audit' }) {
+export function AdminArea({ section }: { section: 'home' | 'users' | 'audit' | 'reports' }) {
   const auth = useAuth(),
     permissions = usePermissions()
   const allowed = permissions.data?.capabilities.accessAdmin
@@ -46,7 +47,10 @@ export function AdminArea({ section }: { section: 'home' | 'users' | 'audit' }) 
     content = <p role="status">Checking administrative permissions…</p>
   else if (permissions.isError)
     content = <Feedback pending={false} error={permissions.error} retry={permissions.refetch} />
-  else if (!allowed || (section !== 'home' && !permissions.data?.capabilities.manageAdminRoles))
+  else if (
+    !allowed ||
+    ((section === 'users' || section === 'audit') && !permissions.data?.capabilities.manageAdminRoles)
+  )
     content = (
       <div className="space-y-3">
         <h1 className="text-3xl font-bold">Access restricted</h1>
@@ -65,7 +69,9 @@ export function AdminArea({ section }: { section: 'home' | 'users' | 'audit' }) 
               ? 'Manage administrators'
               : section === 'audit'
                 ? 'Role audit history'
-                : 'Administration'}
+                : section === 'reports'
+                  ? 'Event reports'
+                  : 'Administration'}
           </h1>
           <p className="text-muted-foreground">
             Your current role:{' '}
@@ -74,6 +80,7 @@ export function AdminArea({ section }: { section: 'home' | 'users' | 'audit' }) 
         </header>
         <nav aria-label="Administration" className="flex flex-wrap gap-4 text-primary">
           <Link to="/admin">Overview</Link>
+          <Link to="/admin/reports">Event reports</Link>
           {permissions.data?.capabilities.manageAdminRoles && (
             <>
               <Link to="/admin/users">Accounts and roles</Link>
@@ -86,12 +93,15 @@ export function AdminArea({ section }: { section: 'home' | 'users' | 'audit' }) 
             <h2 className="text-xl font-semibold">Administrative access</h2>
             <p>
               Administrative roles do not grant access to private profiles, invitation codes, addresses or
-              other hosts’ event controls.
+              ordinary host editing controls.
             </p>
             <p className="text-muted-foreground">
-              Content moderation and abuse reporting will be introduced in a later milestone.
+              Review event reports and make narrowly scoped, audited cancellation decisions. Account
+              suspension and broader moderation remain deferred.
             </p>
           </div>
+        ) : section === 'reports' ? (
+          <ModerationDashboard key={auth.data?.id} />
         ) : section === 'users' ? (
           <AdminUsers key={auth.data?.id} />
         ) : (

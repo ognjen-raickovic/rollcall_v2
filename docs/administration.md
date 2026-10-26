@@ -126,3 +126,7 @@ The milestone is ready for PR review, with no hosted operations or personal prov
 Content moderation, reports, suspension, event takedowns, extra private-data access, broader
 administrative roles, hosted provisioning/recovery, production abuse controls and deployment
 remain separate work. No blanket admin override was added.
+
+## Milestone 5B-2A
+
+5B-2A now extends accessAdmin to the reported-event review/dismiss/cancel workflow at /admin/reports. This is an explicit narrow cancellation policy, not a general event/privacy override. Current roles are checked again inside SQL; role locks coordinate demotion with pending decisions. Role-management permissions remain superadmin-only. See [moderation scope and verification](event-moderation.md); suspension, broader investigation and deployment remain deferred.

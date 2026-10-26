@@ -736,3 +736,7 @@ The following mock examples do not imply that real attendance endpoints exist.
 ## Milestone 5B-1
 
 The existing private account_roles assignment remains authoritative (missing row = user). New private role_audit stores immutable actor/target UUID snapshots, previous/new roles, controlled action/source and timestamp; snapshots survive account deletion. No client table grants. /api/me/permissions returns only the caller’s role/capabilities. Superadmin-only users/role/audit endpoints expose bounded safe projections, never email/age/Auth metadata. See [field/API/security contracts](administration.md). Public profile DTOs are unchanged.
+
+## Milestone 5B-2A
+
+Private event_reports stores report UUID, nullable live event/reporter FKs (SET NULL on deletion), immutable target UUID, reason, optional 1000-character description, safe title/game/start/visibility snapshot, open/dismissed/actioned status, timestamps and internal resolution metadata. A partial unique index permits one open report per reporter/event. event_report_attempts stores durable 15-minute account windows. Append-only moderation_audit stores actor/report/target UUIDs, action, previous/new report status, explanation, eventChanged and timestamp; event deletion never cascades audit history. No report DTO includes reporter identities or protected event/profile fields. See [API/validation/access contracts](event-moderation.md).

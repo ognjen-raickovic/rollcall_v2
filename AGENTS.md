@@ -126,3 +126,7 @@ checks using available tools; Claude hooks do not automatically run for Codex ed
 ## Milestone 5B-1
 
 Read docs/administration.md before role work. Reuse private.account_roles and verified current UUID permissions. Only superadmins manage user/admin transitions; no self/superadmin changes or private-data override. Preserve independent RPC checks, role-lock serialization and atomic append-only auditing. Bootstrap is operator-confirmed and literal-loopback-only; never provision a personal account automatically or expose a bootstrap endpoint. Clear viewer-scoped administration caches on Auth transitions.
+
+## Milestone 5B-2A
+
+Read docs/event-moderation.md for 5B-2A. Only checked reported-event cancellation expands moderator writes; ordinary host editing/deletion and private-data boundaries remain unchanged. Preserve durable report attempt commits, current-role checks, shared role locks, parent-first event/report serialization, append-only atomic audits and anti-reactivation protection. Never expose reporter identities or protected fields in report projections. Keep numeric demos isolated.

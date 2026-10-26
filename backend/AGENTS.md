@@ -79,3 +79,7 @@ Read ../docs/private-invitations.md before invitation work. Failed validation ou
 ## Milestone 5B-1
 
 Read ../docs/administration.md. Administration uses verified UUIDs/current database assignments, an unprivileged caller client, checked RPCs and a narrow executor. No raw Auth/private-profile/secret grants. Serialize role writes/bootstrap, authorize after the lock and audit atomically. No API superadmin assignment, self-edit, generic audit writer or public bootstrap. The bootstrap command requires explicit operator confirmation and literal loopback; hosted provisioning is separate.
+
+## Milestone 5B-2A
+
+Read ../docs/event-moderation.md. The separate moderation executor gets only bounded report operations and event status cancellation. Private RPCs enforce real current actors/roles and event access independently of Fastify. Shared role locks precede event/report locks; audit and successful state changes commit atomically. Failed report verification must commit durable attempts. Preserve restricted helper grants, catalog RLS, existing event constraints and anti-reactivation protection; never broaden event PATCH.

@@ -137,3 +137,7 @@ You may talk to me in any language.
 ## Milestone 5B-1
 
 Read @docs/administration.md for implemented 5B-1 current-role permissions, superadmin-only role/audit operations and local-only explicit bootstrap. Keep private.account_roles authoritative, independent RPC authorization and append-only atomic audits. No metadata-derived permissions, self/superadmin changes, automatic personal provisioning or private event/profile/Storage override. 5B-2 moderation remains deferred.
+
+## Milestone 5B-2A
+
+Read @docs/event-moderation.md. 5B-2A implements private event reports and narrow checked admin/superadmin dismissal/cancellation. Preserve DB authorization, durable limiter commits, parent-first event locks, demotion coordination, atomic immutable audits and limited snapshots. No ordinary host-control override, private addresses/codes/covers, reporter identity exposure or account suspension.

@@ -159,3 +159,7 @@ its original gaming palette in both themes. Never invert uploaded photographs.
 ## Milestone 5B-1
 
 Administrative pages retain the current tokens and restrained cards: one heading, effective role, compact section navigation and bounded account/audit lists that wrap on phones. Exact UUID lookup is labeled; public emails/private data are absent. Native role-change confirmation focuses Cancel, supports Escape and returns focus. Provide loading, empty, restricted, error/retry and successful-save feedback. No decorative dashboard metrics, fake moderation controls or navbar redesign.
+
+## Milestone 5B-2A
+
+Event safety uses a restrained Report Event control and native dialog with reason selector, bounded optional plain text, privacy guidance and explicit pending/error/success states. Admin reports use token-based cards, status filters, limited context/history and native confirmation focusing Cancel. Wrap mobile controls and long text; add no fake metrics, new palette or private-content previews.

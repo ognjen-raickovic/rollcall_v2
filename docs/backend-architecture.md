@@ -321,3 +321,7 @@ release requirements. This milestone does not deploy or modify a remote Supabase
 ## Milestone 5B-1
 
 Administration owns current trusted permissions, a reusable capability guard and bounded superadmin role/audit APIs. Requests use the existing verified bearer-scoped unprivileged Data API client. RPCs independently authorize callers, rechecking after the role-mutation transaction lock. Role updates/audits are atomic; existing feature authorization is unchanged. Local bootstrap uses a separate explicitly confirmed maintenance connection, never runtime credentials. See [administration](administration.md).
+
+## Milestone 5B-2A
+
+Moderation owns strict report/review/decision routes and checked RPCs, using existing verified caller-scoped unprivileged clients and capability guards. Database access independently enforces current admin/superadmin roles, legitimate reporting access, durable throttles and atomic decisions. No blanket admin event editing or private-content retrieval is added. Parent event locks coordinate attendance, moderation and FK deletion; role-change locks serialize demotion with moderation. See [contracts and tests](event-moderation.md).

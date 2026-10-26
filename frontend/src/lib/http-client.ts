@@ -13,6 +13,7 @@ const errorCodes: Record<number, string> = {
   503: 'DEPENDENCY_UNAVAILABLE',
 }
 const eventConflicts = new Set([
+  'Administratively cancelled events cannot be reactivated.',
   'This event is full.',
   'Attendance is only available for scheduled events that have not started.',
   'Hosts cannot join or leave their own event as a participant.',
