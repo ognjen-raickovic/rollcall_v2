@@ -461,3 +461,7 @@ The additive 20261026000200_private_invitations.sql creates private invitation a
 ## Milestone 5B-1
 
 Two additive 5B-1 migrations reuse account_roles, add RLS-protected role_audit and restricted current-role RPCs, and preserve all existing records. A NOLOGIN/NOBYPASSRLS executor has only profiles/roles and select/insert audit access, with no raw Auth/private age/event-secret access. Narrow internal confirmation helpers accommodate separate Supabase Auth ownership. Bootstrap and role updates serialize and audit atomically; no public bootstrap or superadmin-assignment RPC. See [details](administration.md).
+
+## Milestone 5B-2A
+
+The additive 20261026000500_event_moderation.sql creates private RLS-protected reports, attempt counters and append-only audits, with a separate NOLOGIN/NOBYPASSRLS executor. Event privileges are column-limited reads and UPDATE(status) only; no locations, codes, ages, raw Auth or role writes. Checked RPCs enforce current roles and event access. Shared role locks, parent-first event/report locks and atomic audit/state writes coordinate demotion, attendance and deletion. A guarded status trigger prevents reactivation of audited moderator cancellations. See [security design](event-moderation.md).

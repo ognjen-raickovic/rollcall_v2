@@ -181,3 +181,7 @@ Source references: [GeoNames data and attribution](https://www.geonames.org/expo
 ## Milestone 5B-1
 
 5B-1 administrative role management is implemented locally; see [administration and verification](administration.md). 5B-2 remains content moderation/reporting/suspension/takedown policy, with separately reviewed private-data permissions. Hosted provisioning/recovery and launch hardening are not implemented.
+
+## Milestone 5B-2A
+
+5B-2A event reports, moderator dismissal and narrow audited cancellation are implemented locally; see [verification](event-moderation.md). 5B-2B or later covers user/account reports, suspension/bans, restoration/appeals, notifications and separately reviewed investigatory access. Hosted controls and deployment remain deferred.

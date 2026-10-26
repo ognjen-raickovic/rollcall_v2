@@ -354,3 +354,7 @@ Current delivery: Milestone 5A adds encrypted private room codes, host managemen
 ## Milestone 5B-1
 
 Milestone 5B-1 implements current-role permissions, superadmin-only user/admin management, immutable role audits and minimal /admin pages. Read [administration setup and security](docs/administration.md), including the explicitly confirmed local-only `pnpm admin:bootstrap` command. No personal administrator is provisioned automatically; moderation and hosted provisioning remain deferred.
+
+## Milestone 5B-2A
+
+Milestone 5B-2A adds private event reports and an admin/superadmin review queue at `/admin/reports`, with audited dismissal and reported-event cancellation. It grants no general editing or private-data access. Read [setup, contracts and verification](docs/event-moderation.md). `pnpm test:moderation` runs focused frontend client checks; no new configuration/dependency is required.

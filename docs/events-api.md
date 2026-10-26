@@ -276,3 +276,7 @@ Backend endpoints, migrations and database permissions are unchanged. See
 ## Milestone 5B-1
 
 Administrative roles do not bypass event ownership, visibility, capacity, protected addresses, invitation management or cover authorization. The 5B-1 role-management APIs are separate; see [administration](administration.md).
+
+## Milestone 5B-2A
+
+POST /api/events/:eventId/reports accepts only reason/description from a real verified viewer; private host/current participants may report. The dedicated /api/admin/event-reports queue/detail/dismiss/take-action endpoints permit current admins/superadmins to cancel only the reported event, never edit arbitrary fields or retrieve private content. Cancellation removes scheduled discovery/joining, revokes invitations and prevents host reactivation. Hosts retain cancelled metadata editing/deletion. See [full contracts](event-moderation.md).

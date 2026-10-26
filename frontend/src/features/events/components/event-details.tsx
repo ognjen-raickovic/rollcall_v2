@@ -14,6 +14,7 @@ import { EventParticipationSummary } from './event-participation-summary'
 import { DeleteEventDialog } from './delete-event-dialog'
 import { EventNotice } from './event-notice'
 import { InvitationPanel } from './invitation-panel'
+import { ReportEvent } from './report-event'
 import { PersistentEventImage } from './persistent-event-image'
 import {
   usePersistentDeleteEvent,
@@ -261,6 +262,7 @@ export function EventDetails({
         <InvitationPanel id={event.id} session={session} />
       )}
       {deleteDialog}
+      <ReportEvent key={`${event.id}:${session.viewerId ?? 'anonymous'}`} id={event.id} session={session} />
     </>
   )
 }

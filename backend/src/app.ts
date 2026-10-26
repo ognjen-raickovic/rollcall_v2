@@ -3,6 +3,7 @@ import multipart from '@fastify/multipart'
 import { registerInvitationRoutes } from './modules/events/event-invitations.js'
 import type { Environment } from './config/env.js'
 import { registerAdminRoutes } from './modules/administration/admin-routes.js'
+import { registerModerationRoutes } from './modules/moderation/moderation-routes.js'
 import { createAdminRepository } from './modules/administration/admin-repository.js'
 import { createDatabaseClient } from './db/supabase.js'
 import { installErrorHandler } from './middleware/error-handler.js'
@@ -74,6 +75,7 @@ export function buildApp(
   })
   registerEventCoverRoutes(app, { verify, repository: covers })
   registerInvitationRoutes(app, env, verify)
+  registerModerationRoutes(app, env, verify)
   app.get('/health', async () => ({ status: 'ok', service: 'rollcall-api' }))
   const repository = options.geography ?? createGeographyRepository(createDatabaseClient(env))
   registerGeographyRoutes(app, repository, {

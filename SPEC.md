@@ -9,7 +9,7 @@ never "RollCall v2" in the UI.
 
 ## Delivery stages
 
-Current delivery is Milestone 5B-1; see docs/administration.md. Earlier sections record historical boundaries.
+Current delivery is Milestone 5B-2A; see docs/event-moderation.md. Earlier sections record historical boundaries.
 
 ## Current Milestone 4D: persistent event covers
 
@@ -482,3 +482,7 @@ Milestone 5A implements encrypted host-only private invitations, authenticated c
 ## Milestone 5B-1
 
 Milestone 5B-1 implements user/admin/superadmin permissions from private trusted assignments, local first-superadmin bootstrap, bounded account lookup, user/admin transitions and atomic append-only audits. Admins receive only a landing page; superadmins manage roles/audits. Existing private ages, event host controls, invitation secrets, addresses and Storage permissions gain no administrative override. See [contracts and verification](docs/administration.md). Moderation is 5B-2.
+
+## Milestone 5B-2A
+
+Milestone 5B-2A implements authenticated event reporting, database-enforced open-report deduplication/account throttling, moderator review, dismissal and atomic reported-event cancellation. Private-event reports require the host/current participant; moderator context excludes reporter identities, protected addresses, covers and codes. Host reactivation after moderation is blocked, while ordinary editing/deletion otherwise remains host-only. See [policy and verification](docs/event-moderation.md). Account suspensions, user reports, invitations overrides and deployment remain outside scope.
