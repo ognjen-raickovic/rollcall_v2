@@ -13,6 +13,7 @@ import type {
 } from './event-write-dtos'
 import { persistentEventActionsApi } from './persistent-event-actions-api'
 import { persistentEventsApi } from './persistent-events-api'
+import { invalidateEventCovers } from './use-persistent-event-covers'
 
 type Envelope<T> = { value: T; session: EventActionSession }
 type Owner = { viewerId: string }
@@ -41,6 +42,7 @@ function removeOtherViewers(client: QueryClient, id: string, viewerId: string) {
 }
 
 async function cacheHost(client: QueryClient, event: HostEventDetails, session: EventActionSession) {
+  await invalidateEventCovers(client, event.id, () => current(client, session.viewerId))
   await client.cancelQueries({ queryKey: [...EVENT_DETAILS_QUERY_KEY, event.id] })
   if (!current(client, session.viewerId)) return
   removeOtherViewers(client, event.id, session.viewerId)
@@ -50,6 +52,7 @@ async function cacheHost(client: QueryClient, event: HostEventDetails, session: 
 }
 
 async function cacheAttendance(client: QueryClient, result: AttendanceResult, session: EventActionSession) {
+  await invalidateEventCovers(client, result.eventId, () => current(client, session.viewerId))
   await client.cancelQueries({ queryKey: [...EVENT_DETAILS_QUERY_KEY, result.eventId] })
   if (!current(client, session.viewerId)) return
   const key = detailKey(result.eventId, session.viewerId)
@@ -166,6 +169,7 @@ export function persistentDeleteEventOptions(client: QueryClient) {
     'delete',
     persistentEventActionsApi.remove,
     async (_result, id, session) => {
+      await invalidateEventCovers(client, id, () => current(client, session.viewerId))
       await client.cancelQueries({ queryKey: [...EVENT_DETAILS_QUERY_KEY, id] })
       if (!current(client, session.viewerId)) return
       client.removeQueries({ queryKey: [...EVENT_DETAILS_QUERY_KEY, id] })

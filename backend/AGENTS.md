@@ -12,7 +12,8 @@ for both assistants. Read `../SPEC.md`, `../docs/entities.md`,
   year, real catalog reads and per-game experience. Milestone 4A adds persistent event
   discovery/details and host-only create/update/delete. Milestone 4B adds persistent
   transactional join/leave and participant-aware details. Frontend reads/actions are
-  integrated in 4C-1/4C-2. Storage (4D) and private codes/role authorization (5) remain deferred.
+  integrated in 4C-1/4C-2. Storage covers are implemented in 4D; private codes/role
+  authorization (5) remain deferred. Read `../docs/event-covers.md` for image work.
 - Preserve the frontend's mocks, numeric IDs, routes and styling. Do not import frontend
   feature types into this package. Real frontend UUID DTOs stay separate from numeric demos.
 - Keep routes, Zod validation and data access within the owning module; common errors and
@@ -49,6 +50,13 @@ for both assistants. Read `../SPEC.md`, `../docs/entities.md`,
 - Version schema changes under `../supabase/migrations/`. Add explicit grants/RLS, indexes,
   delete behavior, constraints and tests with each schema change. Keep private age, roles,
   exact addresses and future invitation secrets outside public DTOs.
+- Cover uploads are backend-mediated multipart, bounded and decoded/re-encoded with Sharp.
+  Never trust MIME/extension alone. Writes/signing combine the existing unprivileged caller
+  JWT with a server-only operation key verified by SQL/RLS; never forward a client's copy
+  of that header or introduce a service-role bypass. Current event access governs reads;
+  only backend signing may issue 60-second access. Preserve retired-path cleanup/tombstones,
+  compensate failed writes without deleting active objects and never fabricate/remove file
+  metadata through SQL. `pnpm covers:setup` accepts local maintenance connections only.
 - Keep errors consistent as `{ code, message, fields }`. Do not return raw database errors,
   keys or stack traces. Redact headers/secrets from logs; do not log sensitive payloads.
 - Configuration must fail clearly without exposing invalid environment values. Keep `.env`

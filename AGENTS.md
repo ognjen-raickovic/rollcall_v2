@@ -9,6 +9,7 @@ and verified backend identity. Milestone 3B adds real editable UUID profiles and
 experience. Milestones 4A/4B add persistent event backend APIs and transactional attendance; React event CRUD/attendance
 and their numeric demos remain separate. Milestone 4C-1 connects public homepage/discovery
 and UUID details to real reads; 4C-2 connects real event mutations and participation.
+Milestone 4D adds persistent, private-bucket event covers with checked upload/access/cleanup.
 
 ## Shared rules
 
@@ -37,8 +38,8 @@ Keep foundation routes simple until finished pages are requested.
 - Update `docs/entities.md` alongside entity/API changes, and `SPEC.md` alongside scope changes.
 - Curated event tags and experience compatibility come from `frontend/src/features/events/event-tags.ts`.
   Cover preparation belongs to events; bounded image data URLs are mock-only and never stored
-  in browser storage. Supabase Storage is planned for real pictures in a later backend
-  milestone; do not add uploads or buckets during geography work.
+  in browser storage. Real cover drafts become multipart files through the separate 4D
+  image API, never JSON image references. Read `docs/event-covers.md` before image work.
 - Theme tokens live in `frontend/src/index.css`; `src/lib/theme.ts` and the early HTML script
   share the `rollcall.theme` preference key. Default to dark and keep blocked-storage fallback.
 - Use a separate GitHub feature branch per task/person; review through PRs. Inspect existing
@@ -75,7 +76,7 @@ Keep foundation routes simple until finished pages are requested.
   Attendance locks the event and validates current visibility/state/time before changing
   the existing membership table. Preserve closed client tables, executor/trigger-role RLS,
   explicit ACLs and empty search paths. Private outsiders cannot join; no experience/age
-  eligibility or admin override. Storage (4D) and private codes/role authorization (5)
+  eligibility or admin override. Storage is implemented in 4D; private codes/role authorization (5)
   remain separate work. Read integration is documented in `docs/event-frontend-verification.md`;
   real mutation integration and browser acceptance are in `docs/event-actions-verification.md`.
 - Real event reads use dedicated UUID DTOs and TanStack Query keys, never numeric adapters.
@@ -86,7 +87,15 @@ Keep foundation routes simple until finished pages are requested.
   their initiating session, validate strict write DTOs and cancel stale detail reads before
   applying acknowledged results. Recheck identity before cache effects/navigation; no optimism.
   Leave hides protected addresses and removes private details on departure. Do not attach
-  mock actions to UUID events. Real forms use default illustrations, never data URL uploads.
+  mock actions to UUID events. Real forms upload validated multipart images after saving
+  metadata; retain the saved UUID on partial failure to prevent duplicate creation.
+- Cover writes/signing require the backend-only operation key plus existing verified user
+  permissions. Never expose the key in Vite, caller payloads, logs or tracked files. Storage
+  RLS must independently restrict exact reserved paths and current associations. No service-role
+  bypass, direct Storage metadata manipulation or long-lived client signing. Signed access is
+  60 seconds; document its residual window. Clear viewer-specific cover queries on auth/access
+  changes. Retire/clean old objects only after safe association changes; preserve bounded retry
+  work and use supported Storage APIs. Local setup is `pnpm covers:setup`, never a hosted operation.
 - Event forms require a confirmed city suggestion, clear it on country/text changes, and
   allow an empty venue. Exact addresses render only for the host/current participants;
   real API DTOs enforce this server-side; numeric demos only simulate the safeguard.
@@ -98,6 +107,7 @@ Keep foundation routes simple until finished pages are requested.
   Run `pnpm test:mock`, `pnpm test:backend`, and available local database/integration checks.
   `pnpm test:events` covers real event clients and pagination/cache/privacy boundaries.
   `pnpm test:event-actions` covers mutation contracts, session/cache privacy and real form/date mapping.
+  `pnpm test:event-covers` covers cover requests, signed access and cache/account boundaries.
   On PowerShell with blocked `.ps1` shims,
   use `pnpm.cmd` with the same arguments.
 - Before handoff, typecheck, lint (including boundaries), and build must pass. For UI changes,

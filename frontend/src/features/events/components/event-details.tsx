@@ -13,6 +13,7 @@ import { EventDetailsView } from './event-details-view'
 import { EventParticipationSummary } from './event-participation-summary'
 import { DeleteEventDialog } from './delete-event-dialog'
 import { EventNotice } from './event-notice'
+import { PersistentEventImage } from './persistent-event-image'
 import {
   usePersistentDeleteEvent,
   usePersistentJoinEvent,
@@ -195,6 +196,19 @@ export function EventDetails({
   return (
     <>
       <EventDetailsView
+        cover={
+          <PersistentEventImage
+            key={`${event.id}-${viewerId ?? 'guest'}`}
+            eventId={event.id}
+            cover={event.cover}
+            session={session}
+            enabled={!leave.isPending && !leave.error && !(leave.isSuccess && event.visibility === 'private')}
+            title={event.title}
+            category={event.game.category}
+            priority
+            className="aspect-[16/7] max-h-64 w-full rounded-xl border"
+          />
+        }
         event={{
           ...event,
           cityName: event.city.name,

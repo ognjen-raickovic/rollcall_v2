@@ -67,6 +67,8 @@ export async function prepareEventCover(file: File): Promise<string> {
   }
   const canvas = document.createElement('canvas')
   try {
+    if (bitmap.width > 8192 || bitmap.height > 8192 || bitmap.width * bitmap.height > 16000000)
+      throw new Error('Choose an image no larger than 8192 pixels per edge and 16 megapixels.')
     // Bound the retained image, preserve its ratio, and never upscale a small cover.
     const scale = Math.min(1, 1600 / Math.max(bitmap.width, bitmap.height))
     canvas.width = Math.max(1, Math.round(bitmap.width * scale))

@@ -18,13 +18,20 @@ export function registerEventRoutes(
   options: {
     verify: TokenVerifier
     repository: (accessToken?: string) => EventRepository
+    cleanupCover?: (eventId: string, accessToken: string) => Promise<boolean>
   },
 ): void {
   const guard = createAuthGuard(options.verify)
-  function authenticated(request: FastifyRequest): { repository: EventRepository; accountId: string } {
+  function authenticated(request: FastifyRequest): {
+    repository: EventRepository
+    accountId: string
+  } {
     const token = request.headers.authorization?.slice(7)
     if (!request.account || !token) throw unauthenticated()
-    return { repository: options.repository(token), accountId: request.account.id }
+    return {
+      repository: options.repository(token),
+      accountId: request.account.id,
+    }
   }
   app.get('/api/events', async (request, reply) => {
     reply.header('Cache-Control', 'no-store')
@@ -68,6 +75,16 @@ export function registerEventRoutes(
     parseInput(noQuerySchema, request.query)
     const { eventId } = parseInput(eventIdSchema, request.params)
     await authenticated(request).repository.remove(eventId)
+    const token = request.headers.authorization?.slice(7)
+    if (token && options.cleanupCover) {
+      let pending = true
+      try {
+        pending = await options.cleanupCover(eventId, token)
+      } catch {
+        /* Durable cleanup remains retryable. */
+      }
+      if (pending) reply.header('X-Event-Cover-Cleanup', 'pending')
+    }
     return reply.code(204).send()
   })
   app.post('/api/events/:eventId/attendees/me', { preHandler: guard }, async (request) => {

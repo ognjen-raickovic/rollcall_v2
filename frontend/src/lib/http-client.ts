@@ -6,6 +6,8 @@ const errorCodes: Record<number, string> = {
   403: 'FORBIDDEN',
   404: 'NOT_FOUND',
   409: 'CONFLICT',
+  413: 'VALIDATION_ERROR',
+  415: 'VALIDATION_ERROR',
   500: 'INTERNAL_ERROR',
   503: 'DEPENDENCY_UNAVAILABLE',
 }
@@ -63,18 +65,23 @@ export async function httpRequest<T>(
   if (!path.startsWith('/api/') || url.origin !== origin.origin)
     throw new Error('The API request address is invalid.')
   let response: Response
+  const multipart = typeof FormData !== 'undefined' && options.body instanceof FormData
   try {
     response = await fetch(url, {
       method: options.method ?? 'GET',
       headers: {
         Accept: 'application/json',
-        ...(options.body !== undefined ? { 'Content-Type': 'application/json' } : {}),
+        ...(options.body !== undefined && !multipart ? { 'Content-Type': 'application/json' } : {}),
         ...(options.token ? { Authorization: `Bearer ${options.token}` } : {}),
       },
-      body: options.body === undefined ? undefined : JSON.stringify(options.body),
+      body: multipart
+        ? (options.body as FormData)
+        : options.body === undefined
+          ? undefined
+          : JSON.stringify(options.body),
       signal: options.signal
-        ? AbortSignal.any([options.signal, AbortSignal.timeout(5000)])
-        : AbortSignal.timeout(5000),
+        ? AbortSignal.any([options.signal, AbortSignal.timeout(multipart ? 20000 : 5000)])
+        : AbortSignal.timeout(multipart ? 20000 : 5000),
       cache: 'no-store',
       redirect: 'error',
     })
@@ -100,7 +107,7 @@ export async function httpRequest<T>(
           )
             conflict = payload.message
           if (
-            [400, 409].includes(response.status) &&
+            [400, 409, 413, 415].includes(response.status) &&
             'fields' in payload &&
             typeof payload.fields === 'object' &&
             payload.fields !== null
@@ -129,7 +136,7 @@ export async function httpRequest<T>(
             ? resource === 'event'
               ? 'This event could not be found or is not available to this account.'
               : 'This profile or game could not be found.'
-            : response.status === 400
+            : [400, 413, 415].includes(response.status)
               ? 'Check the highlighted fields and try again.'
               : response.status === 409
                 ? 'This event changed or is no longer available. Check the latest details and try again.'

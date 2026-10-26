@@ -2,7 +2,7 @@ import { ArrowUpRight, MapPin, Users } from 'lucide-react'
 import { Link } from 'react-router'
 
 import type { EventSummary } from '../api/event-dtos'
-import { EventImage } from './event-image'
+import { PersistentEventImage } from './persistent-event-image'
 
 type EventCardProps = { event: EventSummary }
 
@@ -17,8 +17,9 @@ export function EventCard({ event }: EventCardProps) {
         aria-label={`View ${event.title}`}
         className="relative flex h-40 items-center justify-center overflow-hidden bg-secondary focus-visible:outline-2 focus-visible:outline-ring focus-visible:-outline-offset-2"
       >
-        <EventImage
-          src={event.cover.imageUrl}
+        <PersistentEventImage
+          eventId={event.id}
+          cover={event.cover}
           title={event.title}
           category={event.game.category}
           className="absolute inset-0"

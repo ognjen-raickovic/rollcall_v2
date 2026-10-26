@@ -11,23 +11,25 @@ with inline validation and host authorization.
 The final polish adds optional custom event covers, curated multi-select tags, and a
 matching light theme alongside the default dark theme.
 
-**Current frontend milestone: 4C-2.** Homepage/discovery/details and event creation,
+**Current milestone: 4D.** Homepage/discovery/details and event creation,
 editing, deletion, joining and leaving use Fastify/PostgreSQL and real Supabase UUID
 accounts. Host-only forms use the real games/geography catalogs; participants gain and
 lose address access through verified membership. Numeric workflows remain isolated at
 development-only `/demo/events/*`; public pages never fall back to fixtures. Real event
-forms use default illustrations until Storage is implemented. See
+forms now upload persistent covers to a private Supabase Storage bucket, with host-only
+replacement/removal, validated WebP processing and short-lived authorized access. See
+[cover setup and contracts](docs/event-covers.md), [cover verification](docs/event-cover-verification.md),
 [event action verification](docs/event-actions-verification.md) and the historical
 [read integration verification](docs/event-frontend-verification.md).
 
 Earlier milestone sections below describe their delivery boundaries; the current real
-event behavior is the 4C-2 integration above.
+event behavior includes the 4D integration above.
 
 **Backend Milestone 1** adds an independent Fastify API, Supabase database schema and
 local development tools. Its original boundary was health and geography; the current
 Milestones 3A/3B implement real authentication and profiles, and 4A adds persistent event
 backend APIs. Milestone 4B adds real backend attendance. Milestones 4C-1/4C-2 connect real
-frontend reads and mutations; uploads remain later work.
+frontend reads and mutations; 4D adds persistent event covers.
 Start with [backend setup](backend/README.md),
 [architecture](docs/backend-architecture.md), [schema](docs/database-schema.md), and
 [roadmap](docs/backend-roadmap.md).
@@ -94,6 +96,7 @@ pnpm test:backend                # backend tests without a running database
 pnpm test:profiles               # focused frontend profile/account-isolation checks
 pnpm test:events                 # real event clients, pagination and viewer privacy
 pnpm test:event-actions          # mutation contracts, cache/privacy, form/date mapping
+pnpm test:event-covers           # signed access, multipart requests and cover cache safety
 pnpm format                     # Prettier on frontend/src
 pnpm --filter frontend preview  # preview the production build
 ```
@@ -111,6 +114,7 @@ pnpm db:start
 # Copy backend/.env.example to backend/.env and set the local URL/key from Supabase status.
 # Copy frontend/.env.example to frontend/.env and set its public local URL/key too.
 pnpm exec supabase db push --local # apply pending migrations without resetting geography
+pnpm covers:setup                # local-only server operation key; writes ignored backend/.env
 pnpm dev:backend                 # http://127.0.0.1:3001
 pnpm db:lint                    # local SQL analysis
 pnpm db:test                    # local database tests
@@ -124,6 +128,11 @@ For UI development, keep Supabase running, start `pnpm dev:backend` in one termi
 `frontend/.env` settings are documented in `frontend/.env.example`. Set
 `VITE_SUPABASE_URL=http://127.0.0.1:55321` and `VITE_SUPABASE_PUBLISHABLE_KEY` to the
 local public key. Never copy a secret/service-role key into a browser environment.
+Cover uploads also require local Storage (included by `pnpm db:start`) and the additive
+cover migration. Run `pnpm covers:setup` once, then restart Fastify. The server-only
+`EVENT_COVER_OPERATION_KEY` stays in ignored backend configuration; it is never a Vite
+variable. Setup stores only its hash in PostgreSQL and refuses implicit rotation. See
+[cover setup](docs/event-covers.md) for cleanup/recovery and existing-stack startup details.
 Open `http://localhost:5173/register`; local confirmation/reset emails appear at
 `http://127.0.0.1:55324`. Follow email links in the same browser/origin that requested them
 because PKCE uses a locally retained verifier. Exact local redirect URLs are allowlisted
@@ -164,6 +173,8 @@ resetting existing data. Traces are disabled to keep session credentials out of 
 For the real multi-user action workflow, set `RUN_LOCAL_EVENT_ACTIONS_UI=true` and run
 `pnpm --filter frontend exec playwright test tests/event-actions-ui.spec.mjs`. The main
 journey runs at 375px/1440px in light/dark; focused conflict/privacy cases run once.
+For persistent image workflows, set `RUN_LOCAL_EVENT_COVERS_UI=true` and run
+`pnpm --filter frontend exec playwright test tests/event-covers-ui.spec.mjs`.
 See [the final frontend review](docs/frontend-review.md) for executed checks and limitations.
 
 ## Architecture and scope
@@ -197,6 +208,8 @@ docs/events-api-verification.md Executed Milestone 4A checks and remaining bound
 docs/attendance-verification.md Executed Milestone 4B lifecycle, privacy and concurrency checks
 docs/event-frontend-verification.md Executed 4C-1 read/cache/browser checks and 4C-2 boundary
 docs/event-actions-verification.md Executed 4C-2 write/cache/multi-user browser checks
+docs/event-covers.md          Private Storage, image API, setup and lifecycle recovery
+docs/event-cover-verification.md Executed 4D file/RLS/browser checks and limits
 docs/geographic-import.md    GeoNames scope, attribution, safe reruns and search behavior
 .claude/                     Preserved rules, commands, design skill, reviewer, format hook
 ```

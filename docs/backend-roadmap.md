@@ -138,13 +138,16 @@ actor authorizes persistent writes. Default covers only until Storage; browser d
 remain demo-only. Backend/schema/RLS are unchanged. Focused clients, real multi-user browser
 acceptance and database regressions are recorded in [action verification](event-actions-verification.md).
 
-## Milestone 4D: event covers — planned
+## Milestone 4D: event covers — implemented locally
 
-Implement Supabase Storage with ownership-aware bucket policies, validated image content,
-bounded files and a clear public/private delivery model. Define object references, signed
-URL behavior, replacement/deletion lifecycle and orphan cleanup. Keep service credentials
-server-side. Existing mock data URLs are not a production storage format; no uploads or
-buckets are created during Milestone 1.
+Private `event-covers` Storage uses verified hosts plus a server-only operation capability,
+checked reservations and protected lifecycle records. Backend-mediated uploads validate and
+re-encode bounded images; real forms support staged creation/retry and replacement/removal.
+Public/unlisted/private access follows event permissions. Backend-only signing limits URLs
+to 60 seconds; viewer caches refresh and clear on auth/access changes. Retired objects are
+cleaned through supported Storage APIs with bounded retries/tombstones. No service-role
+bypass, hosted operation or global cleanup job was introduced. See [implementation](event-covers.md)
+and [local verification](event-cover-verification.md). Invitation/role work remains Milestone 5.
 
 ## Milestone 5: private invitations and role-authorized access — planned
 

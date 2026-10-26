@@ -9,6 +9,40 @@ never "RollCall v2" in the UI.
 
 ## Delivery stages
 
+Current delivery is Milestone 4D below; earlier sections record their historical boundaries.
+
+## Current Milestone 4D: persistent event covers
+
+Hosts can select JPEG/PNG/WebP source images up to 3 MiB through the existing form picker.
+The server verifies extension, MIME and decoded content, rejects corrupt/animated/unsupported
+images, limits source dimensions/pixels and re-encodes metadata-free WebP within 1600px.
+Objects persist in one private `event-covers` bucket under server-generated UUID paths.
+Normal event JSON writes cannot attach arbitrary paths or clear an existing cover.
+
+Creation saves the event first, then uploads its optional cover. A failed image request
+preserves the entered form and saved event UUID, explains partial success, and provides
+Retry cover/View saved event actions. Retry reuses the saved event. Hosts can replace or
+remove covers; old objects become removable only after a safe association change.
+Default game illustrations remain available in forms, homepage/cards and details.
+
+Storage RLS requires both verified event ownership and a server-only operation capability
+for reserved-path writes. Public/unlisted reads follow event access; private covers require
+the host/current participant. Only backend-authorized requests may sign URLs, for 60 seconds;
+ordinary users cannot bypass that limit by signing directly. Existing URLs may remain usable
+for their remaining lifetime after visibility/membership changes. No unrestricted service-role
+client or public bucket is introduced.
+
+Viewer-specific cover queries refresh active access after 45 seconds, retain nothing when
+inactive and are cleared on auth transitions, relevant mutations and private departure.
+No signed URL or image draft is stored persistently in the browser. Image failures fall back
+to the standard illustration with bounded refresh behavior. Numeric demo covers remain isolated.
+
+An additive migration configures the bucket, checked RPCs and a protected cleanup manifest.
+Replacement/removal/deletion queue retired paths; supported Storage operations remove files.
+Bounded retries handle partial failure and abandoned reservations, without a global scanner.
+Only local Supabase was modified. No invitations, administration or deployment is included.
+See [cover implementation](docs/event-covers.md) and [verification](docs/event-cover-verification.md).
+
 Workshop 3 delivered the working frontend described below. Backend development is now
 incremental: Milestone 1 adds the separate foundation; Milestone 2A adds geographic import
 and backend search. Milestone 2B connects country/city selection to the frontend while
@@ -20,7 +54,7 @@ Milestone 4B adds real transactional attendance and participant-aware backend de
 Milestone 4C-1 connects the React homepage, discovery and details to real event reads.
 Milestone 4C-2 connects real event creation/editing/deletion and participation below.
 
-## Current Milestone 4C-2: real frontend event actions
+## Milestone 4C-2: real frontend event actions (historical delivery)
 
 `/events/new` requires a verified real account; `/events/:eventId/edit` additionally requires
 the returned viewer to be the UUID event host. Both reuse the shared form presentation,

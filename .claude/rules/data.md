@@ -12,6 +12,10 @@ paths:
   The CRUD/join/leave mock guidance below applies only to numeric demo APIs under
   development-only `/demo/events` routes. Never submit actors/country/counts/image data URLs
   through real event writes. Real profiles and experience have their own authenticated APIs.
+- Real covers use separate multipart API/hooks. Never send draft data URLs through normal
+  JSON or accept arbitrary Storage references. Retain a saved UUID after partial upload
+  failure, keep signed access ephemeral/viewer-scoped, and cancel/clear capabilities on
+  auth/access changes. Follow `docs/event-covers.md`; the server operation key is never public.
 - Real event detail keys use the shared `EVENT_DETAILS_QUERY_KEY` plus event/viewer UUIDs;
   auth transitions destroy sensitive queries and reads consume abort signals/recheck identity.
   Discovery has separate public cursor-page keys. Never mix public backend records with

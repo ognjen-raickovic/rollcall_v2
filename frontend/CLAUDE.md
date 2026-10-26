@@ -67,7 +67,8 @@ Dependency direction: shared code -> features -> app, never the other way around
   addresses/private details, with no new private admission. Demo mutations remain mocked.
 - Read `../SPEC.md` for scope. Homepage, demo login, discovery/details, and shared create/edit
   forms, optional browser-side covers, curated tags, and light/dark themes are implemented.
-  Recurring events, invitations, cloud uploads, and advanced administration remain out of scope.
+  Milestone 4D adds persistent event cover uploads; profile pictures, recurring events,
+  invitations and advanced administration remain out of scope.
 - Real profiles expose owner editing and game-experience mutations; the real game catalog is read-only.
   Separate numeric demo user/game catalogs expose reads only. Events expose CRUD and join/leave, applying the scoped
   CRUD guidance in `.claude/rules/data.md`. Use events as the feature implementation reference.
@@ -103,7 +104,7 @@ Dependency direction: shared code -> features -> app, never the other way around
 - `/events/new` requires real Auth and `/events/:eventId/edit` verifies the host DTO/UUID.
   Share `EventFormView`, keeping real/demo controllers separate. Send selected cityId and
   allowed fields only; never actor/country/counts/images. Preserve drafts on errors/refetch
-  and unchanged ISO timestamps when editing. Default covers only on real forms until 4D.
+  and unchanged ISO timestamps when editing. Covers use the separate 4D multipart API.
   Deletion requires an accessible confirmation. Demo actions remain development-only under
   `/demo/events/*` with opt-in and never receive UUID actors/events. Keep useful mock tests.
 - Read `../docs/profiles.md`. Public profiles exclude email/private birth year/roles. Compose
@@ -119,10 +120,18 @@ Dependency direction: shared code -> features -> app, never the other way around
   `EventFormView` presentation and `event-date-time.ts` conversion without numeric adapters.
 - Use `event-tags.ts` for the canonical EventTag values and experience compatibility. Native
   checkboxes in the Radix popover provide multi-selection; no arbitrary tags are accepted.
-- Demo-only `api/event-covers.ts` validates/prepares JPG/PNG/WebP files up to 3 MiB, resizing to a maximum
+- `api/event-covers.ts` validates/prepares JPG/PNG/WebP files up to 3 MiB, resizing to a maximum
   1600px edge and encoding a bounded data URL. Preserve custom covers across game changes;
   removing a custom cover restores the selected game's default. Never store cover data in
-  localStorage/sessionStorage. No object URLs or backend storage providers are needed.
+  localStorage/sessionStorage. Numeric demos retain these values in their own mock API;
+  real forms convert the draft to a multipart File outside the normal event mapper.
+- Read `../docs/event-covers.md`. Real custom cover metadata contains only a version and
+  local fallback illustration; `persistent-event-covers-api.ts` resolves validated short-lived
+  access through query hooks. Cover keys include event/viewer/version, retain nothing when
+  inactive, refresh in the foreground and clear on auth/access mutations. Never put signed
+  URLs in query keys, storage or logs. Preserve account checks before/after HTTP and bounded
+  image-error refresh. Staged save retains the persisted UUID if an image fails; retry never
+  creates another event. Keep the existing picker, layout and numeric demo separation.
 - `src/lib/theme.ts` and the head script in `index.html` share `rollcall.theme`. Keep both
   bootstrapping and runtime switching consistent; all palettes stay in `src/index.css`.
 - Editor access and update operations require the host. Private event reads require the host

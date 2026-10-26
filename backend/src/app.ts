@@ -1,4 +1,5 @@
 import Fastify from 'fastify'
+import multipart from '@fastify/multipart'
 import type { Environment } from './config/env.js'
 import { createDatabaseClient } from './db/supabase.js'
 import { installErrorHandler } from './middleware/error-handler.js'
@@ -14,6 +15,11 @@ import type { ProfileRepository } from './modules/profiles/types.js'
 import { registerEventRoutes } from './modules/events/event-routes.js'
 import { createEventRepository } from './modules/events/event-repository.js'
 import type { EventRepository } from './modules/events/types.js'
+import { registerEventCoverRoutes } from './modules/events/event-cover-routes.js'
+import {
+  createEventCoverRepository,
+  type EventCoverRepository,
+} from './modules/events/event-cover-repository.js'
 
 export function buildApp(
   env: Environment,
@@ -22,6 +28,7 @@ export function buildApp(
     verifyToken?: TokenVerifier
     profiles?: (accessToken?: string) => ProfileRepository
     events?: (accessToken?: string) => EventRepository
+    covers?: (accessToken?: string) => EventCoverRepository
     logger?: boolean
   } = {},
 ) {
@@ -35,6 +42,7 @@ export function buildApp(
               'req.headers.authorization',
               'req.headers.apikey',
               'req.headers.cookie',
+              'req.headers["x-rollcall-cover-key"]',
               'res.headers["set-cookie"]',
             ],
             serializers: {
@@ -42,11 +50,13 @@ export function buildApp(
             },
           },
     bodyLimit: 16384,
-    requestTimeout: 10000,
+    requestTimeout: 20000,
     trustProxy: false,
   })
   installErrorHandler(app)
+  void app.register(multipart, { limits: { fileSize: 3 * 1024 * 1024, files: 1, fields: 0, parts: 1 } })
   const verify = options.verifyToken ?? createTokenVerifier(env)
+  const covers = options.covers ?? ((token?: string) => createEventCoverRepository(env, token))
   registerAuthRoutes(app, verify)
   registerProfileRoutes(app, {
     verify,
@@ -55,9 +65,10 @@ export function buildApp(
   })
   registerEventRoutes(app, {
     verify,
-    repository:
-      options.events ?? ((token) => createEventRepository(createDatabaseClient(env, fetch, token))),
+    cleanupCover: (eventId, token) => covers(token).cleanup(eventId),
+    repository: options.events ?? ((token) => createEventRepository(createDatabaseClient(env, fetch, token))),
   })
+  registerEventCoverRoutes(app, { verify, repository: covers })
   app.get('/health', async () => ({ status: 'ok', service: 'rollcall-api' }))
   const repository = options.geography ?? createGeographyRepository(createDatabaseClient(env))
   registerGeographyRoutes(app, repository, {
