@@ -6,6 +6,8 @@ import { SuspensionNotice } from '@/features/users/components/suspension-notice'
 import { LogoutFeedback } from '@/features/users/components/logout-feedback'
 
 import { AppLayout } from '@/components/layout/app-layout'
+import { MobileNavigation } from '@/components/layout/mobile-navigation'
+import { MobileSessionMenu } from '@/features/users/components/mobile-session-menu'
 import { SessionMenu } from '@/features/users/components/session-menu'
 import { demoModeEnabled } from '@/features/users/api/auth-client'
 
@@ -24,6 +26,13 @@ export function RootLayout() {
     <>
       <AppLayout
         account={<SessionMenu />}
+        mobileNavigation={
+          <MobileSessionMenu
+            renderNavigation={(props) => (
+              <MobileNavigation {...props} showDemoEvents={demoModeEnabled} />
+            )}
+          />
+        }
         showDemoEvents={demoModeEnabled}
         content={suspended && !safe ? <SuspendedAccount /> : undefined}
         notice={

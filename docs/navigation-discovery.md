@@ -1,12 +1,58 @@
 # Account navigation and event discovery
 
+## Current responsive navigation
+
+The desktop navbar starts at 1280px, leaving room for the four site links (Explore events,
+Host an event, About Us, Contact), optional Admin link and Welcome / account icon / theme
+controls. The RollCall logo remains the homepage link. Both modes use one shared site-link
+list. Only one navigation mode is mounted, avoiding hidden menus/dialogs and duplicate
+visible theme controls. Smaller viewports have a compact logo/hamburger header.
+
+The greeting reads the current UUID's public-safe profile after matching backend identity
+and active status verification. Prefer case-preserved username, then display name, then
+Account. Pending/failed verification shows no name; cache keys and response UUID checks
+prevent another account's cached identity appearing. Email and private profile fields are
+never used. Existing Auth/session, status and permission APIs/guards are unchanged.
+
+Mobile navigation uses the existing Radix Dialog dependency: right-side full-height drawer,
+backdrop, focus trap/return, scroll lock, Close button and Escape/outside interaction. Links
+and route changes close it; switching to desktop removes the drawer. A scrollable body
+keeps account/theme controls reachable in short landscape/large-text layouts. Animation
+is 250ms and respects reduced motion. Mobile profile is one full-row direct profile link,
+not another dropdown. My Events, Settings and confirmed logout remain separate actions.
+
+Logout confirmation stays outside the drawer portal. Closing finishes before confirmation
+opens; cancellation returns to the hamburger. Existing button order, initial cancellation
+focus, error/pending behavior and SDK local-signout semantics are preserved. Permissions
+still determine Admin visibility. Development numeric demos remain explicitly labeled and
+never gain real account actions. The same ThemeToggle/store handles both modes.
+
+Focused browser verification uses synthetic intercepted APIs, not hosted Auth acceptance.
+The new responsive-navigation suite covers 320/375/768/1024/1440px in both themes, keyboard
+and backdrop interaction, username/fallback, pending account switches, roles/suspension,
+logout and theme persistence. Existing discovery and information-page fixtures are updated
+for drawer navigation. No database/API contract, migration, environment or contact-address
+changes are required. Inspect actual staging accounts and touch/screen-reader behavior
+after separately approved deployment; do not treat intercepted fixtures as hosted proof.
+
+
+## Responsive verification
+
+Responsive follow-up checks passed: root typecheck/lint/build and `git diff --check`;
+the new responsive-navigation browser suite (five widths, both themes, including an
+open-drawer resize); existing navigation/discovery and information-page browser suites;
+and 12 mock-contract checks. Representative screenshots were inspected. Build retains
+a non-blocking chunk-size advisory. These are local UI/fixture checks, not hosted Auth
+acceptance or a physical-device/screen-reader audit. No new dependency was added.
+
 ## Verification incident: evidence and limits
 
 The operator's retest succeeded: password login, account status, permissions, countries
 and discovery returned 200; the account page worked. The earlier verification error is
 **currently not reproducible**, not proven permanently fixed. A missing `/api/me` entry
-in a partial capture is not a failed request: it runs on Account Settings and may be
-cached briefly. Migration 18 changes registration spelling and a safe profile field,
+in a partial capture is not a failed request. At that milestone identity verification ran
+on Account Settings and could be cached briefly; the current navbar also verifies identity.
+Migration 18 changes registration spelling and a safe profile field,
 not token verification, `/api/me` or account-status authorization.
 
 Current ordinary frontend-file diagnostics reported a local Supabase origin; loopback

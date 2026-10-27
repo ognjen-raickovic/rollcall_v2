@@ -1,0 +1,24 @@
+import { useAuth, useAccountIdentity } from './use-auth'
+import { useAccountStatus } from './use-account-status'
+import { usePublicProfile } from './use-profiles'
+
+export function useNavigationAccount() {
+  const auth = useAuth()
+  const identity = useAccountIdentity()
+  const status = useAccountStatus(auth.data?.id ?? null)
+  const verified = Boolean(
+    auth.data &&
+    !auth.isPending &&
+    !auth.error &&
+    identity.data?.id === auth.data.id &&
+    !identity.isFetching &&
+    !identity.error &&
+    status.data?.status === 'active' &&
+    !status.isFetching &&
+    !status.error,
+  )
+  const profile = usePublicProfile(verified ? (auth.data?.id ?? '') : '')
+  if (!verified) return null
+  const matched = !profile.error && profile.data?.id === auth.data?.id ? profile.data : null
+  return matched?.username?.trim() || matched?.displayName.trim() || 'Account'
+}

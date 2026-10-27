@@ -11,7 +11,9 @@ import { ModerationDashboard } from './moderation-dashboard'
 import { useAccountStatus } from '../api/use-account-status'
 import { AccountAccess } from './account-access'
 
-export function AdminNavigation() {
+type AdminNavigationProps = { onNavigate?: () => void; className?: string }
+
+export function AdminNavigation({ onNavigate, className }: AdminNavigationProps = {}) {
   const auth = useAuth(),
     permissions = usePermissions()
   const status = useAccountStatus(auth.data?.id ?? null)
@@ -19,7 +21,7 @@ export function AdminNavigation() {
     status.data?.status === 'active' &&
     !permissions.isError &&
     permissions.data?.capabilities.accessAdmin ? (
-    <Link to="/admin" className="text-sm font-medium hover:text-primary">
+    <Link to="/admin" onClick={onNavigate} className={className ?? 'text-sm font-medium hover:text-primary'}>
       Admin
     </Link>
   ) : null
