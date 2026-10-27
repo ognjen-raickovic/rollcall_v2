@@ -103,34 +103,17 @@ export const authApi = {
     const result = await authClient().auth.signOut({ scope: 'local' })
     if (result.error) throw authError(result.error)
   },
-  me: async (signal?: AbortSignal): Promise<Account> => {
-    const { data, error } = await authClient().auth.getSession()
-    if (error || !data.session) throw new Error('Log in to check your account.')
-    const configured = (import.meta.env.VITE_API_ORIGIN ?? '').trim()
-    const origin = configured ? new URL(configured) : new URL(window.location.origin)
-    if (
-      !['http:', 'https:'].includes(origin.protocol) ||
-      origin.username ||
-      origin.password ||
-      origin.pathname !== '/' ||
-      origin.search ||
-      origin.hash
-    )
-      throw new Error('The API origin is invalid.')
-    const response = await fetch(new URL('/api/me', origin), {
-      headers: { Authorization: `Bearer ${data.session.access_token}` },
-      signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(5000)]) : AbortSignal.timeout(5000),
-      cache: 'no-store',
+  me: async (expectedUserId: string, signal?: AbortSignal): Promise<Account> => {
+    const token = await authApi.accessToken(expectedUserId)
+    if (!token) throw new HttpError(401, 'Log in to check your account.')
+    const account = await httpRequest('/api/me', accountSchema, {
+      token,
+      signal,
+      viewerId: expectedUserId,
+      resource: 'auth',
     })
-    if (!response.ok)
-      throw new Error(
-        response.status === 401
-          ? 'Your account could not be verified. Log out and log in again.'
-          : 'The account service is unavailable. Please try again.',
-      )
-    const account = accountSchema.parse(await response.json())
-    if (account.id !== data.session.user.id)
-      throw new Error('Your account could not be verified. Log out and log in again.')
+    if (signal?.aborted || account.id !== expectedUserId || !(await authApi.accessToken(expectedUserId)))
+      throw new HttpError(401, 'Your account changed. Reload this page and try again.')
     return account
   },
 }

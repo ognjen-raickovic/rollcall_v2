@@ -4,6 +4,40 @@
 The account Danger Zone is informational. Do not perform deletion with the current
 ordinary host/profile APIs or weaken RLS to make it possible.
 
+## Current implementation gate: navigation/discovery follow-up
+
+The current schema still has host/member RESTRICT dependencies, immutable audits,
+private DOB/registration data and independently checked Storage. Migrations 19–20 add
+read-only discovery/My Events functions and indexes; they provide no deletion authority,
+recent-reauthentication verifier, durable cleanup jobs or privileged worker. A paginated
+My Events response must never be treated as a complete deletion inventory.
+
+**Deletion remains blocked.** The event-removal policy proposed below has not been
+approved. Initial permitted policy must block an account that hosts any event, including
+past/cancelled events, rather than destroying other players' participation or changing
+immutable ownership. Even accounts without hosted events need approved retention,
+superadmin/suspended-account policy, provider reauthentication evidence and tested isolated
+Auth Admin/Storage processing before any enabled deletion control can be shipped.
+
+Proposed separate source structure (not created/implemented):
+
+- `backend/src/modules/account-deletion/deletion-routes.ts`, `deletion-schema.ts`,
+  `deletion-repository.ts`: verified owner challenge/request/status only, no Admin key.
+- `backend/workers/account-deletion/main.ts`, `reauthentication.ts`, `job-runner.ts`,
+  `storage-cleanup.ts`, `auth-admin.ts`: separately packaged private worker and secret
+  boundary; independently validates job/subject/stage and uses exact object manifests.
+- Proposed future migrations, after explicit policy review: `20261028000100_account_deletion_jobs.sql`
+  (closed challenge/job/tombstone tables), `20261028000200_account_deletion_guards.sql`
+  (live guards/RLS/Storage plus role/account/event serialization), and
+  `20261028000300_account_deletion_worker.sql` (narrow job-scoped execution and checkpoint ACLs).
+- `frontend/src/features/users/components/account-deletion.tsx`: only after end-to-end
+  acceptance, irreversible confirmation plus job status; never a direct Auth delete call.
+- Dedicated worker/API/Data API/Storage tests for reauthentication/replay, cross-user
+  attempts, all superadmin protections, hosted-event blocking, current membership cleanup,
+  pending/orphan objects, old JWTs, immutable audits, concurrent writes and crash/retry.
+
+These names are a proposed plan, not deployed capabilities or reserved migration history.
+
 ## Existing constraints inspected
 
 - `auth.users -> profiles` cascades; private DOB, roles, experience, suspension state

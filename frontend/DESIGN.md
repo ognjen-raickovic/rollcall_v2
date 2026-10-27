@@ -2,6 +2,13 @@
 
 ## Product and users
 
+Navigation uses a single labeled account icon: guests link to login; real accounts
+open a Radix menu with My Profile, Settings, My Events and confirmed logout. Admin links
+stay separate. Auth return navigation sits at the content container's top-left while
+the shared card remains centered. Native selectors use inset chevrons, consistent 44px
+height and clear labels. Discovery keeps common fields visible, Sort accessible and
+advanced filters under More filters; matching semantics/timezones are explicit.
+
 My Profile shares the public player layout; private account details live in Account
 Settings, grouped into account information, security and an informational Danger Zone.
 Logout uses a centered native dialog with equal-width side-by-side buttons: primary
@@ -9,7 +16,8 @@ Yes, log out on the left, outlined No, stay on the right. Initially focus cancel
 preserve keyboard wrapping, token-based palettes and 375px/1440px layouts.
 
 Authentication uses one centered 448px column at all widths: a quiet centered brand/
-heading/help area, one bordered form or status card, then centered secondary navigation.
+heading/help area, one bordered form or status card and centered secondary links.
+Back to discovery is positioned separately at the content container's upper-left.
 Remove the promotional paragraph/sidebar; labels and input text stay left aligned.
 Callback loading, success and failure use centered icons/copy with clear full-width actions.
 Use natural scrolling, compact form gaps and tokens in both themes.

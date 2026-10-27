@@ -2,6 +2,12 @@
 
 ## Product
 
+Current navigation/discovery work adds an account-icon menu, active UUID My Events,
+global database filters/sorting and a top-left auth return link. Migrations 19–20 are
+local-only pending approval. Public discovery stays public/scheduled; cancelled private
+relationships are available only through authorized My Events. Deletion and username
+recovery remain separately gated/deferred. See [implemented scope](docs/navigation-discovery.md).
+
 The account experience separates public My Profile from private Account Settings,
 with shared accessible logout confirmation. Account deletion remains design-only;
 see [account experience](docs/account-experience.md) and its separate approval proposal.

@@ -20,6 +20,7 @@ import { registerProfileRoutes } from './modules/profiles/profile-routes.js'
 import { createProfileRepository } from './modules/profiles/profile-repository.js'
 import type { ProfileRepository } from './modules/profiles/types.js'
 import { registerEventRoutes } from './modules/events/event-routes.js'
+import { registerPersonalEventRoutes } from './modules/events/personal-event-routes.js'
 import { createEventRepository } from './modules/events/event-repository.js'
 import type { EventRepository } from './modules/events/types.js'
 import { registerEventCoverRoutes } from './modules/events/event-cover-routes.js'
@@ -71,6 +72,7 @@ export function buildApp(
   const verify = options.verifyToken ?? createTokenVerifier(env)
   const covers = options.covers ?? ((token?: string) => createEventCoverRepository(env, token))
   registerAuthRoutes(app, verify)
+  registerPersonalEventRoutes(app,env,verify)
   registerSuspensionRoutes(app,env,verify)
   registerAdminRoutes(app, { verify, repository: (token) => createAdminRepository(createDatabaseClient(env, fetch, token)) })
   registerProfileRoutes(app, {

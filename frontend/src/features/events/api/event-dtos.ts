@@ -59,6 +59,12 @@ function validSummary(value: {
 export const eventSummarySchema = z
   .object({ ...summaryFields, visibility: z.literal('public'), status: z.literal('scheduled') })
   .refine(validSummary)
+export const myEventSummarySchema = z.object(summaryFields).refine(validSummary)
+export type MyEventSummary = z.infer<typeof myEventSummarySchema>
+export const myEventPageSchema = z.object({
+  items: z.array(myEventSummarySchema).max(50),
+  pageInfo: z.object({ limit: z.number().int().min(1).max(50), nextCursor: z.string().max(1024).nullable() }),
+})
 export const eventPageSchema = z.object({
   items: z.array(eventSummarySchema).max(50),
   pageInfo: z.object({
@@ -66,7 +72,7 @@ export const eventPageSchema = z.object({
     nextCursor: z
       .string()
       .min(1)
-      .max(512)
+      .max(1024)
       .regex(/^[A-Za-z0-9_-]+$/)
       .nullable(),
   }),
@@ -121,6 +127,27 @@ export const eventDiscoveryFiltersSchema = z
     gameId: referenceId.optional(),
     startsAfter: instant.optional(),
     startsBefore: instant.optional(),
+    startsBeforeExclusive: z.boolean().optional(),
+    sort: z.enum(['soonest', 'latest', 'title-asc', 'title-desc']).optional(),
+    period: z.enum(['upcoming', 'past', 'all']).optional(),
+    availability: z.enum(['all', 'open', 'full']).optional(),
+    category: category.optional(),
+    tags: z
+      .array(z.enum(EVENT_TAGS))
+      .max(6)
+      .refine((value) => new Set(value).size === value.length)
+      .optional(),
+    experience: z.enum(['all-levels', 'beginner', 'experienced']).optional(),
+    maxMinimumAge: z.number().int().min(0).max(99).optional(),
+    timeFrom: z
+      .string()
+      .regex(/^([01]\d|2[0-3]):[0-5]\d$/)
+      .optional(),
+    timeTo: z
+      .string()
+      .regex(/^([01]\d|2[0-3]):[0-5]\d$/)
+      .optional(),
+    timeZone: z.string().min(1).max(100).optional(),
     upcomingOnly: z.boolean().optional(),
     availableOnly: z.boolean().optional(),
     status: z.literal('scheduled').optional(),
@@ -132,6 +159,9 @@ export const eventDiscoveryFiltersSchema = z
       !value.startsBefore ||
       Date.parse(value.startsAfter) <= Date.parse(value.startsBefore),
   )
+  .refine((value) => !(value.availableOnly && value.availability === 'full'))
+  .refine((value) => !(value.timeFrom || value.timeTo) || Boolean(value.timeZone))
+  .refine((value) => !value.timeFrom || !value.timeTo || value.timeFrom <= value.timeTo)
 
 export type EventSummary = z.infer<typeof eventSummarySchema>
 export type EventDetails = z.infer<typeof eventDetailsSchema>

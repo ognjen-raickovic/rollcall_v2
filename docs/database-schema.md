@@ -2,6 +2,14 @@
 
 ## Milestone 4D additions
 
+Forward migrations 19–20 add discovery filters/sort-aware keyset positions and the
+owner/member-only `my_events` RPC. Partial title/tag and host/member lookup indexes
+support bounded reads. Existing runtime RLS/table grants and private-data contracts
+are preserved; My Events uses the existing non-bypass executor, live active-account
+guard, empty search path and authenticated-only wrappers. Temporary migration-role
+membership is revoked before commit. No tables, Auth/DOB triggers or deletion capability
+are added. See [contracts and approval order](navigation-discovery.md).
+
 The later additive `20261027000100_registration_identity.sql` adds nullable unique
 `profiles.username`, private `profile_private.date_of_birth`, closed RLS reservation/
 rate-counter tables and checked preparation/claim/metadata-sanitization triggers.

@@ -3,7 +3,9 @@
 ## Implementation
 
 AuthShell now uses a centered 448px maximum-width column: small brand icon, centered
-heading/help, one bordered form/status card, then return navigation. Fields remain
+heading/help and one bordered form/status card. The subsequent navigation follow-up
+moves return navigation to the content container's top-left while keeping the card
+centered. Fields remain
 left aligned. Compact vertical spacing and normal document scrolling support short
 mobile screens. There is no desktop sidebar, promotional paragraph, fixed-height form
 or new palette. Registration, login, callback, recovery and reset share this shell.

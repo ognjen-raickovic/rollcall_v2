@@ -17,6 +17,7 @@ type LocationPickerProps = {
   legacyCity?: string
   required?: boolean
   allCountries?: boolean
+  compact?: boolean
   inputRef?: Ref<HTMLInputElement>
   onBlur?: () => void
   onQueryChange?: (query: string) => void
@@ -33,6 +34,7 @@ export function LocationPicker({
   legacyCity,
   required = true,
   allCountries = false,
+  compact = false,
   inputRef,
   onBlur,
   onQueryChange,
@@ -40,6 +42,7 @@ export function LocationPicker({
   const countries = useCountries()
   const allowed = countries.data?.some((country) => country.isoCode === countryCode) ?? false
   const cityId = `${idPrefix}-city`
+  const showHelp = !compact || Boolean(legacyCity && !value)
   return (
     <div className="grid min-w-0 gap-4 sm:grid-cols-2">
       <CountrySelector
@@ -74,13 +77,18 @@ export function LocationPicker({
           onBlur={onBlur}
           onQueryChange={onQueryChange}
           initialQuery={legacyCity}
-          describedBy={`${cityId}-help${error ? ` ${cityId}-error` : ''}`}
+          describedBy={
+            [showHelp ? `${cityId}-help` : '', error ? `${cityId}-error` : ''].filter(Boolean).join(' ') ||
+            undefined
+          }
         />
-        <p id={`${cityId}-help`} className="text-xs leading-relaxed text-muted-foreground">
-          {legacyCity && !value
-            ? 'Confirm the existing location by choosing a city from the suggestions.'
-            : 'Choose a suggestion to confirm the city. Use arrow keys and Enter, or select a result.'}
-        </p>
+        {showHelp && (
+          <p id={`${cityId}-help`} className="text-xs leading-relaxed text-muted-foreground">
+            {legacyCity && !value
+              ? 'Confirm the existing location by choosing a city from the suggestions.'
+              : 'Choose a suggestion to confirm the city. Use arrow keys and Enter, or select a result.'}
+          </p>
+        )}
         {error && (
           <p id={`${cityId}-error`} className="text-sm text-destructive">
             {error}

@@ -33,6 +33,7 @@ export function AccountStatusSync() {
       ['own-profile'],
       ['profile-experience'],
       ['account-identity'],
+      ['my-events'],
     ])
       client.removeQueries({ queryKey: key })
   }, [status.data?.status, viewer, client])

@@ -745,6 +745,27 @@ Private event_reports stores report UUID, nullable live event/reporter FKs (SET 
 
 Private account_suspensions uses the profile UUID PK/FK, active/suspended state, last suspend/reinstate times, verified moderator UUIDs and internal 5–500-character reasons. Missing state = active; no public profile role/status/note fields are added. Append-only suspension_audit stores actor/target UUID snapshots, transition, action, reason and timestamp. Self status returns only {status}; exact moderator lookup returns minimal account/role/status/canManage data. State/audit writes are atomic and idempotent. See [HTTP/validation/privacy contracts](account-suspensions.md).
 
+## Current discovery and personal event reads (19–20)
+
+`GET /api/events` remains anonymous/public/scheduled only. In addition to existing
+search/place/game/date bounds, it accepts `category`, `period=upcoming|past|all`,
+`availability=all|open|full`, `sort=soonest|latest|title-asc|title-desc`, comma-separated
+canonical `tags` (match all, at most six), `experience` (specific level includes
+all-levels), `maxMinimumAge=0..99`, `timeFrom`/`timeTo` (`HH:mm`, inclusive start-minute
+bounds) with validated `timeZone`, and optional `startsBeforeExclusive` (UI inclusive
+end-day conversion). Legacy date bounds/default soonest cursors remain compatible.
+No public visibility/actor/cancelled parameter is allowed. All filters/order precede
+pagination; title cursors preserve the database ordering key. No public counts over
+private/unlisted/cancelled records or addresses are introduced.
+
+`GET /api/me/events` requires a verified active UUID and accepts only relation
+`hosting|joined`, period `upcoming|past|all`, sort `soonest|latest`, limit 1..50 and
+matching cursor. SQL `my_events` independently derives the caller from the verified
+token/live account guard; it returns only current host/member summaries, including
+authorized private/unlisted/cancelled events. No actor ID in input; no address, room
+code, private user information or signed URL in output. Shape remains `{items,pageInfo}`.
+See [exact semantics, cursor and rollout limits](navigation-discovery.md).
+
 ## Registration identity (additive migration 17)
 
 `POST /api/auth/registration-intent` is an unauthenticated, backend-capability-checked

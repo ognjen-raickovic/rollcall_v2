@@ -76,6 +76,7 @@ export function AccountSummary() {
               <p role="alert" className="text-sm text-destructive">
                 Your account could not be verified.
               </p>
+              <p className="text-sm text-muted-foreground">{identity.error.message}</p>
               <Button variant="outline" onClick={() => void identity.refetch()}>
                 Retry verification
               </Button>
@@ -92,6 +93,7 @@ export function AccountSummary() {
               <p role="alert" className="text-sm text-destructive">
                 Private details are unavailable until account access is verified.
               </p>
+              <p className="text-sm text-muted-foreground">{status.error.message}</p>
               <Button variant="outline" onClick={() => void status.refetch()}>
                 Retry account access
               </Button>

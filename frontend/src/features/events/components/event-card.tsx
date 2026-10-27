@@ -1,15 +1,25 @@
 import { ArrowUpRight, MapPin, Users } from 'lucide-react'
 import { Link } from 'react-router'
 
-import type { EventSummary } from '../api/event-dtos'
+import type { EventSummary, MyEventSummary } from '../api/event-dtos'
 import { PersistentEventImage } from './persistent-event-image'
+import type { EventActionSession } from '../api/event-write-dtos'
 
-type EventCardProps = { event: EventSummary }
+type EventCardProps = { event: EventSummary | MyEventSummary; session?: EventActionSession }
 
-export function EventCard({ event }: EventCardProps) {
+export function EventCard({ event, session }: EventCardProps) {
   const date = new Date(event.startsAt)
   const seats = event.availableSlots
-  const availability = seats > 0 ? `${seats} ${seats === 1 ? 'seat' : 'seats'} open` : 'Full · 0 seats open'
+  const availability =
+    event.status === 'cancelled'
+      ? 'Cancelled'
+      : Date.parse(event.endsAt) <= Date.now()
+        ? 'Finished'
+        : Date.parse(event.startsAt) <= Date.now()
+          ? 'In progress'
+          : seats > 0
+            ? `${seats} ${seats === 1 ? 'seat' : 'seats'} open`
+            : 'Full · 0 seats open'
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-xl border bg-card transition-colors hover:border-primary/60">
       <Link
@@ -19,6 +29,7 @@ export function EventCard({ event }: EventCardProps) {
       >
         <PersistentEventImage
           eventId={event.id}
+          session={session}
           cover={event.cover}
           title={event.title}
           category={event.game.category}
@@ -45,6 +56,9 @@ export function EventCard({ event }: EventCardProps) {
         >
           {event.title}
         </Link>
+        {event.visibility !== 'public' && (
+          <p className="text-xs font-medium text-muted-foreground capitalize">{event.visibility} event</p>
+        )}
         <p className="flex items-start gap-2 text-sm text-muted-foreground">
           <MapPin className="mt-1 size-4 shrink-0" aria-hidden="true" />
           {[event.venue, event.city.name, event.country.name].filter(Boolean).join(', ')}

@@ -1,6 +1,11 @@
 ﻿# RollCall
 
-Registration now requires a unique username and private date of birth. See
+The account menu now links My Profile, Settings and My Events. Event discovery adds
+global sorting and advanced date/time/tag/experience/age filters. Migrations 19–20
+require separate review/application before the matching backend/frontend rollout.
+See [navigation, verification diagnostics and discovery](docs/navigation-discovery.md).
+
+Registration requires a unique username and private date of birth. See
 [registration, safe 401 diagnostics and startup](docs/registration.md) before using
 the flow: the operator reports migration 17 applied; preserving username capitalization
 requires forward migration 18, tested locally only. See [auth layout and rollout](docs/auth-experience.md).
