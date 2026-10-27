@@ -15,7 +15,9 @@ export function ProfileSummary({ profile }: ProfileSummaryProps) {
             <h1 className="text-3xl font-bold tracking-tight [overflow-wrap:anywhere]">
               {profile.displayName}
             </h1>
-            <p className="text-sm text-muted-foreground">Tabletop player</p>
+            <p className="text-sm text-muted-foreground [overflow-wrap:anywhere]">
+              {profile.username ? `@${profile.username}` : 'Tabletop player'}
+            </p>
           </div>
         </div>
         <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">

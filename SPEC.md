@@ -5,12 +5,15 @@
 The account experience separates public My Profile from private Account Settings,
 with shared accessible logout confirmation. Account deletion remains design-only;
 see [account experience](docs/account-experience.md) and its separate approval proposal.
-No profile API, RLS, role, Storage or migration changes are introduced by this UI work.
+That account layout milestone introduced no profile API, RLS, role, Storage or migration
+changes. The later auth-casing follow-up below adds only a safe username projection and
+the reviewed forward registration schema change, preserving those security boundaries.
 
-Current registration adds unique canonical usernames and required private DOB for new
+Current registration preserves username casing with case-insensitive uniqueness and required private DOB for new
 accounts. Legacy accounts are preserved; ordinary display names remain editable. No
 event-age eligibility is added. See [registration contract](docs/registration.md).
-This requires reviewed additive migration 17 and the existing backend operation capability;
+The operator reports migration 17 applied; case preservation requires separately approved
+forward migration 18 and the existing backend operation capability. See [auth experience](docs/auth-experience.md);
 hosted application/security acceptance remains pending. New launchers start both local
 services or use isolated application staging configuration without operator-file access.
 

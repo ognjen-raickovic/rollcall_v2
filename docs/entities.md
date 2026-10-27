@@ -753,8 +753,11 @@ validation 400, username conflict 409 with `fields.username`, durable rate limit
 unavailable setup 503. No passwords, account IDs or roles are accepted. Email and DOB
 go only to private preparation; Auth signup receives an opaque expiring ticket.
 
-`profiles.username`: nullable for legacy users, otherwise unique canonical lowercase
-3–24 ASCII letters/digits/underscores starting with a letter. Clients cannot change it.
+`profiles.username`: nullable for legacy users, otherwise case-preserving ASCII with unique `lower(username)`;
+3–24 letters/digits/underscores starting with a letter. Clients cannot change it.
+Migration 18 preserves existing values and adds lower-based pending-intent uniqueness.
+Public/own profile DTOs include optional nullable `username`, shown separately from
+editable `displayName`; no private fields are added. See [rollout and verification](auth-experience.md).
 `private.profile_private.date_of_birth`: required during new registration, valid calendar
 date 1900..today, owner-private and immutable through profile editing. Public responses
 exclude all age/email. Own profile adds `hasDateOfBirth:boolean` and retains private

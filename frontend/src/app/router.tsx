@@ -6,6 +6,7 @@ import { RootLayout } from '@/app/routes/root-layout'
 import { RequireSession } from '@/features/users/components/require-session'
 import { RequireAccount } from '@/features/users/components/require-account'
 import { demoModeEnabled } from '@/features/users/api/auth-client'
+import { AuthError } from '@/features/users/components/auth-error'
 
 const Home = lazy(() => import('@/app/routes/home').then((module) => ({ default: module.Home })))
 const AdministrationRoute = lazy(() =>
@@ -61,7 +62,7 @@ export const router = createBrowserRouter([
     element: <RootLayout />,
     children: [
       { path: '/', element: <Home /> },
-      ...['/admin', '/admin/users', '/admin/role-audit', '/admin/reports','/admin/accounts'].map((path) => ({
+      ...['/admin', '/admin/users', '/admin/role-audit', '/admin/reports', '/admin/accounts'].map((path) => ({
         path,
         element: (
           <RequireAccount>
@@ -87,11 +88,11 @@ export const router = createBrowserRouter([
           </RequireAccount>
         ),
       },
-      { path: '/login', element: <Login /> },
-      { path: '/register', element: <Register /> },
-      { path: '/forgot-password', element: <ForgotPassword /> },
-      { path: '/reset-password', element: <ResetPassword /> },
-      { path: '/auth/callback', element: <AuthCallbackRoute /> },
+      { path: '/login', element: <Login />, errorElement: <AuthError /> },
+      { path: '/register', element: <Register />, errorElement: <AuthError /> },
+      { path: '/forgot-password', element: <ForgotPassword />, errorElement: <AuthError /> },
+      { path: '/reset-password', element: <ResetPassword />, errorElement: <AuthError /> },
+      { path: '/auth/callback', element: <AuthCallbackRoute />, errorElement: <AuthError /> },
       { path: '/account', element: <Account /> },
       {
         path: '/profile',

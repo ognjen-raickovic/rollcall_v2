@@ -25,25 +25,25 @@ export function ResetPasswordForm() {
   })
   if (update.isSuccess) return <Navigate to="/login?passwordUpdated=true" replace />
   return (
-    <AuthShell title="Choose a new password." description="Finish your password recovery, then log in again.">
+    <AuthShell title="Choose a new password" description="Update your password, then log in again.">
       {auth.isPending ? (
-        <p role="status" className="text-sm text-muted-foreground">
+        <p role="status" className="text-center text-sm text-muted-foreground">
           Checking your reset link...
         </p>
       ) : !auth.data || !recovery.data ? (
-        <div className="space-y-4">
+        <div className="space-y-4 text-center">
           <p role="alert" className="text-sm text-muted-foreground">
             Open a valid password reset link from your email in the same browser where you requested it. The
             link may have expired or already been used.
           </p>
-          <Button asChild>
+          <Button asChild className="w-full">
             <Link to="/forgot-password">Request another link</Link>
           </Button>
         </div>
       ) : (
         <form
           noValidate
-          className="space-y-6"
+          className="space-y-4"
           onSubmit={form.handleSubmit(({ password }) => update.mutate(password))}
         >
           <AuthField

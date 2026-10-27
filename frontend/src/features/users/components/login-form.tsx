@@ -26,11 +26,8 @@ export function LoginForm() {
   })
   if (auth.data) return <Navigate to={returnTo} replace />
   return (
-    <AuthShell
-      title="Welcome back."
-      description="Log in to your RollCall account and keep your next game night in sight."
-    >
-      <form className="space-y-6" noValidate onSubmit={form.handleSubmit((values) => login.mutate(values))}>
+    <AuthShell title="Welcome back" description="Log in to your RollCall account.">
+      <form className="space-y-4" noValidate onSubmit={form.handleSubmit((values) => login.mutate(values))}>
         {params.get('passwordUpdated') === 'true' && (
           <p role="status" className="text-sm text-primary">
             Password updated. Log in with your new password.
@@ -70,7 +67,7 @@ export function LoginForm() {
           {login.isPending ? 'Logging in...' : 'Log in'}
         </Button>
       </form>
-      <div className="space-y-4 text-sm">
+      <div className="space-y-4 text-center text-sm">
         <Link className="block text-primary hover:underline" to="/forgot-password">
           Forgot password?
         </Link>

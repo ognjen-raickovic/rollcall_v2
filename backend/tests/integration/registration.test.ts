@@ -27,7 +27,7 @@ test(
     const ids: string[] = [];
     try {
       const email = `registration-${randomUUID()}@example.test`,
-        username = "u" + randomUUID().replaceAll("-", "").slice(0, 20),
+        username = "Player_" + randomUUID().replaceAll("-", "").slice(0, 14),
         birth = "2000-02-29";
       const prepare = (name: string, address: string) =>
         app.inject({
@@ -110,11 +110,14 @@ test(
       });
       assert.equal(own.statusCode, 200);
       assert.equal(own.json().hasDateOfBirth, true);
+      assert.equal(own.json().username, username);
+      assert.equal(own.json().displayName, username);
       assert.equal(own.body.includes(birth), false);
       const publicProfile = await app.inject(
         `/api/users/${signup.data.user.id}`,
       );
       assert.equal(publicProfile.statusCode, 200);
+      assert.equal(publicProfile.json().username, username);
       assert.equal(publicProfile.body.includes(birth), false);
       assert.equal(publicProfile.body.includes(email), false);
       const raceName = "r" + randomUUID().replaceAll("-", "").slice(0, 20);
@@ -135,7 +138,7 @@ test(
         "Direct signup without a prepared ticket must fail",
       );
       await db.query(
-        "delete from private.registration_intents where username=$1",
+        "delete from private.registration_intents where lower(username)=lower($1)",
         [raceName],
       );
     } finally {

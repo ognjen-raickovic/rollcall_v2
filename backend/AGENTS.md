@@ -105,8 +105,8 @@ in maintenance mode until acceptance/approval; no migration/setup command belong
 
 ## Registration identity and application startup
 
-Read docs/registration.md before registration changes. New accounts require canonical unique
-usernames and private DOB through additive migration 17 and backend-prepared tickets. Never
+Read docs/registration.md before registration changes. New accounts require case-preserving, case-insensitively unique
+usernames and private DOB through migration 17 plus forward casing migration 18 and backend-prepared tickets. Never
 send DOB to Auth metadata/JWTs or public DTOs. Preserve legacy accounts, email confirmation,
 private owner RLS, durable rate counters and backend-only capability checks. dev:all is local;
 staging:smoke reads only separate ignored application configuration, never operator files.

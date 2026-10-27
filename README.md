@@ -2,7 +2,8 @@
 
 Registration now requires a unique username and private date of birth. See
 [registration, safe 401 diagnostics and startup](docs/registration.md) before using
-the new flow: additive migration 17 has not been applied to hosted staging.
+the flow: the operator reports migration 17 applied; preserving username capitalization
+requires forward migration 18, tested locally only. See [auth layout and rollout](docs/auth-experience.md).
 Use `pnpm.cmd dev:all` for both local services, or `pnpm.cmd staging:smoke`
 with a separate ignored `.env.staging-app`. Neither command deploys or migrates data.
 

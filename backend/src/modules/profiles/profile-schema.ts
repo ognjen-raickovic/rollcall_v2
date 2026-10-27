@@ -9,6 +9,7 @@ export const gameExperienceSchema = z.object({
 })
 export const publicProfileSchema = z.object({
   id: z.uuid(),
+  username: z.string().regex(/^[A-Za-z][A-Za-z0-9_]{2,23}$/).nullable().optional(),
   displayName: z.string().min(2).max(80),
   biography: z.string().max(500).nullable(),
   country: z.object({ id, isoCode: z.string().regex(/^[A-Z]{2}$/), name: z.string() }).nullable(),

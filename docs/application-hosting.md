@@ -12,9 +12,10 @@ acceptance and custom SMTP are pending. See [database rollout](hosted-supabase-s
 
 ## Architecture and access gates
 
-The subsequent username/DOB registration flow requires separately approved migration 17
-and the existing backend operation capability. The reported hosted 16-migration baseline
-does not yet support it. See [registration/startup](registration.md) for safe public-key
+The operator now reports username/DOB migration 17 applied. Case-preserving registration
+requires separately approved forward migration 18, then backend/frontend updates; the
+existing operation capability remains required. See [auth rollout](auth-experience.md)
+and [registration/startup](registration.md) for safe public-key
 diagnostics and the dedicated local staging application configuration. This follow-up
 does not complete any outstanding hosted security or email acceptance gate.
 

@@ -308,4 +308,9 @@ no local env file. Render supplies PORT; HOST is `0.0.0.0`. The prepared Bluepri
 paid maintenance mode and disables automatic deployment. No database/operator credentials
 belong in the application deployment. No service was deployed during preparation.
 
-Registration requires additive migration 17 and the existing backend operation capability. See [registration/startup](../docs/registration.md). Use pnpm.cmd dev:all or pnpm.cmd staging:smoke from the repository root; the latter never loads operator files.
+Registration requires migration 17 and the existing backend operation capability.
+Case-preserving usernames require forward migration 18 before the updated backend/UI;
+the operator reports 17 applied, while 18 is locally verified only. See
+[registration/startup](../docs/registration.md) and [rollout](../docs/auth-experience.md).
+Use pnpm.cmd dev:all or pnpm.cmd staging:smoke from the repository root; the latter
+never loads operator files.

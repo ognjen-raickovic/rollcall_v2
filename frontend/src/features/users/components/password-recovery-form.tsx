@@ -19,10 +19,13 @@ export function PasswordRecoveryForm() {
     defaultValues: { email: '' },
   })
   return (
-    <AuthShell title="A fresh start." description="Request a password reset link for your RollCall account.">
+    <AuthShell
+      title="Reset your password"
+      description="We'll email you a secure link to choose a new password."
+    >
       <form
         noValidate
-        className="space-y-6"
+        className="space-y-4"
         onSubmit={form.handleSubmit(({ email }) => recovery.mutate(email))}
       >
         {configuration && (
@@ -52,7 +55,7 @@ export function PasswordRecoveryForm() {
         <Button type="submit" className="w-full" disabled={Boolean(configuration) || recovery.isPending}>
           {recovery.isPending ? 'Sending link...' : 'Send reset link'}
         </Button>
-        <Link className="block text-sm text-primary hover:underline" to="/login">
+        <Link className="block text-center text-sm text-primary hover:underline" to="/login">
           Back to login
         </Link>
       </form>

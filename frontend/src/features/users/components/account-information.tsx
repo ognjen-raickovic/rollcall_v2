@@ -22,6 +22,12 @@ export function AccountInformation() {
     )
   return (
     <dl className="space-y-4 border-t pt-4 text-sm">
+      {profile.data.username && (
+        <div className="space-y-1">
+          <dt className="text-muted-foreground">Username</dt>
+          <dd className="font-medium [overflow-wrap:anywhere]">@{profile.data.username}</dd>
+        </div>
+      )}
       <div className="space-y-1">
         <dt className="text-muted-foreground">Member since</dt>
         <dd>
