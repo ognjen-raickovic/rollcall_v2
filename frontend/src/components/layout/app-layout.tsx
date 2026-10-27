@@ -1,24 +1,35 @@
 import type { ReactNode } from 'react'
-import { Suspense } from 'react'
+import { Suspense, useSyncExternalStore } from 'react'
 import { Dices } from 'lucide-react'
 import { Link, NavLink, Outlet } from 'react-router'
 
 import { cn } from '@/lib/utils'
 import { ThemeToggle } from './theme-toggle'
+import { demoNavigationLink, desktopNavigationMedia, navigationLinks } from './navigation-links'
 
-const links = [
-  { to: '/events', label: 'Explore events' },
-  { to: '/events/new', label: 'Host an event' },
-]
+function subscribeViewport(listener: () => void) {
+  const media = window.matchMedia(desktopNavigationMedia)
+  media.addEventListener('change', listener)
+  return () => media.removeEventListener('change', listener)
+}
+const desktopViewport = () => window.matchMedia(desktopNavigationMedia).matches
 
 type AppLayoutProps = {
   account: ReactNode
+  mobileNavigation: ReactNode
   showDemoEvents?: boolean
   content?: ReactNode
   notice?: ReactNode
 }
 
-export function AppLayout({ account, showDemoEvents = false, content, notice }: AppLayoutProps) {
+export function AppLayout({
+  account,
+  mobileNavigation,
+  showDemoEvents = false,
+  content,
+  notice,
+}: AppLayoutProps) {
+  const desktop = useSyncExternalStore(subscribeViewport, desktopViewport, () => false)
   return (
     <div className="flex min-h-dvh flex-col">
       <a
@@ -30,7 +41,7 @@ export function AppLayout({ account, showDemoEvents = false, content, notice }: 
       <header className="border-b bg-card">
         <nav
           aria-label="Main navigation"
-          className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-4 gap-y-4 px-4 py-4 md:py-6"
+          className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 xl:py-6"
         >
           <Link
             to="/"
@@ -41,38 +52,43 @@ export function AppLayout({ account, showDemoEvents = false, content, notice }: 
             </span>
             RollCall
           </Link>
-          <ul className="order-3 flex w-full flex-wrap items-center gap-6 text-sm md:order-none md:w-auto">
-            {links.map((link) => (
-              <li key={link.to}>
-                <NavLink
-                  to={link.to}
-                  end
-                  className={({ isActive }) =>
-                    cn(
-                      'text-muted-foreground hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring',
-                      isActive && 'font-semibold text-foreground',
-                    )
-                  }
-                >
-                  {link.label}
-                </NavLink>
-              </li>
-            ))}
-            {showDemoEvents && (
-              <li>
-                <NavLink
-                  to="/demo/events"
-                  className="text-muted-foreground hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring"
-                >
-                  Demo events
-                </NavLink>
-              </li>
-            )}
-          </ul>
-          <div className="ml-auto flex items-center gap-2 md:ml-0">
-            <ThemeToggle />
-            {account}
-          </div>
+          {desktop && (
+            <ul className="flex items-center gap-6 text-sm">
+              {navigationLinks.map((link) => (
+                <li key={link.to}>
+                  <NavLink
+                    to={link.to}
+                    end
+                    className={({ isActive }) =>
+                      cn(
+                        'text-muted-foreground hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring',
+                        isActive && 'font-semibold text-foreground',
+                      )
+                    }
+                  >
+                    {link.label}
+                  </NavLink>
+                </li>
+              ))}
+              {showDemoEvents && (
+                <li>
+                  <NavLink
+                    to={demoNavigationLink.to}
+                    className="text-muted-foreground hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring"
+                  >
+                    {demoNavigationLink.label}
+                  </NavLink>
+                </li>
+              )}
+            </ul>
+          )}
+          {desktop && (
+            <div className="flex shrink-0 items-center gap-2">
+              {account}
+              <ThemeToggle />
+            </div>
+          )}
+          {!desktop && mobileNavigation}
         </nav>
       </header>
       <main

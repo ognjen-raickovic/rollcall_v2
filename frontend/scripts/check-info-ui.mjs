@@ -122,14 +122,23 @@ test(
             'href',
             '/',
           )
+          async function siteNavigation() {
+            await expect(page.getByRole('button', { name: 'Find events', exact: true })).toBeVisible()
+            if (width < 1280) {
+              await page.getByRole('button', { name: 'Open menu', exact: true }).click()
+              return page.getByRole('dialog', { name: 'Menu', exact: true })
+            }
+            return navigation
+          }
+          const siteLinks = await siteNavigation()
           await expect(
-            navigation.getByRole('link', { name: 'Explore events', exact: true }),
+            siteLinks.getByRole('link', { name: 'Explore events', exact: true }),
           ).toHaveAttribute('href', '/events')
           await expect(
-            navigation.getByRole('link', { name: 'Host an event', exact: true }),
+            siteLinks.getByRole('link', { name: 'Host an event', exact: true }),
           ).toHaveAttribute('href', '/events/new')
-          await expect(navigation.getByRole('link', { name: 'Log in', exact: true })).toBeVisible()
-          await navigation.getByRole('link', { name: 'Host an event', exact: true }).click()
+          await expect(siteLinks.getByRole('link', { name: 'Log in', exact: true })).toBeVisible()
+          await siteLinks.getByRole('link', { name: 'Host an event', exact: true }).click()
           await expect(page).toHaveURL(/\/login\?returnTo=%2Fevents%2Fnew$/)
           await stable()
           const authBack = page.getByRole('link', { name: 'Back to discovery', exact: true })
@@ -157,10 +166,14 @@ test(
           })
           await footer.getByRole('link', { name: 'Contact', exact: true }).click()
           await expect(page.getByRole('heading', { name: 'Contact Us', level: 1 })).toBeVisible()
-          await expect(page.getByRole('link', { name: 'rollcallsupport@gmail.com', exact: true }))
-            .toHaveAttribute('href', 'mailto:rollcallsupport@gmail.com')
+          await expect(
+            page.getByRole('link', { name: 'rollcallsupport@gmail.com', exact: true }),
+          ).toHaveAttribute('href', 'mailto:rollcallsupport@gmail.com')
           assert.equal(await page.locator('main form').count(), 0)
-          assert.equal(await page.getByText('Email support is not available yet.', { exact: false }).count(), 0)
+          assert.equal(
+            await page.getByText('Email support is not available yet.', { exact: false }).count(),
+            0,
+          )
           await expect(footer.getByRole('link', { name: 'Contact', exact: true })).toHaveAttribute(
             'aria-current',
             'page',
@@ -190,7 +203,11 @@ test(
           await expect(page.getByRole('heading', { name: 'About RollCall', level: 1 })).toBeVisible()
           await navigation.getByRole('link', { name: 'RollCall', exact: true }).click()
           await expect(page).toHaveURL(origin + '/')
-          await navigation.getByRole('link', { name: 'Explore events', exact: true }).click()
+          await (
+            await siteNavigation()
+          )
+            .getByRole('link', { name: 'Explore events', exact: true })
+            .click()
           await expect(
             page.getByRole('heading', { name: 'Find your next game night', level: 1 }),
           ).toBeVisible()
@@ -209,9 +226,19 @@ test(
           await expect(page.getByRole('heading', { name: 'My Profile', level: 1 })).toBeVisible()
           await expect(page.locator('main h1')).toHaveCount(1)
           await expect(page.getByRole('heading', { name: 'Tabletop Player', level: 2 })).toBeVisible()
-          await page.getByRole('button', { name: 'Account menu', exact: true }).click()
-          await expect(page.getByRole('menuitem', { name: 'My Profile', exact: true })).toBeVisible()
-          await page.keyboard.press('Escape')
+          if (width < 1280) {
+            await page.getByRole('button', { name: 'Open menu', exact: true }).click()
+            await expect(
+              page
+                .getByRole('dialog', { name: 'Menu', exact: true })
+                .getByRole('link', { name: 'My Profile', exact: true }),
+            ).toBeVisible()
+            await page.keyboard.press('Escape')
+          } else {
+            await page.getByRole('button', { name: 'Account menu', exact: true }).click()
+            await expect(page.getByRole('menuitem', { name: 'My Profile', exact: true })).toBeVisible()
+            await page.keyboard.press('Escape')
+          }
           await overflow()
           await page.screenshot({
             path: fileURLToPath(

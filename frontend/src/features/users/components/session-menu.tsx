@@ -11,11 +11,13 @@ import { useAuth } from '../api/use-auth'
 import { LogoutButton } from './logout-button'
 import { AdminNavigation } from './administration'
 import { AccountMenu } from './account-menu'
+import { useNavigationAccount } from '../api/use-navigation-account'
 
 export function SessionMenu() {
   const session = useSession()
   const location = useLocation()
   const auth = useAuth()
+  const label = useNavigationAccount()
 
   if (session.isPending || auth.isPending)
     return (
@@ -23,10 +25,21 @@ export function SessionMenu() {
         <Skeleton className="h-9 w-28" />
       </div>
     )
+  if (auth.error)
+    return (
+      <Button variant="outline" size="sm" onClick={() => void auth.refetch()}>
+        Retry session
+      </Button>
+    )
   if (auth.data)
     return (
       <div className="flex items-center gap-2">
         <AdminNavigation />
+        {label && (
+          <span className="max-w-40 truncate text-sm text-muted-foreground" title={`Welcome, ${label}`}>
+            Welcome, {label}
+          </span>
+        )}
         <AccountMenu key={auth.data.id} />
       </div>
     )
@@ -57,7 +70,10 @@ export function SessionMenu() {
       <span className="hidden sm:inline-flex">
         <UserAvatar name={session.data.displayName} size="sm" />
       </span>
-      <span className="max-w-20 truncate text-sm font-medium sm:max-w-32" title={session.data.displayName}>
+      <span
+        className="max-w-20 truncate text-sm font-medium sm:max-w-32"
+        title={session.data.displayName}
+      >
         {session.data.displayName}
       </span>
       <span className="text-xs text-muted-foreground">Demo</span>

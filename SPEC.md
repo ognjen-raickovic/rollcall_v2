@@ -1,5 +1,11 @@
 # RollCall product specification
 
+Responsive navigation retains desktop site links at 1280px+, with a verified public-profile
+Welcome label, account icon and theme control. Smaller viewports use a modal right-side
+drawer containing site navigation, direct profile/account actions and the existing theme
+control. Both modes preserve confirmed logout, current role/status checks and isolated
+demos. See [navigation contracts](docs/navigation-discovery.md).
+
 Public `/about` and `/contact` pages describe the product and available contact options.
 Footer links expose these pages; the logo provides homepage navigation without a duplicate
 Discover item. Contact uses the owner-approved public support email

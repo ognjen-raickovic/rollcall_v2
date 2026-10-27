@@ -184,7 +184,8 @@ test(
             (row) =>
               (!url.searchParams.get('search') ||
                 row.title.toLowerCase().includes(url.searchParams.get('search').toLowerCase())) &&
-              (!url.searchParams.get('category') || row.game.category === url.searchParams.get('category')),
+              (!url.searchParams.get('category') ||
+                row.game.category === url.searchParams.get('category')),
           )
           if (url.searchParams.get('sort') === 'title-asc')
             items = [...items].sort((a, b) => a.title.localeCompare(b.title))
@@ -218,7 +219,10 @@ test(
             fullPage: true,
           })
           await main.getByText('More filters', { exact: true }).click()
-          assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true)
+          assert.equal(
+            await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
+            true,
+          )
           await page.screenshot({
             animations: 'disabled',
             path: fileURLToPath(
@@ -227,39 +231,53 @@ test(
             fullPage: true,
           })
           await main.getByText('More filters', { exact: true }).click()
-          assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true)
-          await avatar.focus()
-          await page.keyboard.press(width === 375 ? 'Space' : 'Enter')
-          await page.getByRole('menuitem', { name: 'My Profile', exact: true }).waitFor()
-          assert.deepEqual(await page.getByRole('menuitem').allTextContents(), [
-            'My Profile',
-            'Settings',
-            'My Events',
-            'Log out',
-          ])
-          await page.keyboard.press('ArrowDown')
           assert.equal(
-            await page
-              .getByRole('menuitem', { name: 'Settings', exact: true })
-              .evaluate((el) => el === document.activeElement),
+            await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
             true,
           )
-          await page.keyboard.press('Escape')
-          await expect(avatar).toBeFocused()
-          await avatar.click()
-          await page.mouse.click(5, 300)
-          await page.getByRole('menu').waitFor({ state: 'detached' })
-          await avatar.click()
-          await page.getByRole('menuitem', { name: 'Log out', exact: true }).click()
-          const dialog = page.getByRole('dialog', { name: 'Log out of RollCall?' })
-          await expect(dialog.getByRole('button', { name: 'No, stay', exact: true })).toBeFocused()
-          assert.deepEqual(await dialog.getByRole('button').allTextContents(), ['Yes, log out', 'No, stay'])
-          await page.keyboard.press('Escape')
-          await dialog.waitFor({ state: 'detached' })
-          await expect(avatar).toBeFocused()
-          assert.equal(logoutCalls, 0)
-          await avatar.click()
-          await page.getByRole('menuitem', { name: 'My Events', exact: true }).click()
+          if (width < 1280) {
+            await page.getByRole('button', { name: 'Open menu', exact: true }).click()
+            await page
+              .getByRole('dialog', { name: 'Menu', exact: true })
+              .getByRole('link', { name: 'My Events', exact: true })
+              .click()
+          } else {
+            await avatar.focus()
+            await page.keyboard.press(width === 375 ? 'Space' : 'Enter')
+            await page.getByRole('menuitem', { name: 'My Profile', exact: true }).waitFor()
+            assert.deepEqual(await page.getByRole('menuitem').allTextContents(), [
+              'My Profile',
+              'Settings',
+              'My Events',
+              'Log out',
+            ])
+            await page.keyboard.press('ArrowDown')
+            assert.equal(
+              await page
+                .getByRole('menuitem', { name: 'Settings', exact: true })
+                .evaluate((el) => el === document.activeElement),
+              true,
+            )
+            await page.keyboard.press('Escape')
+            await expect(avatar).toBeFocused()
+            await avatar.click()
+            await page.mouse.click(5, 300)
+            await page.getByRole('menu').waitFor({ state: 'detached' })
+            await avatar.click()
+            await page.getByRole('menuitem', { name: 'Log out', exact: true }).click()
+            const dialog = page.getByRole('dialog', { name: 'Log out of RollCall?' })
+            await expect(dialog.getByRole('button', { name: 'No, stay', exact: true })).toBeFocused()
+            assert.deepEqual(await dialog.getByRole('button').allTextContents(), [
+              'Yes, log out',
+              'No, stay',
+            ])
+            await page.keyboard.press('Escape')
+            await dialog.waitFor({ state: 'detached' })
+            await expect(avatar).toBeFocused()
+            assert.equal(logoutCalls, 0)
+            await avatar.click()
+            await page.getByRole('menuitem', { name: 'My Events', exact: true }).click()
+          }
           await main.getByRole('link', { name: 'My private Podgorica campaign', exact: true }).waitFor()
           await main.getByRole('button', { name: "Events I've joined", exact: true }).click()
           await main.getByText('No joined events match this period.', { exact: true }).waitFor()
@@ -329,7 +347,9 @@ test(
         await page.setViewportSize({ width, height: 800 })
         await page.goto(origin + '/register')
         await main.getByRole('heading', { name: 'Create your account', exact: true }).waitFor()
-        const back = await main.getByRole('link', { name: 'Back to discovery', exact: true }).boundingBox(),
+        const back = await main
+            .getByRole('link', { name: 'Back to discovery', exact: true })
+            .boundingBox(),
           card = await page.getByRole('region', { name: 'Account access', exact: true }).boundingBox()
         assert.ok(back.y < card.y)
         if (width === 1440) assert.ok(back.x < card.x)

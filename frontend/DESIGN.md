@@ -2,7 +2,15 @@
 
 ## Product and users
 
-Navigation uses a single labeled account icon: guests link to login; real accounts
+Desktop navigation (1280px and wider) shows site links, then a verified Welcome label,
+account icon and the existing theme toggle in that order. Below that width, a single
+compact row shows the logo and hamburger; a Radix modal drawer opens from the right.
+It uses card/background tokens, full dynamic viewport height, a 384px maximum width,
+24px page strip on phones, independent content scrolling and a 250ms slide that honors
+reduced motion. Put site links, separated account actions and the shared Theme control
+in the drawer. Only the active viewport mode is mounted.
+
+Guests link to login; real accounts
 open a Radix menu with My Profile, Settings, My Events and confirmed logout. Admin links
 stay separate. Auth return navigation sits at the content container's top-left while
 the shared card remains centered. Native selectors use inset chevrons, consistent 44px
@@ -166,8 +174,8 @@ its original gaming palette in both themes. Never invert uploaded photographs.
 
 - Mobile first: one column on phones; category tiles expand to two/four columns and event
   cards to two/three columns. The hero becomes two columns on large screens. Mobile navigation
-  keeps the brand, theme toggle, and account on the first row and page links on a second row.
-  On phones the decorative account avatar is hidden and the visible name is truncated with a title.
+  uses one compact logo/hamburger row. Site, account and theme controls live in the drawer.
+  Long public account names truncate with a title; never use email as the account label.
 - Main content `max-w-6xl`, comfortable padding, wrapping navigation, and readable line lengths.
 - User-entered text wraps even inside long words or URLs, preserving narrow layouts.
 - New route navigation starts at the top; browser Back/Forward restores the saved scroll position.

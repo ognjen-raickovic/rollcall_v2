@@ -1,5 +1,10 @@
 ﻿# RollCall
 
+Navigation uses a horizontal desktop header at 1280px+ and a full-height right-side menu
+on smaller screens. Account greetings use verified public profile names, never email.
+Run `pnpm.cmd test:responsive-navigation` for focused responsive/focus/session checks;
+see [navigation behavior and verification](docs/navigation-discovery.md).
+
 Public information pages are available at `/about` and `/contact`, linked in the footer.
 Contact links to the owner-approved public support address, `rollcallsupport@gmail.com`,
 through `mailto:`; visitors send messages using their own email app. There is no contact
