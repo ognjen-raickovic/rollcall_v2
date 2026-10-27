@@ -4,6 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "test:account-ui": "node --test scripts/check-account-ui.mjs",
     "test:registration": "node --test scripts/check-registration-api.mjs",
     "test:registration-ui": "node --test scripts/check-registration-ui.mjs",
     "test:suspensions": "node --test scripts/check-suspensions-api.mjs",

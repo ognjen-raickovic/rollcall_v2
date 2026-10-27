@@ -1,21 +1,20 @@
-import { LogIn, LogOut } from 'lucide-react'
+import { LogIn } from 'lucide-react'
 import { Link, useLocation } from 'react-router'
 
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { loginPath } from '@/lib/auth-navigation'
 
-import { useLogout, useSession } from '../api/use-session'
+import { useSession } from '../api/use-session'
 import { UserAvatar } from './user-avatar'
-import { useAuth, useAuthLogout } from '../api/use-auth'
+import { useAuth } from '../api/use-auth'
+import { LogoutButton } from './logout-button'
 import { AdminNavigation } from './administration'
 
 export function SessionMenu() {
   const session = useSession()
-  const logout = useLogout()
   const location = useLocation()
   const auth = useAuth()
-  const realLogout = useAuthLogout()
 
   if (session.isPending || auth.isPending)
     return (
@@ -32,23 +31,16 @@ export function SessionMenu() {
           className="max-w-28 truncate text-sm font-medium hover:text-primary focus-visible:outline-2 focus-visible:outline-ring"
           title="Your player profile"
         >
-          Profile
+          My Profile
         </Link>
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label="Log out"
-          title="Log out"
-          disabled={realLogout.isPending}
-          onClick={() => realLogout.mutate()}
+        <Link
+          aria-label="Account Settings"
+          to="/account"
+          className="text-sm font-medium hover:text-primary focus-visible:outline-2 focus-visible:outline-ring"
         >
-          <LogOut aria-hidden="true" />
-        </Button>
-        {realLogout.error && (
-          <p role="alert" className="text-sm text-destructive">
-            Logout failed. Try again.
-          </p>
-        )}
+          Settings
+        </Link>
+        <LogoutButton iconOnly />
       </div>
     )
   if (session.error)
@@ -81,21 +73,7 @@ export function SessionMenu() {
         {session.data.displayName}
       </span>
       <span className="text-xs text-muted-foreground">Demo</span>
-      <Button
-        variant="ghost"
-        size="icon"
-        aria-label="Log out"
-        title="Log out"
-        disabled={logout.isPending}
-        onClick={() => logout.mutate()}
-      >
-        <LogOut aria-hidden="true" />
-      </Button>
-      {logout.error && (
-        <p role="alert" className="text-sm text-destructive">
-          Logout failed. Try again.
-        </p>
-      )}
+      <LogoutButton demo iconOnly />
     </div>
   )
 }
