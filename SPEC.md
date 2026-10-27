@@ -1,5 +1,10 @@
 # RollCall product specification
 
+The current profile-editor follow-up implements a single-column tabbed editor, draft-only
+game changes with an atomic owner-only Save endpoint (migration 21), inverted Back buttons
+and consistent UTC account dates. Account deletion stays disabled pending the independently
+reviewed security and retention requirements. See [profiles](docs/profiles.md).
+
 ## Product
 
 Current navigation/discovery work adds an account-icon menu, active UUID My Events,

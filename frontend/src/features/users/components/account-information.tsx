@@ -1,3 +1,4 @@
+import { formatAccountDate } from '@/lib/account-date'
 import { Button } from '@/components/ui/button'
 import { useOwnProfile } from '../api/use-profiles'
 
@@ -30,9 +31,7 @@ export function AccountInformation() {
       )}
       <div className="space-y-1">
         <dt className="text-muted-foreground">Member since</dt>
-        <dd>
-          {new Intl.DateTimeFormat('en-GB', { dateStyle: 'long' }).format(new Date(profile.data.createdAt))}
-        </dd>
+        <dd>{formatAccountDate(profile.data.createdAt)}</dd>
       </div>
       <div className="space-y-1">
         <dt className="text-muted-foreground">Date of birth</dt>

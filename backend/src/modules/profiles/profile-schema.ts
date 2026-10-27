@@ -9,7 +9,11 @@ export const gameExperienceSchema = z.object({
 })
 export const publicProfileSchema = z.object({
   id: z.uuid(),
-  username: z.string().regex(/^[A-Za-z][A-Za-z0-9_]{2,23}$/).nullable().optional(),
+  username: z
+    .string()
+    .regex(/^[A-Za-z][A-Za-z0-9_]{2,23}$/)
+    .nullable()
+    .optional(),
   displayName: z.string().min(2).max(80),
   biography: z.string().max(500).nullable(),
   country: z.object({ id, isoCode: z.string().regex(/^[A-Z]{2}$/), name: z.string() }).nullable(),
@@ -68,6 +72,17 @@ export const gameIdSchema = z.strictObject({
     .pipe(id),
 })
 export const experienceInputSchema = z.strictObject({ experience: experienceSchema })
+const experienceSetSchema = z
+  .array(z.strictObject({ gameId: id, experience: experienceSchema }))
+  .max(50)
+  .refine(
+    (games) => new Set(games.map((game) => game.gameId)).size === games.length,
+    'Choose each game once.',
+  )
+export const replaceExperienceSchema = z.strictObject({
+  games: experienceSetSchema,
+  expected: experienceSetSchema,
+})
 export const catalogGameSchema = z.object({
   id,
   name: z.string(),

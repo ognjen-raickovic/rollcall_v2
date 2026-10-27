@@ -1,18 +1,27 @@
 # Account deletion: proposal for separate approval
 
 **Design only. No deletion endpoint, worker, migration or enabled UI action exists.**
-The account Danger Zone is informational. Do not perform deletion with the current
+The account Danger Zone shows a disabled Delete account control. Do not perform deletion with the current
 ordinary host/profile APIs or weaken RLS to make it possible.
 
-## Current implementation gate: navigation/discovery follow-up
+## Current implementation gate: profile editor follow-up
 
 The current schema still has host/member RESTRICT dependencies, immutable audits,
 private DOB/registration data and independently checked Storage. Migrations 19–20 add
 read-only discovery/My Events functions and indexes; they provide no deletion authority,
-recent-reauthentication verifier, durable cleanup jobs or privileged worker. A paginated
+recent-reauthentication verifier, durable cleanup jobs or privileged worker. Migration 21
+only replaces owner game sets atomically; it adds no deletion authority. A paginated
 My Events response must never be treated as a complete deletion inventory.
 
-**Deletion remains blocked.** The event-removal policy proposed below has not been
+**Deletion remains blocked, including a restricted no-hosted-events version.** The
+current runtime cannot verify a new provider authentication event independently, consume
+a replay-safe challenge, freeze every SQL/Data API/Storage entry point or dispatch an
+isolated privileged worker. It also has no durable deletion checkpoints. Merely excluding
+hosts would leave registration email-hash reservations, storage ownership, joined-event
+counters, old JWTs and retained report/audit snapshots unresolved. No deletion request,
+confirmation dialog, worker, credentials or migration is partially wired by this change.
+
+The event-removal policy proposed below has not been
 approved. Initial permitted policy must block an account that hosts any event, including
 past/cancelled events, rather than destroying other players' participation or changing
 immutable ownership. Even accounts without hosted events need approved retention,
@@ -174,4 +183,7 @@ reauthentication passwords, DOB or raw email in diagnostics or immutable audit r
    audit preservation, public erasure and backup-retention disclosures.
 6. Only after review, add a clearly irreversible Danger Zone confirmation and job status UI.
 
-No destructive part is authorized or implemented by the account experience redesign.
+This task permits a complete locally tested deletion path, but the implementation gates
+above remain unmet. No destructive path is implemented, and no existing account data is
+changed by the disabled control. Resolve the policy/reauthentication/worker/freeze gates
+before enabling it; no historical migration or immutable audit should be weakened.

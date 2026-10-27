@@ -1,5 +1,10 @@
 # RollCall backend architecture
 
+Profile game-set saves use `PUT /api/me/game-experience` with complete desired/expected
+sets and the caller-RLS `replace_my_game_experience` RPC. Migration 21 serializes batch,
+legacy and direct authenticated writes, rejecting stale sets with 409. Runtime stays
+unprivileged; no deletion worker or deletion endpoint is enabled. See [profiles](profiles.md).
+
 ## Milestone 4D cover boundary
 
 Registration preparation now lives in the Auth module at

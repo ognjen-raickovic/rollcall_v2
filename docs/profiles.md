@@ -1,5 +1,44 @@
 # Milestone 3B: real profiles and per-game experience
 
+## Current profile editor (migration 21)
+
+`/profile/edit` is a centered 672px single column with Profile and My games tabs.
+The explanatory sidebar is removed. Radix supplies keyboard/ARIA tab behavior; both
+panels remain mounted to preserve independent drafts. `?tab=games` supports refresh,
+Back/Forward and direct links. A quiet 180ms entry transition honors reduced motion.
+Leaving the editor (Cancel, Back to My Profile or browser navigation to another route)
+discards unsaved drafts; tab-history navigation preserves them. A successful save saves
+only the selected tab and returns to `/profile`, matching the existing profile workflow.
+
+Both tabs use Save changes / Cancel. My games adds, edits and removes locally, with no
+mutation until Save; unchanged sets send no request. Failed saves retain drafts. Reload
+after a conflict is an explicit **Discard draft and reload saved games** action.
+Owner UUID keys remount the editor on account changes; batch requests abort on unmount/
+account transitions and recheck the current SDK account after HTTP before reporting success.
+Confirmed saves cancel old reads and invalidate own, experience and public profile queries.
+
+`PUT /api/me/game-experience` accepts `{ games, expected }`: complete desired and last
+saved sets of `{ gameId, experience }`, each unique and at most 50 entries. The checked
+SECURITY INVOKER RPC `replace_my_game_experience` uses current active Auth identity,
+existing RLS, catalog/level validation and a single transaction. Sorted value comparison
+rejects a changed saved set with 409; this is value-based compare-and-swap, not a revision
+history. A change later reverted to the exact same set is treated as unchanged. All
+authenticated table writes, including legacy RPCs/Data API, take the same per-account
+statement lock before row locks, after role/account suspension guards. No new private
+fields or privileged runtime client are introduced.
+
+Forward migration `20261027000500_profile_game_sets.sql` follows 1–20. Review and approve
+database application separately, then deploy backend before frontend. It has only been
+applied to a disposable local verification project. Historical migrations are unchanged.
+The earlier per-game endpoints remain compatible; the editor exclusively uses batch Save.
+
+Shared BackLink uses foreground/background tokens for an inverted arrow button across
+auth, profile and event return controls. Account Settings removes Browse events, retains
+profile/security navigation, and shows a disabled Delete account control. Full creation
+dates in Settings/editor use UTC and English `27. October 2026.` formatting. Event dates
+and short public Member since labels are unchanged. Deletion remains blocked for the
+specific gates in [the separately reviewable design](account-deletion-design.md).
+
 The auth-casing follow-up (forward migration 18) preserves new username spelling while
 keeping identity uniqueness case-insensitive. Public/own DTOs accept optional nullable
 `username`; shared profiles/settings display it as `@username`, separately from display
@@ -68,7 +107,7 @@ from the own-profile page. Profiles use initials rather than new image storage.
 My games uses `GET /api/games`, reading the existing database catalog. It does not assume
 that a mock game ID equals a real catalog record. Existing event mock catalog APIs remain
 unchanged. Experience is independently `beginner`, `intermediate` or `veteran` for each game.
-Adding, updating and removing games saves immediately, separately from Save profile.
+Adding, updating and removing games edits a draft; Save changes commits the whole set.
 Selected games disappear from add options; the composite database PK also prevents duplicates.
 Public profiles show the chosen games and levels as self-declared, not verified. Experience
 does not gate joining; event experience/tag rules are unchanged.
@@ -78,6 +117,7 @@ does not gate joining; event experience/tag rules are unchanged.
 | `GET /api/me/profile`                    | Verified owner; `OwnProfile`                                |
 | `PATCH /api/me/profile`                  | Verified owner; strict nonempty patch; updated `OwnProfile` |
 | `GET /api/me/game-experience`            | Verified owner; `GameExperience[]`                          |
+| `PUT /api/me/game-experience`            | Verified owner; `{ games, expected }`; atomic replacement or 409 |
 | `PUT /api/me/game-experience/:gameId`    | Verified owner; `{ experience }`; saved association         |
 | `DELETE /api/me/game-experience/:gameId` | Verified owner; idempotent 204 for a valid catalog game     |
 | `GET /api/users/:userId`                 | Public-safe `PublicProfile`; missing profile returns 404    |
@@ -150,3 +190,49 @@ Public and own profile contracts remain unchanged. Role fields remain non-editab
 ## Milestone 5B-2B
 
 Profile/experience modifications and private own-profile access require an active account, including direct RPC/table writes through RLS. Public-safe profile/catalog reads remain public. Suspensions do not delete profiles or game experience, and reinstatement does not change roles. See [enforcement](account-suspensions.md).
+
+## Profile editor follow-up: executed verification
+
+- Root typecheck, lint (including feature boundaries), build and `git diff --check` passed.
+  The production build retains its existing non-blocking chunk-size advisory.
+- Backend profile/Auth unit regression: 8 tests passed. Frontend profile client/date/
+  identity checks: 5 tests passed, including UTC midnight boundaries and late account switches.
+- New database-backed HTTP integration: 1 passed with two confirmed disposable Auth
+  accounts. Covered add/change/remove, refresh/public projection, invalid catalog data,
+  duplicates, atomic concurrent saves (one 200, one 409), contention with legacy writes,
+  private DOB immutability, location consistency, cross-account Data API attempts and
+  suspended old-token denial.
+- SQL: new game-set file 24 assertions, existing profiles 42, existing suspensions 21;
+  all 87 passed in rolled-back transactions. No security policy or validation trigger
+  was disabled by these tests. All 21 migrations replayed on a fresh disposable project.
+- `pnpm.cmd test:profile-editor-ui` passed with intercepted synthetic API/Auth responses
+  at 375/1440 in light/dark themes. Checked keyboard tabs, tab URL Back/Forward, both
+  drafts, Cancel without writes, no-op/duplicate controls, failed-save draft retention,
+  save/reload/public updates, country/city, account-switch clearing, reduced motion,
+  account date punctuation, no enabled deletion action and no horizontal overflow.
+  Screenshots were inspected. This is browser/UI verification, not hosted persistence.
+- Existing focused auth-experience and navigation/discovery browser suites passed across
+  both sizes/themes. No unrelated full browser suite was run. The older opt-in
+  `profiles-ui.spec.mjs` editor assertions were aligned with the new tabs/Save contract,
+  but that entire legacy suite was not executed; its older registration/session fixtures
+  need a separate update before relying on it for current Auth onboarding acceptance.
+
+No hosted writes, account deletion, env changes or original database reset were performed.
+The disposable project's resources are cleaned up; original local Supabase is preserved.
+Historical migrations and existing event experience/tags logic are unchanged.
+
+Manual acceptance after separately approved migration/backend/frontend rollout:
+
+1. Edit Profile, switch tabs and use Back/Forward; drafts must survive tab history.
+   Cancel each editor and verify saved data is unchanged.
+2. Add/change/remove games, Save and refresh own/public profiles. In two sessions, save
+   conflicting drafts; the second must retain its draft and offer explicit saved-set reload.
+3. Verify country changes clear the city; confirmed cities save, free text does not.
+   DOB-backed birth year remains read-only; private data must stay out of public responses.
+4. Check 375/1440 light/dark, keyboard arrows/focus, reduced motion, inverted Back buttons,
+   and account date punctuation. Delete account must remain disabled and start no request.
+
+Primary changed areas: users editor/form/draft/API/hooks, shared BackLink/account-date,
+auth/profile/event return links, account information/settings, backend profile schemas/
+repository/routes/types, migration 21 and focused SQL/API/browser tests. Deletion changes
+are limited to the disabled Settings control and its separate design document.

@@ -54,10 +54,13 @@ export const profilesApi = {
       signal,
     })
     if (profile.id !== ownerId) throw new Error('Your profile could not be verified. Log in again.')
+    await accessToken(ownerId)
     return profile
   },
   getPublic: (userId: string, signal?: AbortSignal): Promise<PublicProfile> =>
-    httpRequest(`/api/users/${encodeURIComponent(z.uuid().parse(userId))}`, publicProfileSchema, { signal }),
+    httpRequest(`/api/users/${encodeURIComponent(z.uuid().parse(userId))}`, publicProfileSchema, {
+      signal,
+    }),
   update: async (update: ProfileUpdate, ownerId: string): Promise<OwnProfile> => {
     const profile = await httpRequest('/api/me/profile', ownProfileSchema, {
       method: 'PATCH',
@@ -66,7 +69,27 @@ export const profilesApi = {
       viewerId: ownerId,
     })
     if (profile.id !== ownerId) throw new Error('Your profile could not be verified. Log in again.')
+    await accessToken(ownerId)
     return profile
+  },
+  replaceExperience: async (
+    value: {
+      games: { gameId: number; experience: GameExperienceLevel }[]
+      expected: { gameId: number; experience: GameExperienceLevel }[]
+    },
+    ownerId: string,
+    signal?: AbortSignal,
+  ) => {
+    const result = await httpRequest('/api/me/game-experience', z.array(gameExperienceSchema).max(50), {
+      method: 'PUT',
+      body: value,
+      token: await accessToken(ownerId),
+      viewerId: ownerId,
+      signal,
+    })
+    await accessToken(ownerId)
+    if (signal?.aborted) throw new Error('Your account changed. Reload your games.')
+    return result
   },
   experience: async (ownerId: string, signal?: AbortSignal) =>
     httpRequest('/api/me/game-experience', z.array(gameExperienceSchema), {

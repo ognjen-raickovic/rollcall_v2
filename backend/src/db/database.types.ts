@@ -49,6 +49,7 @@ export type Database = {
     }
     Views: Record<string, never>
     Functions: {
+      replace_my_game_experience: { Args: { p_games: Json; p_expected: Json }; Returns: Json }
       prepare_registration: {
         Args: { p_username: string; p_email: string; p_date_of_birth: string; p_fingerprint: string }
         Returns: Json

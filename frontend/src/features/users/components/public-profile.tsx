@@ -1,3 +1,4 @@
+import { BackLink } from '@/components/back-link'
 import { Link } from 'react-router'
 import { z } from 'zod'
 import { Button } from '@/components/ui/button'
@@ -30,7 +31,11 @@ export function PublicProfile({ userId }: PublicProfileProps) {
     )
   if (profile.isPending)
     return (
-      <div role="status" aria-label="Loading player profile" className="mx-auto max-w-4xl space-y-6 py-8">
+      <div
+        role="status"
+        aria-label="Loading player profile"
+        className="mx-auto max-w-4xl space-y-6 py-8"
+      >
         <Skeleton className="h-64" />
         <Skeleton className="h-48" />
       </div>
@@ -48,12 +53,9 @@ export function PublicProfile({ userId }: PublicProfileProps) {
   return (
     <div className="mx-auto max-w-4xl space-y-6 py-4 md:py-8">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <Link
-          to={own ? '/profile' : '/events'}
-          className="inline-block text-sm text-primary hover:underline focus-visible:outline-2 focus-visible:outline-ring"
-        >
+        <BackLink to={own ? '/profile' : '/events'}>
           {own ? 'Back to My Profile' : 'Back to events'}
-        </Link>
+        </BackLink>
         {own && (
           <Button asChild variant="outline">
             <Link to="/account">Account Settings</Link>

@@ -1,3 +1,4 @@
+import { BackLink } from '@/components/back-link'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link } from 'react-router'
 import { z } from 'zod'
@@ -61,9 +62,9 @@ export function AdminArea({ section }: { section: 'home' | 'users' | 'audit' | '
       <div className="space-y-3">
         <h1 className="text-3xl font-bold">Access restricted</h1>
         <p>You do not have permission to use this administrative page.</p>
-        <Link className="text-primary underline" to="/">
+        <BackLink to="/">
           Back to discovery
-        </Link>
+        </BackLink>
       </div>
     )
   else

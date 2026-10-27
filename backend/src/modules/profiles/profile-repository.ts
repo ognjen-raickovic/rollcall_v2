@@ -13,6 +13,15 @@ import type { ProfileRepository } from './types.js'
 type DatabaseError = { code: string }
 function databaseError(error: DatabaseError): ApiError {
   throwIfSuspended(error)
+  if (error.code === 'PT409')
+    return new ApiError(
+      409,
+      'CONFLICT',
+      'Your games changed in another session. Reload before saving.',
+      {
+        _form: ['Your saved games changed. Reload the saved set before applying this draft.'],
+      },
+    )
   if (error.code === 'P0002')
     return new ApiError(404, 'NOT_FOUND', 'The requested profile or game was not found.')
   if (['22023', '22003', '22P02', '23514', '23503'].includes(error.code))
@@ -42,7 +51,8 @@ async function result<T>(
     throw unavailable()
   }
   if (response.error) throw databaseError(response.error)
-  if (missing && response.data === null) throw new ApiError(404, 'NOT_FOUND', 'This profile does not exist.')
+  if (missing && response.data === null)
+    throw new ApiError(404, 'NOT_FOUND', 'This profile does not exist.')
   const parsed = schema.safeParse(response.data)
   if (!parsed.success) throw unavailable()
   return parsed.data
@@ -53,7 +63,8 @@ export function createProfileRepository(client: DatabaseClient): ProfileReposito
     getPublic: (userId) =>
       result(client.rpc('public_profile', { p_user_id: userId }), publicProfileSchema, true),
     getOwn: () => result(client.rpc('get_my_profile'), ownProfileSchema, true),
-    updateOwn: (patch) => result(client.rpc('update_my_profile', { p_patch: patch }), ownProfileSchema, true),
+    updateOwn: (patch) =>
+      result(client.rpc('update_my_profile', { p_patch: patch }), ownProfileSchema, true),
     getExperience: async (userId) =>
       (await result(client.rpc('public_profile', { p_user_id: userId }), publicProfileSchema, true))
         .gameExperience,
@@ -65,6 +76,11 @@ export function createProfileRepository(client: DatabaseClient): ProfileReposito
     removeExperience: async (gameId) => {
       await result(client.rpc('remove_my_game_experience', { p_game_id: gameId }), z.null())
     },
+    replaceExperience: (input) =>
+      result(
+        client.rpc('replace_my_game_experience', { p_games: input.games, p_expected: input.expected }),
+        z.array(gameExperienceSchema).max(50),
+      ),
     listGames: async () => {
       const rows = await result(
         client

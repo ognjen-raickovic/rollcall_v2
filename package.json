@@ -4,6 +4,7 @@
   "packageManager": "pnpm@12.14.0",
   "engines": { "node": "22.x" },
   "scripts": {
+    "test:profile-editor-ui": "pnpm --filter frontend test:profile-editor-ui",
     "test:discovery": "pnpm --filter frontend test:discovery",
     "test:navigation-ui": "pnpm --filter frontend test:navigation-ui",
     "dev:all": "node scripts/run-app.mjs local",
