@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { formatAccountDate } from '@/lib/account-date'
+import { FormSelect } from '@/components/form-select'
 import { HttpError } from '@/lib/http-client'
 import { locationReferenceSchema, type LocationReference } from '@/lib/location'
 import { useUpdateProfile } from '../api/use-profiles'
@@ -114,131 +116,134 @@ export function ProfileForm({ profile, renderLocation }: ProfileFormProps) {
         )
       })}
     >
-      <section className="space-y-6 rounded-xl border bg-card p-6 md:p-8">
-        <div className="space-y-2">
-          <h2 className="text-xl font-semibold">The player behind the games</h2>
-          <p className="text-sm text-muted-foreground">
-            Your name, biography and location appear on your public profile. Location is optional.
-          </p>
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="profile-display-name">
-            Display name{' '}
-            <span aria-hidden="true" className="text-primary">
-              *
-            </span>
-          </Label>
-          <Input
-            id="profile-display-name"
-            autoComplete="nickname"
-            maxLength={80}
-            aria-invalid={Boolean(form.formState.errors.displayName)}
-            aria-describedby={form.formState.errors.displayName ? 'profile-name-error' : undefined}
-            {...form.register('displayName')}
-          />
-          {form.formState.errors.displayName && (
-            <p id="profile-name-error" className="text-sm text-destructive">
-              {form.formState.errors.displayName.message}
+      <fieldset disabled={update.isPending} className="min-w-0 space-y-6">
+        <section className="space-y-6 rounded-xl border bg-card p-6 md:p-8">
+          <div className="space-y-2">
+            <h2 className="text-xl font-semibold">The player behind the games</h2>
+            <p className="text-sm text-muted-foreground">
+              Your name, biography and location appear on your public profile. Location is optional.
             </p>
-          )}
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="profile-biography">Biography</Label>
-          <Textarea
-            id="profile-biography"
-            rows={4}
-            maxLength={500}
-            placeholder="Your favorite games, the tables you enjoy, or a little about you."
-            aria-invalid={Boolean(form.formState.errors.biography)}
-            aria-describedby="profile-bio-help"
-            {...form.register('biography')}
-          />
-          <p id="profile-bio-help" className="text-xs text-muted-foreground">
-            Optional · Up to 500 characters. Avoid sharing private contact details.
-          </p>
-          {form.formState.errors.biography && (
-            <p className="text-sm text-destructive">{form.formState.errors.biography.message}</p>
-          )}
-        </div>
-        <Controller
-          name="location"
-          control={form.control}
-          render={({ field, fieldState }) => (
-            <>
-              {renderLocation({
-                countryId: form.watch('countryId'),
-                value: field.value,
-                disabled: update.isPending,
-                error: fieldState.error?.message ?? form.formState.errors.countryId?.message,
-                onCountryChange: (countryId) => {
-                  form.setValue('countryId', countryId, { shouldDirty: true })
-                  field.onChange(null)
-                  setUnconfirmedCity(false)
-                  form.clearErrors(['location', 'countryId'])
-                },
-                onChange: (value) => {
-                  field.onChange(value)
-                  if (value) {
-                    form.setValue('countryId', value.countryId, { shouldDirty: true })
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="profile-display-name">
+              Display name{' '}
+              <span aria-hidden="true" className="text-primary">
+                *
+              </span>
+            </Label>
+            <Input
+              id="profile-display-name"
+              autoComplete="nickname"
+              maxLength={80}
+              aria-invalid={Boolean(form.formState.errors.displayName)}
+              aria-describedby={form.formState.errors.displayName ? 'profile-name-error' : undefined}
+              {...form.register('displayName')}
+            />
+            {form.formState.errors.displayName && (
+              <p id="profile-name-error" className="text-sm text-destructive">
+                {form.formState.errors.displayName.message}
+              </p>
+            )}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="profile-biography">Biography</Label>
+            <Textarea
+              id="profile-biography"
+              rows={4}
+              maxLength={500}
+              placeholder="Your favorite games, the tables you enjoy, or a little about you."
+              aria-invalid={Boolean(form.formState.errors.biography)}
+              aria-describedby="profile-bio-help"
+              {...form.register('biography')}
+            />
+            <p id="profile-bio-help" className="text-xs text-muted-foreground">
+              Optional · Up to 500 characters. Avoid sharing private contact details.
+            </p>
+            {form.formState.errors.biography && (
+              <p className="text-sm text-destructive">{form.formState.errors.biography.message}</p>
+            )}
+          </div>
+          <Controller
+            name="location"
+            control={form.control}
+            render={({ field, fieldState }) => (
+              <>
+                {renderLocation({
+                  countryId: form.watch('countryId'),
+                  value: field.value,
+                  disabled: update.isPending,
+                  error: fieldState.error?.message ?? form.formState.errors.countryId?.message,
+                  onCountryChange: (countryId) => {
+                    form.setValue('countryId', countryId, { shouldDirty: true })
+                    field.onChange(null)
                     setUnconfirmedCity(false)
+                    form.clearErrors(['location', 'countryId'])
+                  },
+                  onChange: (value) => {
+                    field.onChange(value)
+                    if (value) {
+                      form.setValue('countryId', value.countryId, { shouldDirty: true })
+                      setUnconfirmedCity(false)
+                      form.clearErrors('location')
+                    }
+                  },
+                  onQueryChange: (query) => {
+                    setUnconfirmedCity(Boolean(query.trim()))
                     form.clearErrors('location')
-                  }
-                },
-                onQueryChange: (query) => {
-                  setUnconfirmedCity(Boolean(query.trim()))
-                  form.clearErrors('location')
-                },
-              })}
-            </>
-          )}
-        />
-        <p className="text-xs text-muted-foreground">
-          City is optional. Leave it blank or choose a suggestion; changing country clears the city.
-        </p>
-        <div className="space-y-2 border-t pt-6">
-          <p className="text-sm font-medium">Account created</p>
-          <p className="text-sm text-muted-foreground">
-            {new Intl.DateTimeFormat('en-GB', { dateStyle: 'long' }).format(new Date(profile.createdAt))} ·
-            Read-only
+                  },
+                })}
+              </>
+            )}
+          />
+          <p className="text-xs text-muted-foreground">
+            City is optional. Leave it blank or choose a suggestion; changing country clears the city.
           </p>
-        </div>
-      </section>
-      <section className="space-y-4 rounded-xl border bg-card p-6 md:p-8">
-        <h2 className="flex items-center gap-2 text-xl font-semibold">
-          <LockKeyhole className="size-5 text-primary" aria-hidden="true" />
-          Private age information
-        </h2>
-        <p className="text-sm leading-relaxed text-muted-foreground">
-          {profile.hasDateOfBirth
-            ? 'Your birth year comes from your private registration date and cannot be changed here. Your full date of birth is never shown publicly.'
-            : 'This optional birth year is visible only to you. It is self-declared, not verified, and is never shown on your public profile.'}
-        </p>
-        <div className="space-y-2">
-          <Label htmlFor="profile-birth-year">Birth year (private)</Label>
-          {profile.hasDateOfBirth ? (
-            <Input id="profile-birth-year" readOnly value={profile.birthYear ?? ''} />
-          ) : (
-            <select
-              id="profile-birth-year"
-              className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              aria-invalid={Boolean(form.formState.errors.birthYear)}
-              {...form.register('birthYear', {
-                setValueAs: (value) => (value === '' || value == null ? null : Number(value)),
-              })}
-            >
-              <option value="">Prefer not to say</option>
-              {Array.from({ length: currentYear - 1899 }, (_, index) => currentYear - index).map((year) => (
-                <option key={year} value={year}>
-                  {year}
-                </option>
-              ))}
-            </select>
-          )}
-          {form.formState.errors.birthYear && (
-            <p className="text-sm text-destructive">{form.formState.errors.birthYear.message}</p>
-          )}
-        </div>
-      </section>
+          <div className="space-y-2 border-t pt-6">
+            <p className="text-sm font-medium">Account created</p>
+            <p className="text-sm text-muted-foreground">
+              {formatAccountDate(profile.createdAt)} · Read-only
+            </p>
+          </div>
+        </section>
+        <section className="space-y-4 rounded-xl border bg-card p-6 md:p-8">
+          <h2 className="flex items-center gap-2 text-xl font-semibold">
+            <LockKeyhole className="size-5 text-primary" aria-hidden="true" />
+            Private age information
+          </h2>
+          <p className="text-sm leading-relaxed text-muted-foreground">
+            {profile.hasDateOfBirth
+              ? 'Your birth year comes from your private registration date and cannot be changed here. Your full date of birth is never shown publicly.'
+              : 'This optional birth year is visible only to you. It is self-declared, not verified, and is never shown on your public profile.'}
+          </p>
+          <div className="space-y-2">
+            <Label htmlFor="profile-birth-year">Birth year (private)</Label>
+            {profile.hasDateOfBirth ? (
+              <Input id="profile-birth-year" readOnly value={profile.birthYear ?? ''} />
+            ) : (
+              <FormSelect
+                id="profile-birth-year"
+                className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                aria-invalid={Boolean(form.formState.errors.birthYear)}
+                {...form.register('birthYear', {
+                  setValueAs: (value) => (value === '' || value == null ? null : Number(value)),
+                })}
+              >
+                <option value="">Prefer not to say</option>
+                {Array.from({ length: currentYear - 1899 }, (_, index) => currentYear - index).map(
+                  (year) => (
+                    <option key={year} value={year}>
+                      {year}
+                    </option>
+                  ),
+                )}
+              </FormSelect>
+            )}
+            {form.formState.errors.birthYear && (
+              <p className="text-sm text-destructive">{form.formState.errors.birthYear.message}</p>
+            )}
+          </div>
+        </section>
+      </fieldset>
       {update.error && (
         <p
           role="alert"
@@ -255,7 +260,7 @@ export function ProfileForm({ profile, renderLocation }: ProfileFormProps) {
       <div className="flex flex-wrap gap-4">
         <Button type="submit" disabled={update.isPending}>
           <Save aria-hidden="true" />
-          {update.isPending ? 'Saving profile...' : 'Save profile'}
+          {update.isPending ? 'Saving changes...' : 'Save changes'}
         </Button>
         <Button asChild variant="outline">
           <Link to="/profile">Cancel</Link>

@@ -9,6 +9,7 @@ import {
   noQuerySchema,
   profileIdSchema,
   profilePatchSchema,
+  replaceExperienceSchema,
 } from './profile-schema.js'
 import type { ProfileRepository } from './types.js'
 
@@ -46,6 +47,10 @@ export function registerProfileRoutes(
     const { gameId } = parseInput(gameIdSchema, request.params)
     const { experience } = parseInput(experienceInputSchema, request.body)
     return own(request).setExperience(gameId, experience)
+  })
+  app.put('/api/me/game-experience', { preHandler: guard }, async (request) => {
+    parseInput(noQuerySchema, request.query)
+    return own(request).replaceExperience(parseInput(replaceExperienceSchema, request.body))
   })
   app.delete('/api/me/game-experience/:gameId', { preHandler: guard }, async (request, reply) => {
     parseInput(noQuerySchema, request.query)

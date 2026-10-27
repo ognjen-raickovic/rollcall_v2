@@ -1,5 +1,12 @@
 # RollCall database schema
 
+Forward migration 21 (`20261027000500_profile_game_sets.sql`) adds the owner-only,
+SECURITY INVOKER `replace_my_game_experience(jsonb,jsonb)` RPC and a before-statement
+game-experience write lock. It validates bounded catalog sets, compares expected saved
+values and replaces atomically, returning PT409 for a stale set. Legacy/raw authenticated
+writes share serialization. Existing table schema, grants, RLS, private DOB and registration
+triggers remain intact. See [current profile contracts](profiles.md).
+
 ## Milestone 4D additions
 
 Forward migrations 19–20 add discovery filters/sort-aware keyset positions and the

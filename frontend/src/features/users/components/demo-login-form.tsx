@@ -1,5 +1,6 @@
+import { BackLink } from '@/components/back-link'
 import { useState } from 'react'
-import { ArrowLeft, ArrowRight, Check, Dices, LoaderCircle, ShieldCheck } from 'lucide-react'
+import { ArrowRight, Check, Dices, LoaderCircle, ShieldCheck } from 'lucide-react'
 import { Link, Navigate, useSearchParams } from 'react-router'
 
 import { Button } from '@/components/ui/button'
@@ -32,12 +33,11 @@ export function DemoLoginForm() {
   return (
     <div className="mx-auto grid max-w-5xl gap-12 py-4 md:py-12 lg:grid-cols-5 lg:gap-16">
       <section className="space-y-6 lg:col-span-2">
-        <Link
+        <BackLink
           to="/"
-          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary focus-visible:outline-2 focus-visible:outline-ring"
         >
-          <ArrowLeft className="size-4" aria-hidden="true" /> Back to discovery
-        </Link>
+          Back to discovery
+        </BackLink>
         <div className="flex size-12 items-center justify-center rounded-xl border border-primary/30 bg-accent text-primary">
           <Dices className="size-6" aria-hidden="true" />
         </div>

@@ -51,8 +51,13 @@ with a visible demo label. Real login never grants numeric demo privileges.
 Real profiles use a readable identity/biography/location summary and separate My Games list.
 Own profiles offer clear Edit profile and public-view links; a new account gets friendly
 completion guidance. Editing groups public details/location separately from private optional
-birth year, with explicit self-declared wording. Games use labeled native selectors and
-per-row update/remove actions with pending, success and error feedback. Reuse country/city
+birth year, with explicit self-declared wording. The editor is one centered 672px column,
+without a sidebar, with equal-width Profile/My games tabs. Keep both drafts mounted when
+switching; use a restrained 180ms slide/fade only when reduced motion is not requested.
+Games use labeled inset-chevron native selectors and draft-only add/change/remove actions;
+both tabs end with Save changes and Cancel, with pending, success and error feedback.
+Return links use an arrow and inverted foreground/background tokens with visible focus.
+Reuse country/city
 controls through route composition. Use initials rather than adding picture uploads. Public
 views contain no email, age or roles. Preserve semantic tokens, keyboard focus and readable
 wrapping at 375px and 1440px in both themes.

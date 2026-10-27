@@ -185,3 +185,12 @@ filters/order run in SQL before pagination and stay public/scheduled only. My Ev
 independently active-owner/member authorized and viewer-cached; never use discovery as
 its authorization. Preserve sort-bound cursors, civil-date/DST handling, logout confirmation
 and account-switch cache destruction. Deletion and username recovery remain separately gated.
+
+## Profile editor and atomic game saves (21)
+
+Read ../docs/profiles.md for the centered tabbed editor and complete-set Save contract.
+Keep drafts owner-scoped and in memory, preserve them across tab changes, and use the
+transactional expected-set replacement instead of sequential game mutations. Preserve
+statement-lock serialization, active-account checks and caller RLS. Full account dates
+use UTC; event dates do not change. Deletion remains disabled pending the separate
+reauthentication, freeze, retention and isolated-worker gates.

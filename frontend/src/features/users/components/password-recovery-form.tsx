@@ -1,6 +1,6 @@
+import { BackLink } from '@/components/back-link'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
-import { Link } from 'react-router'
 import { z } from 'zod'
 import { Button } from '@/components/ui/button'
 import { emailSchema } from '../api/auth-api'
@@ -55,9 +55,7 @@ export function PasswordRecoveryForm() {
         <Button type="submit" className="w-full" disabled={Boolean(configuration) || recovery.isPending}>
           {recovery.isPending ? 'Sending link...' : 'Send reset link'}
         </Button>
-        <Link className="block text-center text-sm text-primary hover:underline" to="/login">
-          Back to login
-        </Link>
+        <BackLink to="/login">Back to login</BackLink>
       </form>
     </AuthShell>
   )

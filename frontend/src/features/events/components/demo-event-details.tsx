@@ -1,5 +1,5 @@
-﻿import type { ReactNode } from 'react'
-import { ArrowLeft } from 'lucide-react'
+import { BackLink } from '@/components/back-link'
+import type { ReactNode } from 'react'
 import { Link, Navigate, useLocation } from 'react-router'
 
 import { Button } from '@/components/ui/button'
@@ -35,14 +35,7 @@ export function DemoEventDetails({
   const validId = /^\d+$/.test(eventId ?? '') && Number.isSafeInteger(id) && id > 0
   const location = useLocation()
   const { data: event, isPending, error, refetch } = useEvent(validId ? id : 0, currentUserId)
-  const backLink = (
-    <Link
-      to="/demo/events"
-      className="inline-flex min-h-10 items-center gap-2 text-sm text-primary hover:underline focus-visible:outline-2 focus-visible:outline-ring"
-    >
-      <ArrowLeft className="size-4" aria-hidden="true" /> Back to events
-    </Link>
-  )
+  const backLink = <BackLink to="/demo/events">Back to events</BackLink>
 
   if (!validId)
     return (
@@ -72,7 +65,9 @@ export function DemoEventDetails({
     event.organizerId !== currentUserId &&
     !event.attendeeIds.includes(currentUserId)
   ) {
-    return <Navigate to="/demo/events" replace state={{ eventNotice: 'You’ve left the private event.' }} />
+    return (
+      <Navigate to="/demo/events" replace state={{ eventNotice: 'You’ve left the private event.' }} />
+    )
   }
   if (error || !event) {
     const missing = error instanceof ApiError && error.code === 'NOT_FOUND'

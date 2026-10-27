@@ -1,5 +1,9 @@
 ﻿# RollCall
 
+Profile editing now uses a centered Profile/My games tabbed editor and explicit atomic
+game-set saves (forward migration 21). See [profile contracts and verification](docs/profiles.md).
+Account deletion remains disabled under its separate security/policy gates.
+
 The account menu now links My Profile, Settings and My Events. Event discovery adds
 global sorting and advanced date/time/tag/experience/age filters. Migrations 19–20
 require separate review/application before the matching backend/frontend rollout.

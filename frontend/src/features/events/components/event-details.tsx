@@ -1,4 +1,5 @@
-import { ArrowLeft, Gamepad2 } from 'lucide-react'
+import { BackLink } from '@/components/back-link'
+import { Gamepad2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router'
 
@@ -68,7 +69,10 @@ export function EventDetails({
       await getAccessToken()
       if (!mounted.current) return
       setDeleteOpen(false)
-      await navigate('/events', { replace: true, state: { eventNotice: 'Your event has been deleted.' } })
+      await navigate('/events', {
+        replace: true,
+        state: { eventNotice: 'Your event has been deleted.' },
+      })
     } catch {
       /* Keep the confirmation open and show the mutation error. */
     } finally {
@@ -87,14 +91,7 @@ export function EventDetails({
       onConfirm={() => void deleteEvent()}
     />
   )
-  const backLink = (
-    <Link
-      to="/events"
-      className="inline-flex min-h-10 items-center gap-2 text-sm text-primary hover:underline focus-visible:outline-2 focus-visible:outline-ring"
-    >
-      <ArrowLeft className="size-4" aria-hidden="true" /> Back to events
-    </Link>
-  )
+  const backLink = <BackLink to="/events">Back to events</BackLink>
   if (!validId)
     return (
       <section className="space-y-4 py-8">
@@ -163,7 +160,9 @@ export function EventDetails({
     )
   }
   const authorized =
-    viewerId !== null && event.viewer.userId === viewerId && (event.viewer.isHost || event.viewer.hasJoined)
+    viewerId !== null &&
+    event.viewer.userId === viewerId &&
+    (event.viewer.isHost || event.viewer.hasJoined)
   const address =
     authorized && !leave.isPending && !leave.isSuccess && !leave.error && 'address' in event
       ? event.address
@@ -204,7 +203,9 @@ export function EventDetails({
             eventId={event.id}
             cover={event.cover}
             session={session}
-            enabled={!leave.isPending && !leave.error && !(leave.isSuccess && event.visibility === 'private')}
+            enabled={
+              !leave.isPending && !leave.error && !(leave.isSuccess && event.visibility === 'private')
+            }
             title={event.title}
             category={event.game.category}
             priority
@@ -226,7 +227,9 @@ export function EventDetails({
             <Gamepad2 className="size-8 shrink-0 text-primary" aria-hidden="true" />
             <div>
               <p className="font-semibold">{event.game.name}</p>
-              <p className="mt-1 text-sm text-muted-foreground">{event.game.category.replaceAll('-', ' ')}</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {event.game.category.replaceAll('-', ' ')}
+              </p>
             </div>
           </div>
         }
@@ -262,7 +265,11 @@ export function EventDetails({
         <InvitationPanel id={event.id} session={session} />
       )}
       {deleteDialog}
-      <ReportEvent key={`${event.id}:${session.viewerId ?? 'anonymous'}`} id={event.id} session={session} />
+      <ReportEvent
+        key={`${event.id}:${session.viewerId ?? 'anonymous'}`}
+        id={event.id}
+        session={session}
+      />
     </>
   )
 }

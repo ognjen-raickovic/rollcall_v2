@@ -5,6 +5,7 @@ import type {
   ownProfileSchema,
   profilePatchSchema,
   publicProfileSchema,
+  replaceExperienceSchema,
 } from './profile-schema.js'
 
 export type PublicProfile = z.infer<typeof publicProfileSchema>
@@ -20,5 +21,6 @@ export interface ProfileRepository {
   getExperience(userId: string): Promise<GameExperience[]>
   setExperience(gameId: number, experience: GameExperience['experience']): Promise<GameExperience>
   removeExperience(gameId: number): Promise<void>
+  replaceExperience(input: z.infer<typeof replaceExperienceSchema>): Promise<GameExperience[]>
   listGames(): Promise<CatalogGame[]>
 }

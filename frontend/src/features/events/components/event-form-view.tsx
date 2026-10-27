@@ -1,9 +1,10 @@
+import { BackLink } from '@/components/back-link'
 import { useState } from 'react'
 import type { FormEventHandler, ReactNode } from 'react'
 import type { FieldValues, UseFormReturn } from 'react-hook-form'
 import { useController } from 'react-hook-form'
-import { ArrowLeft, CalendarDays, Dices, LoaderCircle, LockKeyhole, MapPin, Tag, Users } from 'lucide-react'
-import { Link, useNavigate } from 'react-router'
+import { CalendarDays, Dices, LoaderCircle, LockKeyhole, MapPin, Tag, Users } from 'lucide-react'
+import { useNavigate } from 'react-router'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -95,15 +96,11 @@ export function EventFormView<TOutput extends FieldValues>({
 
   return (
     <div className="space-y-8 py-4">
-      <Link
-        to={cancelTo}
-        className="inline-flex min-h-10 items-center gap-2 text-sm text-primary hover:underline focus-visible:outline-2 focus-visible:outline-ring"
-      >
-        <ArrowLeft className="size-4" aria-hidden="true" />
-        {editing ? 'Back to event' : 'Back to discovery'}
-      </Link>
+      <BackLink to={cancelTo}>{editing ? 'Back to event' : 'Back to discovery'}</BackLink>
       <header className="max-w-2xl space-y-4">
-        <p className="text-xs font-semibold tracking-widest text-primary uppercase">Make room for one more</p>
+        <p className="text-xs font-semibold tracking-widest text-primary uppercase">
+          Make room for one more
+        </p>
         <h1 className="text-3xl font-bold tracking-tight md:text-4xl">
           {editing ? 'Edit your event' : 'Bring your table together'}
         </h1>
@@ -143,7 +140,10 @@ export function EventFormView<TOutput extends FieldValues>({
               aria-labelledby="form-basics"
               className="min-w-0 space-y-6 rounded-xl border bg-card p-4 md:p-6"
             >
-              <h2 id="form-basics" className="flex items-center gap-3 text-2xl font-semibold tracking-tight">
+              <h2
+                id="form-basics"
+                className="flex items-center gap-3 text-2xl font-semibold tracking-tight"
+              >
                 <Dices className="size-5 text-primary" aria-hidden="true" /> The basics
               </h2>
               <EventFormField
@@ -317,7 +317,10 @@ export function EventFormView<TOutput extends FieldValues>({
               aria-labelledby="form-players"
               className="min-w-0 space-y-6 rounded-xl border bg-card p-4 md:p-6"
             >
-              <h2 id="form-players" className="flex items-center gap-3 text-2xl font-semibold tracking-tight">
+              <h2
+                id="form-players"
+                className="flex items-center gap-3 text-2xl font-semibold tracking-tight"
+              >
                 <Users className="size-5 text-primary" aria-hidden="true" /> Your players
               </h2>
               <div className="grid min-w-0 gap-4 sm:grid-cols-2">
@@ -377,7 +380,10 @@ export function EventFormView<TOutput extends FieldValues>({
                       className={selectStyle}
                       onChange={(event) => {
                         const next = event.currentTarget.value as ExperienceLevel
-                        form.setValue('experienceLevel', next, { shouldDirty: true, shouldValidate: true })
+                        form.setValue('experienceLevel', next, {
+                          shouldDirty: true,
+                          shouldValidate: true,
+                        })
                         const kept = tagsField.value.filter((tag) => tagMatchesExperience(tag, next))
                         const removed = tagsField.value.filter((tag) => !tagMatchesExperience(tag, next))
                         if (removed.length)
@@ -459,7 +465,8 @@ export function EventFormView<TOutput extends FieldValues>({
                       className="aspect-video w-full rounded-lg border"
                     />
                     <p className="text-sm text-muted-foreground">
-                      Your event uses the standard game illustration. Custom cover uploads are coming later.
+                      Your event uses the standard game illustration. Custom cover uploads are coming
+                      later.
                     </p>
                   </div>
                 ))}
@@ -542,8 +549,8 @@ export function EventFormView<TOutput extends FieldValues>({
             <CalendarDays className="size-6 text-primary" aria-hidden="true" />
             <p className="font-semibold">A good invitation goes a long way.</p>
             <p className="text-sm leading-relaxed text-muted-foreground">
-              Be clear about the game, who it’s for, and what players need to bring. Leave a little room for
-              first-timers.
+              Be clear about the game, who it’s for, and what players need to bring. Leave a little room
+              for first-timers.
             </p>
             <p className="border-t pt-4 text-sm text-muted-foreground">
               Hosting as{' '}

@@ -64,6 +64,7 @@ document describe the Workshop 3 mock-shaped intended contract, not existing ser
 | `GET /api/me/profile`                      | `OwnProfile`                                                            | Verified owner; no-store                     |
 | `PATCH /api/me/profile`                    | Updated `OwnProfile`                                                    | Verified owner; atomic public/private update |
 | `GET /api/me/game-experience`              | `GameExperience[]`                                                      | Verified owner; no-store                     |
+| `PUT /api/me/game-experience`              | `GameExperience[]`; `{ games, expected }` complete sets, max 50 unique games each | Verified active owner; atomic compare-and-swap; stale set 409 |
 | `PUT /api/me/game-experience/:gameId`      | Saved `GameExperience`                                                  | Verified owner; idempotent upsert            |
 | `DELETE /api/me/game-experience/:gameId`   | 204, no body                                                            | Verified owner; idempotent removal           |
 | `GET /api/users/:userId`                   | `PublicProfile`                                                         | Public; UUID path                            |

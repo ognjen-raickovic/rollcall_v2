@@ -1,3 +1,4 @@
+import { BackLink } from '@/components/back-link'
 import { Link } from 'react-router'
 import type { ReactNode } from 'react'
 
@@ -72,9 +73,7 @@ export function EventEditor({
         <Button variant="outline" onClick={() => void result.refetch()}>
           Try again
         </Button>
-        <Button asChild variant="ghost">
-          <Link to="/demo/events">Back to demo events</Link>
-        </Button>
+        <BackLink to="/demo/events">Back to demo events</BackLink>
       </section>
     )
   if (editing && result.data?.organizerId !== currentUserId)

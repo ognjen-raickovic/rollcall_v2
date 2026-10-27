@@ -56,6 +56,7 @@ test('profile routes use verified identity and strictly validate writes before r
         removeExperience: async () => {
           note('removeExperience')
         },
+        replaceExperience: async ({ games }) => games.map(game => ({ ...game, gameName: 'Catalog game' })),
         listGames: async () => {
           note('listGames')
           return []

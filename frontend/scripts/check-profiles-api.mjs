@@ -20,6 +20,16 @@ test('profile client account isolation and public projection', async (t) => {
   try {
     const { authClient } = await server.ssrLoadModule('/src/features/users/api/auth-client.ts')
     const { profilesApi } = await server.ssrLoadModule('/src/features/users/api/profiles-api.ts')
+    const { formatAccountDate } = await server.ssrLoadModule('/src/lib/account-date.ts')
+    await t.test(
+      'full account dates use English ordinals and UTC without changing event formatting',
+      () => {
+        assert.equal(formatAccountDate('2026-10-27T00:05:00Z'), '27. October 2026.')
+        assert.equal(formatAccountDate('2026-10-27T23:55:00-03:00'), '28. October 2026.')
+        assert.equal(formatAccountDate('2026-01-01T00:05:00+02:00'), '31. December 2025.')
+        assert.equal(formatAccountDate('not a date'), 'Date unavailable')
+      },
+    )
     const auth = authClient().auth
     const originalGetSession = auth.getSession
     const first = '10000000-0000-4000-8000-000000000001'
@@ -30,21 +40,25 @@ test('profile client account isolation and public projection', async (t) => {
       throw new Error('Unexpected network request')
     }
     try {
-      await t.test('an account switch blocks stale owner reads and every write before HTTP', async () => {
-        auth.getSession = async () => ({
-          data: { session: { user: { id: second }, access_token: 'synthetic-test-token' } },
-          error: null,
-        })
-        for (const operation of [
-          () => profilesApi.getOwn(first),
-          () => profilesApi.update({ displayName: 'Stale form' }, first),
-          () => profilesApi.experience(first),
-          () => profilesApi.setExperience({ gameId: 1, experience: 'veteran' }, first),
-          () => profilesApi.removeExperience(1, first),
-        ])
-          await assert.rejects(operation(), /account changed/)
-        assert.equal(calls, 0)
-      })
+      await t.test(
+        'an account switch blocks stale owner reads and every write before HTTP',
+        async () => {
+          auth.getSession = async () => ({
+            data: { session: { user: { id: second }, access_token: 'synthetic-test-token' } },
+            error: null,
+          })
+          for (const operation of [
+            () => profilesApi.getOwn(first),
+            () => profilesApi.update({ displayName: 'Stale form' }, first),
+            () => profilesApi.experience(first),
+            () => profilesApi.setExperience({ gameId: 1, experience: 'veteran' }, first),
+            () => profilesApi.removeExperience(1, first),
+            () => profilesApi.replaceExperience({ games: [], expected: [] }, first),
+          ])
+            await assert.rejects(operation(), /account changed/)
+          assert.equal(calls, 0)
+        },
+      )
       await t.test(
         'own replies must match the expected UUID and public results omit private fields',
         async () => {
@@ -68,7 +82,10 @@ test('profile client account isolation and public projection', async (t) => {
           })
           globalThis.fetch = async () => Response.json(profile)
           await assert.rejects(profilesApi.getOwn(first), /could not be verified/)
-          await assert.rejects(profilesApi.update({ displayName: 'Player' }, first), /could not be verified/)
+          await assert.rejects(
+            profilesApi.update({ displayName: 'Player' }, first),
+            /could not be verified/,
+          )
           globalThis.fetch = async (_url, options) => {
             assert.equal(new Headers(options.headers).has('Authorization'), false)
             return Response.json(profile)
@@ -76,6 +93,26 @@ test('profile client account isolation and public projection', async (t) => {
           const safe = await profilesApi.getPublic(second)
           for (const field of ['birthYear', 'ageDeclaredAt', 'email', 'role'])
             assert.equal(Object.hasOwn(safe, field), false)
+        },
+      )
+      await t.test(
+        'a late account switch rejects the acknowledged batch before UI success',
+        async () => {
+          let viewer = first
+          auth.getSession = async () => ({
+            data: { session: { user: { id: viewer }, access_token: 'synthetic-test-token' } },
+            error: null,
+          })
+          globalThis.fetch = async (_url, options) => {
+            assert.equal(options.method, 'PUT')
+            assert.deepEqual(JSON.parse(options.body), { games: [], expected: [] })
+            viewer = second
+            return Response.json([])
+          }
+          await assert.rejects(
+            profilesApi.replaceExperience({ games: [], expected: [] }, first),
+            /account changed/,
+          )
         },
       )
     } finally {

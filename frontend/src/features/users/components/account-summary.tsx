@@ -46,9 +46,6 @@ export function AccountSummary() {
           <Button asChild variant="outline">
             <Link to="/profile/edit">Edit Profile</Link>
           </Button>
-          <Button asChild variant="ghost">
-            <Link to="/events">Browse events</Link>
-          </Button>
         </nav>
       </header>
       <div className="grid items-start gap-6 md:grid-cols-2">
@@ -137,10 +134,16 @@ export function AccountSummary() {
           Danger Zone
         </h2>
         <h3 className="font-semibold">Account deletion</h3>
-        <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
-          Account deletion is not available yet. Your account, hosted events and game history will stay
-          intact. No deletion action can be started here.
+        <p
+          id="account-deletion-help"
+          className="max-w-2xl text-sm leading-relaxed text-muted-foreground"
+        >
+          Account deletion is unavailable while secure reauthentication, data cleanup and retention rules
+          are being reviewed. Your account data stays unchanged.
         </p>
+        <Button type="button" variant="destructive" disabled aria-describedby="account-deletion-help">
+          Delete account
+        </Button>
       </section>
     </div>
   )
