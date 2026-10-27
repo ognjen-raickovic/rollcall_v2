@@ -2,9 +2,28 @@ begin;
 
 create role rollcall_admin_executor nologin noinherit nosuperuser nocreatedb nocreaterole noreplication nobypassrls;
 grant rollcall_admin_executor to current_user;
-grant usage on schema public, private, auth to rollcall_admin_executor;
+grant usage on schema public, private to rollcall_admin_executor;
 grant select on public.profiles, private.account_roles to rollcall_admin_executor;
-grant select(id,email_confirmed_at) on auth.users to rollcall_admin_executor;
+-- Initial hosted rollout compatibility: expose only the existing narrow checks,
+-- never managed Auth schema/table privileges, to the custom executor.
+create function private.confirmed_admin_actor() returns uuid
+language plpgsql security definer set search_path='' as $$
+declare actor uuid:=auth.uid();
+begin
+ if actor is null or not exists(select 1 from auth.users u join public.profiles p on p.id=u.id
+   where u.id=actor and u.email_confirmed_at is not null) then
+   raise exception using errcode='42501',message='Verified account required.';
+ end if;
+ return actor;
+end; $$;
+create function private.admin_account_confirmed(p_target uuid) returns boolean
+language sql stable security definer set search_path='' as $$
+ select exists(select 1 from auth.users where id=p_target and email_confirmed_at is not null);
+$$;
+revoke all on function private.confirmed_admin_actor(), private.admin_account_confirmed(uuid)
+ from public,anon,authenticated,service_role;
+grant execute on function private.confirmed_admin_actor(), private.admin_account_confirmed(uuid)
+ to rollcall_admin_executor;
 grant insert(profile_id,role,assigned_by), update(role,assigned_by) on private.account_roles to rollcall_admin_executor;
 grant execute on function private.event_api_actor() to rollcall_admin_executor;
 create policy admin_profile_read on public.profiles for select to rollcall_admin_executor using(true);
@@ -43,10 +62,9 @@ create trigger immutable_role_audit_truncate before truncate on private.role_aud
  for each statement execute function private.reject_audit_mutation();
 
 create function private.admin_actor() returns uuid language plpgsql security invoker set search_path='' as $$
-declare actor uuid:=private.event_api_actor();
+declare actor uuid:=private.confirmed_admin_actor();
 begin
- if actor is null or not exists(select 1 from auth.users u join public.profiles p on p.id=u.id
-   where u.id=actor and u.email_confirmed_at is not null) then
+ if actor is null then
    raise exception using errcode='42501',message='Verified account required.';
  end if;
  return actor;
@@ -79,8 +97,8 @@ begin
  if p_limit is null or p_limit not between 1 and 50 then raise exception using errcode='22023',message='Invalid page size.'; end if;
  with page as (
   select p.id,p.display_name,p.created_at,private.effective_role(p.id) as role
-  from public.profiles p join auth.users u on u.id=p.id and u.email_confirmed_at is not null
-  where (p_after is null or p.id>p_after) and (p_user_id is null or p.id=p_user_id)
+  from public.profiles p where private.admin_account_confirmed(p.id)
+  and (p_after is null or p.id>p_after) and (p_user_id is null or p.id=p_user_id)
   order by p.id limit p_limit+1
  ), numbered as (select *,row_number() over(order by id) as n from page)
  select jsonb_build_object('items',coalesce(jsonb_agg(jsonb_build_object('id',id,'displayName',display_name,
@@ -100,8 +118,7 @@ begin
  if p_target is null or p_target=actor or p_role is null or p_role not in ('user','admin') then
   raise exception using errcode='22023',message='Unsupported role change.';
  end if;
- if not exists(select 1 from public.profiles p join auth.users u on u.id=p.id
-  where p.id=p_target and u.email_confirmed_at is not null) then
+ if not exists(select 1 from public.profiles where id=p_target) or not private.admin_account_confirmed(p_target) then
   raise exception using errcode='P0002',message='Account not found.';
  end if;
  previous:=private.effective_role(p_target);

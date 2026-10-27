@@ -1,5 +1,88 @@
 # Milestone 6A-1 verification
 
+## Hosted Auth compatibility correction (2026-10-27)
+
+On `feat/hosted-staging-rollout`, corrected the initial, not-yet-hosted history explicitly:
+
+- `20261025000200_events_api.sql`: removed Auth schema USAGE/auth.uid EXECUTE grants;
+  created the existing postgres-owned, argument-free subject helper before first use and
+  routed all executor event functions/policies through it.
+- `20261025000300_event_executor_identity.sql`: CREATE OR REPLACE reuses that early helper.
+- `20261026000300_administrative_roles.sql`: removed Auth schema/column grants, moved the
+  existing confirmed-subject/target-confirmation helpers before first use, and replaced
+  executor Auth joins with those narrow predicates. Maintenance-only bootstrap is unchanged.
+- `20261026000400_admin_verified_identity.sql`: preserved legacy column cleanup; schema
+  revocation runs only when postgres can delegate it, and unexpected remaining executor
+  Auth-schema access fails closed. No managed ownership/membership changes are introduced.
+
+This is an exception to preserving historical SQL, justified before the first hosted apply:
+unsupported GRANTs may warn/no-op rather than abort DDL, leaving unusable earlier executor
+functions/policies before the later helper migration runs. An appended migration does not
+repair that intermediate dependency or remove unsupported statements from the initial path.
+No new migration/version was added. The populated local database was not migrated/reset;
+its already-applied final helpers remain equivalent. Do not force-replay history or repair
+version records. Old approved inventories are superseded; review the changed SQL and new
+checkout checksums, rerun the offline source audit and linked dry-run before hosted approval.
+The audit now rejects reintroduced direct managed-Auth GRANTs; existing role/status gates stay.
+
+Executed on a fresh disposable local project, using all 16 corrected source migrations:
+
+- Passed two intermediate boundary checks, before each following identity migration:
+  custom event/admin roles resolved their own caller/confirmation without Auth schema USAGE.
+  Temporary executor assumption and synthetic confirmed users were rolled back.
+- Local capability metadata matched the relevant hosted restriction: postgres had neither
+  Auth schema USAGE grant option nor auth.uid EXECUTE grant option. Storage owner privileges
+  were false, while the supported Supautils policy exception was true. Actual policy creation
+  succeeded with managed Storage ownership intact.
+- Eight focused SQL suites / **242 assertions passed**, including ten new helper/ACL/search-path
+  assertions, Auth, profiles, event API, administration, covers, suspensions and staging security.
+- Real local Auth/Fastify/PostgREST/Storage suspension integration: **seven TAP tests passed**,
+  including old-JWT denial, both admission/suspension commit orders, reserved uploads,
+  moderator role serialization and atomic immutable audits.
+- Five staging unit tests and offline source audit passed. Root typecheck/lint/build passed.
+  Schema lint found no errors; the updated preflight executed successfully locally (12 result sets).
+  No browser suite or full geographic import was run. No administrator bootstrap or actual
+  staging key provisioning was run; security tests used disposable process-only fixtures.
+
+Supporting changes are in `backend/scripts/staging/audit.ts`, `backend/tests/staging.test.ts`,
+`supabase/staging/preflight.sql`, `supabase/tests/database/hosted-identity.test.sql` and the two
+staging documents. No Storage policy, application runtime, role eligibility or suspension
+implementation was changed.
+
+Hosted automatic-RLS evidence is consistent with a compatible enable-only trigger. It was
+not modified or disabled. Storage policy support is documented by Supautils, not inferred
+from ordinary ownership; the actual hosted `supautils.policy_grants`, Storage delegation
+privileges and effective migration identity still need the updated read-only preflight.
+Missing supported privileges remain a blocker for hosted apply. Digest delegation/effective
+EXECUTE should also be checked. No remote SQL, migration preview/apply, Auth/Storage change
+or local `.env` edit was performed during this correction. The disposable instance was stopped.
+
+Updated inventory below is SHA-256 of the exact operator-checkout SQL bytes, matching
+`pnpm staging:prepare audit --target=staging`; line-ending changes also change these values.
+Regenerate/review at the actual deployment checkout. Existing local version records are not
+proof that these revised bytes executed there. Git retains the original source for comparison.
+
+| Migration | SHA-256 |
+| --- | --- |
+| `20261024000100_initial_schema.sql` | `5b7034c82b85f4120a61623fdf7222c6583209377bf8868a6efa47ab611afbb2` |
+| `20261024000200_geography_search.sql` | `bcb355cbb6ba8cbecad8e475f522fbe4d3cedb26e3dea3074ea52d4eff92d1eb` |
+| `20261024000300_balkan_geography.sql` | `f3ca20858aa349b41efc78a26a615bca392a12daee704b241c30d4392d54add2` |
+| `20261024000400_auth_profile_initialization.sql` | `7615c0713099409a49d1d3bd5e458a2fbded4c64d54fc0e811cc64d2ac9574b9` |
+| `20261025000100_user_profiles.sql` | `c54d5bf460d62eba46ce32e2d08def1713de00c3c0ebfb20298ec55aa2648f01` |
+| `20261025000200_events_api.sql` | `e3866f28052b70dd7a1808865850e3b4b25abcfb233c93b6d7864be186933a80` |
+| `20261025000300_event_executor_identity.sql` | `6de8a61b7af3d259f226524b0569214e8d687dfa142f7dc85be5088d3d81479d` |
+| `20261025000400_event_attendance.sql` | `03f57507986c5c8fb3ee6c12132fc438ac3fa35b9f5cbdba0a75b10e16b7c19a` |
+| `20261025000500_attendance_private_recheck.sql` | `bb1a65c1f2bde6bd08706b3f68eab3253638d499ac7f12686232d50ada31c260` |
+| `20261026000100_event_covers.sql` | `c28d8177ceb67e7d6d761c13c65becb72b7636ded2e43d4afccbca9f276fef08` |
+| `20261026000200_private_invitations.sql` | `44df20fe84b0bcf8b73bdada94701e827d475fa1c5dd1f614c0447c2935f9000` |
+| `20261026000300_administrative_roles.sql` | `a1435707b7efbaf0978beb4b0f73b2f159240ed2892ac53f85a37ae20631511c` |
+| `20261026000400_admin_verified_identity.sql` | `4fad9c09312af011090bf88755d1935610ece5b38cd7d99f1141953a10400432` |
+| `20261026000500_event_moderation.sql` | `ad958f33e7df67b288ae523ed0161b74c496fedb48fb9272c9ea82a429079552` |
+| `20261026000600_account_suspensions.sql` | `5ad7f315b18be0033a7dfc5b8cffda2c7d479102508678f91018fb2396b65d44` |
+| `20261026000700_staging_provisioning.sql` | `bc7cb4b1e5d70a5b0e283e112ca45086c60c1ec5d6fbc0dfa84776a9dc0e9598` |
+
+Earlier sections below are historical verification evidence, not results for revised SQL.
+
 Verified locally on 2026-10-26, branch `feat/hosted-supabase-setup`. **No hosted deployment
 or remote mutation occurred.** No CLI project link, hosted import, bucket/Auth change,
 staging secret provisioning, hosted bootstrap or application deployment was performed.

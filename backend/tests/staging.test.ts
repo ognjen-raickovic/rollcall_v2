@@ -149,6 +149,15 @@ test('offline migration audit still refuses missing suspension source and route 
     assert.ok(audit.blockers.some((item) => item.includes('account-status.ts')))
     assert.ok(audit.blockers.some((item) => item.includes('account-suspensions.md')))
     assert.ok(audit.blockers.some((item) => item.includes('Fastify suspension enforcement')))
+    for (const grant of [
+      'grant usage on schema public, private, auth to rollcall_events_executor;',
+      'grant execute on function auth.uid() to rollcall_events_executor;',
+      'grant select(id,email_confirmed_at) on auth.users to rollcall_admin_executor;',
+    ]) {
+      await writeFile(path.join(directory, 'supabase/migrations/20261025000200_events_api.sql'), grant)
+      const unsafe = await migrationAudit(pathToFileURL(directory + path.sep))
+      assert.ok(unsafe.blockers.some((item) => item.includes('Unsupported managed Auth delegation')))
+    }
   } finally {
     await rm(directory, { recursive: true, force: true })
   }

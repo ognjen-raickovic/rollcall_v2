@@ -18,8 +18,16 @@ begin
 end;
 $$;
 
-grant usage on schema public, private, auth to rollcall_events_executor;
-grant execute on function auth.uid() to rollcall_events_executor;
+-- Initial hosted rollout compatibility: managed Auth privileges cannot be delegated.
+-- Define the same narrow resolver used by the following identity migration now,
+-- before executor-owned functions and RLS policies need it.
+grant usage on schema public, private to rollcall_events_executor;
+create function private.event_api_actor()
+returns uuid language sql stable security definer set search_path = '' as $$
+  select auth.uid();
+$$;
+revoke all on function private.event_api_actor() from public, anon, authenticated, service_role;
+grant execute on function private.event_api_actor() to rollcall_events_executor;
 grant execute on function private.valid_event_tags(text[], text) to rollcall_events_executor;
 grant select on public.events, public.games, public.profiles, public.cities, public.countries
   to rollcall_events_executor;
@@ -42,24 +50,24 @@ create policy event_executor_reference_games on public.games for select
 create policy event_executor_reference_profiles on public.profiles for select
   to rollcall_events_executor using (true);
 create policy event_executor_read on public.events for select to rollcall_events_executor
-  using (visibility in ('public', 'unlisted') or host_id = (select auth.uid()));
+  using (visibility in ('public', 'unlisted') or host_id = (select private.event_api_actor()));
 create policy event_executor_insert on public.events for insert to rollcall_events_executor
-  with check (host_id = (select auth.uid()));
+  with check (host_id = (select private.event_api_actor()));
 create policy event_executor_update on public.events for update to rollcall_events_executor
-  using (host_id = (select auth.uid())) with check (host_id = (select auth.uid()));
+  using (host_id = (select private.event_api_actor())) with check (host_id = (select private.event_api_actor()));
 create policy event_executor_delete on public.events for delete to rollcall_events_executor
-  using (host_id = (select auth.uid()));
+  using (host_id = (select private.event_api_actor()));
 create policy event_executor_location_read on private.event_locations for select
   to rollcall_events_executor using (exists
-    (select 1 from public.events e where e.id = event_id and e.host_id = (select auth.uid())));
+    (select 1 from public.events e where e.id = event_id and e.host_id = (select private.event_api_actor())));
 create policy event_executor_location_insert on private.event_locations for insert
   to rollcall_events_executor with check (exists
-    (select 1 from public.events e where e.id = event_id and e.host_id = (select auth.uid())));
+    (select 1 from public.events e where e.id = event_id and e.host_id = (select private.event_api_actor())));
 create policy event_executor_location_update on private.event_locations for update
   to rollcall_events_executor using (exists
-    (select 1 from public.events e where e.id = event_id and e.host_id = (select auth.uid())))
+    (select 1 from public.events e where e.id = event_id and e.host_id = (select private.event_api_actor())))
   with check (exists
-    (select 1 from public.events e where e.id = event_id and e.host_id = (select auth.uid())));
+    (select 1 from public.events e where e.id = event_id and e.host_id = (select private.event_api_actor())));
 
 -- Substring title search supplements the existing chronological/city/game indexes.
 create index events_public_title_trgm_idx on public.events using gin (title extensions.gin_trgm_ops)
@@ -213,7 +221,7 @@ begin
     'minimumAge', item.minimum_age, 'experienceLevel', item.experience_level,
     'price', item.price, 'currency', item.currency,
     'createdAt', item.created_at, 'updatedAt', item.updated_at);
-  if item.host_id = auth.uid() then
+  if item.host_id = private.event_api_actor() then
     detail := detail || jsonb_build_object('address', (select address from private.event_locations where event_id = item.id));
   end if;
   return detail;
@@ -331,7 +339,7 @@ create function private.event_api_create(p_input jsonb)
 returns jsonb language plpgsql security definer set search_path = '' as $$
 declare input jsonb; event_id uuid; chosen_city integer; chosen_game integer; event_tags text[];
 begin
-  if auth.uid() is null then raise exception using errcode = '42501', message = 'Authentication required.'; end if;
+  if private.event_api_actor() is null then raise exception using errcode = '42501', message = 'Authentication required.'; end if;
   input := private.event_api_input(p_input, false);
   chosen_city := ((input->>'cityId')::numeric)::integer;
   chosen_game := ((input->>'gameId')::numeric)::integer;
@@ -343,7 +351,7 @@ begin
   event_tags := case when input ? 'tags' then array(select jsonb_array_elements_text(input->'tags')) else '{}'::text[] end;
   insert into public.events (host_id, game_id, city_id, title, description, venue, starts_at, ends_at,
     capacity, experience_level, price, tags, minimum_age, visibility, status, cover_storage_path)
-  values (auth.uid(), chosen_game, chosen_city, input->>'title', input->>'description', input->>'venue',
+  values (private.event_api_actor(), chosen_game, chosen_city, input->>'title', input->>'description', input->>'venue',
     private.event_api_time(input->>'startsAt'), private.event_api_time(input->>'endsAt'),
     ((input->>'capacity')::numeric)::integer, input->>'experienceLevel', coalesce((input->>'price')::numeric, 0),
     event_tags, coalesce(((input->>'minimumAge')::numeric)::integer, 0), coalesce(input->>'visibility','public'), 'scheduled', null)
@@ -360,8 +368,8 @@ create function private.event_api_update(p_event_id uuid, p_patch jsonb)
 returns jsonb language plpgsql security definer set search_path = '' as $$
 declare input jsonb; previous public.events%rowtype; next public.events%rowtype;
 begin
-  if auth.uid() is null then raise exception using errcode = '42501', message = 'Authentication required.'; end if;
-  select * into previous from public.events where id = p_event_id and host_id = auth.uid() for update;
+  if private.event_api_actor() is null then raise exception using errcode = '42501', message = 'Authentication required.'; end if;
+  select * into previous from public.events where id = p_event_id and host_id = private.event_api_actor() for update;
   if not found then raise exception using errcode = 'P0002', message = 'Event not found.'; end if;
   input := private.event_api_input(p_patch, true);
   next := previous;
@@ -406,8 +414,8 @@ $$;
 create function private.event_api_delete(p_event_id uuid)
 returns void language plpgsql security definer set search_path = '' as $$
 begin
-  if auth.uid() is null then raise exception using errcode = '42501', message = 'Authentication required.'; end if;
-  delete from public.events where id = p_event_id and host_id = auth.uid();
+  if private.event_api_actor() is null then raise exception using errcode = '42501', message = 'Authentication required.'; end if;
+  delete from public.events where id = p_event_id and host_id = private.event_api_actor();
   if not found then raise exception using errcode = 'P0002', message = 'Event not found.'; end if;
   set constraints public.events_require_location, private.event_locations_required immediate;
   set constraints public.events_require_location, private.event_locations_required deferred;

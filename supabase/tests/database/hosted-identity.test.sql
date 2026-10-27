@@ -1,0 +1,16 @@
+begin;
+create extension if not exists pgtap with schema extensions;
+set local search_path=public,extensions;
+select plan(10);
+select is(has_schema_privilege('rollcall_events_executor','auth','USAGE'),false,'Event executor has no managed Auth schema access');
+select is(has_schema_privilege('rollcall_admin_executor','auth','USAGE'),false,'Admin executor has no managed Auth schema access');
+select is(has_any_column_privilege('rollcall_admin_executor','auth.users','SELECT'),false,'Admin executor has no raw Auth column access');
+select ok((select prosecdef from pg_proc where oid='private.event_api_actor()'::regprocedure),'Event subject resolver is a definer');
+select ok((select prosecdef from pg_proc where oid='private.confirmed_admin_actor()'::regprocedure),'Confirmed subject resolver is a definer');
+select ok((select prosecdef from pg_proc where oid='private.admin_account_confirmed(uuid)'::regprocedure),'Confirmation predicate is a definer');
+select is((select pg_get_userbyid(proowner)::text from pg_proc where oid='private.admin_account_confirmed(uuid)'::regprocedure),'postgres','Only the trusted migration role owns the Auth predicate');
+select is(has_function_privilege('authenticated','private.admin_account_confirmed(uuid)','EXECUTE'),false,'Browser cannot probe Auth confirmation helper');
+select is(has_function_privilege('anon','private.event_api_actor()','EXECUTE'),false,'Anonymous cannot call private subject helper');
+select ok((select proconfig @> array['search_path=""'] from pg_proc where oid='private.admin_account_confirmed(uuid)'::regprocedure),'Auth predicate has an empty search path');
+select * from finish();
+rollback;

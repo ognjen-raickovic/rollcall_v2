@@ -9,6 +9,15 @@ select to_regclass('auth.users') is not null as auth_present,
  to_regclass('storage.buckets') is not null as storage_present,
  to_regprocedure('storage.allow_only_operation(text)') is not null as storage_operation_helper,
  to_regprocedure('extensions.digest(text,text)') is not null as crypto_digest;
+-- Supabase supports Storage policy DDL through supautils, independently of ownership.
+-- This is capability metadata, not a change to platform configuration.
+select current_setting('supautils.policy_grants',true) as supported_policy_grants;
+select
+ has_schema_privilege(current_user,'storage','USAGE WITH GRANT OPTION') as storage_usage_grantable,
+ has_column_privilege(current_user,'storage.objects','bucket_id','SELECT WITH GRANT OPTION') as bucket_id_grantable,
+ has_column_privilege(current_user,'storage.objects','name','SELECT WITH GRANT OPTION') as object_name_grantable,
+ has_column_privilege(current_user,'storage.objects','metadata','SELECT WITH GRANT OPTION') as metadata_grantable,
+ has_function_privilege(current_user,'extensions.digest(text,text)','EXECUTE WITH GRANT OPTION') as digest_grantable;
 select n.nspname as schema,c.relname,c.relrowsecurity,c.relforcerowsecurity,
  pg_get_userbyid(c.relowner) as owner from pg_class c join pg_namespace n on n.oid=c.relnamespace
  where c.relkind='r' and (n.nspname='private' or n.nspname='public' and c.relname in
@@ -22,7 +31,7 @@ select n.nspname as schema,p.proname as function,pg_get_function_identity_argume
  has_function_privilege('anon',p.oid,'EXECUTE') as anon_execute,
  has_function_privilege('authenticated',p.oid,'EXECUTE') as authenticated_execute
  from pg_proc p join pg_namespace n on n.oid=p.pronamespace
- where n.nspname='public' and p.proname in ('search_cities','public_profile','my_profile',
+ where n.nspname='public' and p.proname in ('search_cities','public_profile','get_my_profile',
  'update_my_profile','discover_events','get_event','create_event','join_event','get_event_cover',
  'my_permissions','change_admin_role','my_account_status') order by p.proname;
 select evtname,evtenabled,evtevent from pg_event_trigger order by evtname;

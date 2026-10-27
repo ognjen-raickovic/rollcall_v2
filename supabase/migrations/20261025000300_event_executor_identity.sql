@@ -3,7 +3,7 @@
 -- the event executor broad Auth-schema access. No table is read by this helper.
 begin;
 
-create function private.event_api_actor()
+create or replace function private.event_api_actor()
 returns uuid language sql stable security definer set search_path = '' as $$
   select auth.uid();
 $$;
