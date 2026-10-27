@@ -1,5 +1,11 @@
 # RollCall product specification
 
+Public `/about` and `/contact` pages describe the product and available contact options.
+Footer links expose these pages; the logo provides homepage navigation without a duplicate
+Discover item. Contact uses the owner-approved public support email
+`rollcallsupport@gmail.com` through a mail link, without a messaging backend. My Profile has
+one page h1, and Back navigation reuses the shared primary Button.
+
 The current profile-editor follow-up implements a single-column tabbed editor, draft-only
 game changes with an atomic owner-only Save endpoint (migration 21), inverted Back buttons
 and consistent UTC account dates. Account deletion stays disabled pending the independently

@@ -32,6 +32,16 @@ players on phones and desktops. Tone: welcoming, clear, understated. Brand: **Ro
 
 ## Visual direction
 
+My Profile has a prominent text-3xl page h1; its player-name summary uses h2. Public player
+pages retain the player's name as h1. The logo is the sole navbar link to the homepage;
+keep Explore events, Host an event and account/theme controls. Footer navigation provides
+About Us and Contact, wrapping naturally on mobile with an active-page indication.
+
+About and Contact use centered max-w-4xl content, text-3xl page headings, text-xl section
+headings and existing bordered card surfaces. Keep copy concise and grounded in actual
+features. Contact must show an honest unavailable state until a public address is approved;
+never present a form or mail action that cannot deliver.
+
 Use Meetup's event discovery hierarchy as inspiration: useful filters, scannable dates,
 locations, game labels, and available seats. Use charcoal/navy surfaces and restrained purple
 accents for a slightly gaming-inspired identity, without copying Meetup's brand.
@@ -56,7 +66,8 @@ without a sidebar, with equal-width Profile/My games tabs. Keep both drafts moun
 switching; use a restrained 180ms slide/fade only when reduced motion is not requested.
 Games use labeled inset-chevron native selectors and draft-only add/change/remove actions;
 both tabs end with Save changes and Cancel, with pending, success and error feedback.
-Return links use an arrow and inverted foreground/background tokens with visible focus.
+Return links use an arrow inside the shared default primary Button, matching the homepage
+Find events action in both themes. Keep its standard hover and focus states.
 Reuse country/city
 controls through route composition. Use initials rather than adding picture uploads. Public
 views contain no email, age or roles. Preserve semantic tokens, keyboard focus and readable

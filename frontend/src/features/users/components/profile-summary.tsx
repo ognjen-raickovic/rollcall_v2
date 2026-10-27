@@ -2,9 +2,9 @@ import { CalendarDays, Gamepad2, MapPin } from 'lucide-react'
 import type { PublicProfile } from '../types'
 import { UserAvatar } from './user-avatar'
 
-type ProfileSummaryProps = { profile: PublicProfile }
+type ProfileSummaryProps = { profile: PublicProfile; headingLevel?: 'h1' | 'h2' }
 
-export function ProfileSummary({ profile }: ProfileSummaryProps) {
+export function ProfileSummary({ profile, headingLevel: Heading = 'h1' }: ProfileSummaryProps) {
   const location = [profile.city?.name, profile.country?.name].filter(Boolean).join(', ')
   return (
     <div className="space-y-8">
@@ -12,9 +12,9 @@ export function ProfileSummary({ profile }: ProfileSummaryProps) {
         <div className="flex items-start gap-4">
           <UserAvatar name={profile.displayName} />
           <div className="min-w-0 space-y-2">
-            <h1 className="text-3xl font-bold tracking-tight [overflow-wrap:anywhere]">
+            <Heading className="text-3xl font-bold tracking-tight [overflow-wrap:anywhere]">
               {profile.displayName}
-            </h1>
+            </Heading>
             <p className="text-sm text-muted-foreground [overflow-wrap:anywhere]">
               {profile.username ? `@${profile.username}` : 'Tabletop player'}
             </p>

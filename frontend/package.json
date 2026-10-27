@@ -4,6 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "test:info-ui": "node --test scripts/check-info-ui.mjs",
     "test:profile-editor-ui": "node --test scripts/check-profile-editor-ui.mjs",
     "test:navigation-ui": "node --test scripts/check-navigation-discovery-ui.mjs",
     "test:discovery": "node --test scripts/check-discovery.mjs scripts/check-account-verification.mjs",

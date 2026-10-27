@@ -32,7 +32,7 @@ database application separately, then deploy backend before frontend. It has onl
 applied to a disposable local verification project. Historical migrations are unchanged.
 The earlier per-game endpoints remain compatible; the editor exclusively uses batch Save.
 
-Shared BackLink uses foreground/background tokens for an inverted arrow button across
+Shared BackLink uses the shared primary Button and an arrow across
 auth, profile and event return controls. Account Settings removes Browse events, retains
 profile/security navigation, and shows a disabled Delete account control. Full creation
 dates in Settings/editor use UTC and English `27. October 2026.` formatting. Event dates
@@ -229,7 +229,7 @@ Manual acceptance after separately approved migration/backend/frontend rollout:
    conflicting drafts; the second must retain its draft and offer explicit saved-set reload.
 3. Verify country changes clear the city; confirmed cities save, free text does not.
    DOB-backed birth year remains read-only; private data must stay out of public responses.
-4. Check 375/1440 light/dark, keyboard arrows/focus, reduced motion, inverted Back buttons,
+4. Check 375/1440 light/dark, keyboard arrows/focus, reduced motion, shared primary Back buttons,
    and account date punctuation. Delete account must remain disabled and start no request.
 
 Primary changed areas: users editor/form/draft/API/hooks, shared BackLink/account-date,

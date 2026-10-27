@@ -1,5 +1,13 @@
 ﻿# RollCall
 
+Public information pages are available at `/about` and `/contact`, linked in the footer.
+Contact links to the owner-approved public support address, `rollcallsupport@gmail.com`,
+through `mailto:`; visitors send messages using their own email app. There is no contact
+form or email-sending backend. The public address is configured in
+`frontend/src/features/information/contact-config.ts`. Never substitute private operator
+addresses. Run `pnpm.cmd test:info-ui` for the
+focused information-page, heading, navigation and shared-button browser checks.
+
 Profile editing now uses a centered Profile/My games tabbed editor and explicit atomic
 game-set saves (forward migration 21). See [profile contracts and verification](docs/profiles.md).
 Account deletion remains disabled under its separate security/policy gates.
