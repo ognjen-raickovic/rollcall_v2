@@ -89,6 +89,7 @@ export type Database = {
       set_my_game_experience: { Args: { p_game_id: number; p_experience: string }; Returns: Json }
       remove_my_game_experience: { Args: { p_game_id: number }; Returns: undefined }
       discover_events: { Args: { p_filters: Json }; Returns: Json }
+      my_events: { Args: { p_filters: Json }; Returns: Json }
       get_event: { Args: { p_event_id: string }; Returns: Json }
       create_event: { Args: { p_input: Json }; Returns: Json }
       update_event: { Args: { p_event_id: string; p_patch: Json }; Returns: Json }

@@ -169,3 +169,11 @@ usernames and private DOB through migration 17 plus forward casing migration 18 
 send DOB to Auth metadata/JWTs or public DTOs. Preserve legacy accounts, email confirmation,
 private owner RLS, durable rate counters and backend-only capability checks. dev:all is local;
 staging:smoke reads only separate ignored application configuration, never operator files.
+
+## Account navigation and discovery (19–20)
+
+Read docs/navigation-discovery.md for current contracts and verification limits. Discovery
+filters/order run in SQL before pagination and stay public/scheduled only. My Events is
+independently active-owner/member authorized and viewer-cached; never use discovery as
+its authorization. Preserve sort-bound cursors, civil-date/DST handling, logout confirmation
+and account-switch cache destruction. Deletion and username recovery remain separately gated.

@@ -4,6 +4,8 @@
   "packageManager": "pnpm@12.14.0",
   "engines": { "node": "22.x" },
   "scripts": {
+    "test:discovery": "pnpm --filter frontend test:discovery",
+    "test:navigation-ui": "pnpm --filter frontend test:navigation-ui",
     "dev:all": "node scripts/run-app.mjs local",
     "staging:smoke": "node scripts/run-app.mjs staging",
     "auth:diagnose": "node scripts/auth-diagnose.mjs production",

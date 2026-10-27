@@ -15,6 +15,8 @@ export function AuthSessionSync() {
     const { data } = authClient().auth.onAuthStateChange((event, session) => {
       const previous = client.getQueryData<{ id: string } | null>(authKey)
       if (previous?.id !== session?.user.id || event === 'SIGNED_OUT') {
+        client.removeQueries({ queryKey: ['account-identity'] })
+        client.removeQueries({ queryKey: ['my-events'] })
         client.removeQueries({ queryKey: ACCOUNT_STATUS_QUERY_KEY })
       client.removeQueries({ queryKey: ADMIN_QUERY_KEY })
         // Destroying queries aborts their consumed signals before a new account can render them.

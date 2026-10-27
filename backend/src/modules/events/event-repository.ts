@@ -93,9 +93,11 @@ export function createEventRepository(client: DatabaseClient): EventRepository {
       )
       if (page.items.length > filters.limit || (page.hasMore && !page.items.length)) throw unavailable()
       const last = page.items.at(-1)
+      if (page.hasMore && filters.sort && filters.sort!=='soonest' && !page.position) throw unavailable()
+      if (page.position && (!last || page.position.id!==last.id || page.position.startsAt!==last.startsAt || page.position.sort!==(filters.sort??'soonest'))) throw unavailable()
       return {
         items: page.items,
-        pageInfo: { limit: filters.limit, nextCursor: page.hasMore && last ? encodeEventCursor(last) : null },
+        pageInfo: { limit: filters.limit, nextCursor: page.hasMore && last ? encodeEventCursor(page.position ?? last) : null },
       }
     },
     async get(eventId, expectedUserId) {

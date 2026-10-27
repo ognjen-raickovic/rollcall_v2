@@ -30,6 +30,12 @@ Responses are no-store; details vary on Authorization. Errors retain `{ code, me
 
 ### Discovery
 
+Current 19–20 extensions and My Events are specified in
+[navigation/discovery](navigation-discovery.md) and `docs/entities.md`: all filters and
+four sort orders are database-wide, category is no longer a loaded-page filter, and
+My Events is a separate authenticated owner/member read. The following describes the
+original 4A baseline; legacy date/default-cursor behavior remains supported.
+
 Strict query parameters: `search` (trimmed title substring, up to 100 characters), `country`
 (two-letter ISO, uppercase-normalized), `cityId`, `gameId`, `startsAfter`, `startsBefore`,
 `upcomingOnly` (default true), `availableOnly` (default false), `status` (only `scheduled`),

@@ -92,8 +92,8 @@ Dependency direction: shared code -> features -> app, never the other way around
   destroys these queries before account transitions. No tokens in keys/URLs; no retained
   sensitive cache or previous-account placeholder data. Auth errors hide cached addresses.
 - Discovery is public, cursor-paginated and never falls back to mocks. Changing filter scopes
-  drops accumulated pages; category filtering applies to loaded chronological pages and
-  keeps Load More available until exhaustion. Use real catalog IDs. Public cards have no
+  drops accumulated pages; category and advanced filters/sort apply in SQL before the
+  limit, with matching keyset cursors. Keep Load More until exhaustion. Use real catalog IDs. Public cards have no
   price/address because summaries omit them. `EventDetailsView` shares presentation between
   real and explicit demo controllers, while action controls remain separate.
 - `event-write-dtos.ts`, `persistent-event-actions-api.ts` and `use-persistent-event-actions.ts`
@@ -177,3 +177,11 @@ usernames and private DOB through migration 17 plus forward casing migration 18 
 send DOB to Auth metadata/JWTs or public DTOs. Preserve legacy accounts, email confirmation,
 private owner RLS, durable rate counters and backend-only capability checks. dev:all is local;
 staging:smoke reads only separate ignored application configuration, never operator files.
+
+## Account navigation and discovery (19–20)
+
+Read ../docs/navigation-discovery.md for current contracts and verification limits. Discovery
+filters/order run in SQL before pagination and stay public/scheduled only. My Events is
+independently active-owner/member authorized and viewer-cached; never use discovery as
+its authorization. Preserve sort-bound cursors, civil-date/DST handling, logout confirmation
+and account-switch cache destruction. Deletion and username recovery remain separately gated.

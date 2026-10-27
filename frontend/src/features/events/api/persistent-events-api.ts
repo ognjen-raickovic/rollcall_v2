@@ -24,14 +24,15 @@ export const persistentEventsApi = {
     const cursorResult = z
       .string()
       .min(1)
-      .max(512)
+      .max(1024)
       .regex(/^[A-Za-z0-9_-]+$/)
       .nullable()
       .safeParse(cursor)
     if (!cursorResult.success) throw invalidRequest()
     const params = new URLSearchParams()
     for (const [key, value] of Object.entries(parsed.data))
-      if (value !== undefined && value !== '') params.set(key, String(value))
+      if (value !== undefined && value !== '' && !(Array.isArray(value) && !value.length))
+        params.set(key, String(value))
     if (cursorResult.data) params.set('cursor', cursorResult.data)
     const page = await httpRequest(`/api/events?${params}`, eventPageSchema, { signal, resource: 'event' })
     if (

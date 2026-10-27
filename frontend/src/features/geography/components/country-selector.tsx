@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
+import { FormSelect } from '@/components/form-select'
 
 import { useCountries } from '../api/use-geography'
 
@@ -32,14 +33,13 @@ export function CountrySelector({
           </span>
         )}
       </Label>
-      <select
+      <FormSelect
         id={id}
         value={value}
         onChange={(event) => onChange(event.target.value)}
         disabled={disabled || countries.isPending || Boolean(countries.error) || !countries.data?.length}
         aria-describedby={description}
         aria-required={required}
-        className="h-11 w-full min-w-0 rounded-md border border-input bg-background px-3 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
       >
         <option value="">
           {countries.isPending ? 'Loading countries...' : allCountries ? 'All countries' : 'Select a country'}
@@ -49,7 +49,7 @@ export function CountrySelector({
             {country.name}
           </option>
         ))}
-      </select>
+      </FormSelect>
       <div id={description}>
         {countries.error ? (
           <div role="alert" className="space-y-2 text-sm text-destructive">

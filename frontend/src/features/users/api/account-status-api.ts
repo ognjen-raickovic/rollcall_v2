@@ -13,7 +13,14 @@ async function request<T>(
 ) {
   const token = await authApi.accessToken(viewer)
   if (!token) throw new HttpError(401, 'Log in to continue.')
-  const result = await httpRequest(path, schema, { token, viewerId: viewer, signal, method, body })
+  const result = await httpRequest(path, schema, {
+    token,
+    viewerId: viewer,
+    signal,
+    method,
+    body,
+    resource: 'auth',
+  })
   if (!(await authApi.accessToken(viewer)) || signal.aborted)
     throw new Error('Your account changed. Try again.')
   return result

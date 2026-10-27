@@ -1,4 +1,4 @@
-import { LogIn } from 'lucide-react'
+import { UserRound } from 'lucide-react'
 import { Link, useLocation } from 'react-router'
 
 import { Button } from '@/components/ui/button'
@@ -10,6 +10,7 @@ import { UserAvatar } from './user-avatar'
 import { useAuth } from '../api/use-auth'
 import { LogoutButton } from './logout-button'
 import { AdminNavigation } from './administration'
+import { AccountMenu } from './account-menu'
 
 export function SessionMenu() {
   const session = useSession()
@@ -26,21 +27,7 @@ export function SessionMenu() {
     return (
       <div className="flex items-center gap-2">
         <AdminNavigation />
-        <Link
-          to="/profile"
-          className="max-w-28 truncate text-sm font-medium hover:text-primary focus-visible:outline-2 focus-visible:outline-ring"
-          title="Your player profile"
-        >
-          My Profile
-        </Link>
-        <Link
-          aria-label="Account Settings"
-          to="/account"
-          className="text-sm font-medium hover:text-primary focus-visible:outline-2 focus-visible:outline-ring"
-        >
-          Settings
-        </Link>
-        <LogoutButton iconOnly />
+        <AccountMenu key={auth.data.id} />
       </div>
     )
   if (session.error)
@@ -51,15 +38,16 @@ export function SessionMenu() {
     )
   if (!session.data)
     return (
-      <Button asChild size="sm">
+      <Button asChild size="icon" variant="ghost">
         <Link
+          aria-label="Log in"
           to={
             location.pathname === '/login'
               ? '/login'
               : loginPath(`${location.pathname}${location.search}${location.hash}`)
           }
         >
-          <LogIn aria-hidden="true" /> Log in
+          <UserRound aria-hidden="true" />
         </Link>
       </Button>
     )

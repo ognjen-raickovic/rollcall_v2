@@ -40,10 +40,11 @@ export function useAccountIdentity() {
   const account = useAuth()
   return useQuery({
     queryKey: ['account-identity', account.data?.id],
-    queryFn: ({ signal }) => authApi.me(signal),
+    queryFn: ({ signal }) => authApi.me(account.data?.id ?? '', signal),
     enabled: Boolean(account.data),
     retry: false,
     staleTime: 30_000,
+    gcTime: 0,
   })
 }
 
@@ -52,6 +53,7 @@ export function useAuthLogin() {
   return useMutation({
     mutationFn: authApi.login,
     onSuccess: (account) => {
+      client.removeQueries({ queryKey: ['my-events'] })
       client.removeQueries({ queryKey: ACCOUNT_STATUS_QUERY_KEY })
       client.removeQueries({ queryKey: ADMIN_QUERY_KEY })
       client.removeQueries({ queryKey: EVENT_DETAILS_QUERY_KEY })
@@ -86,6 +88,7 @@ export function useAuthLogout() {
         cache.remove(mutation)
     },
     onSuccess: () => {
+      client.removeQueries({ queryKey: ['my-events'] })
       client.removeQueries({ queryKey: ACCOUNT_STATUS_QUERY_KEY })
       client.removeQueries({ queryKey: ADMIN_QUERY_KEY })
       client.removeQueries({ queryKey: EVENT_DETAILS_QUERY_KEY })

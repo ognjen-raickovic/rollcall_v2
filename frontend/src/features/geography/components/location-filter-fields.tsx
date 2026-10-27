@@ -46,6 +46,7 @@ function LocationFilterDraft({ idPrefix, params }: LocationFilterFieldsProps & {
         countryCode={draft.countryCode}
         value={value}
         allCountries
+        compact
         required={false}
         legacyCity={draft.cityId ? undefined : draft.cityName}
         onCountryChange={(countryCode) => setDraft({ countryCode, cityId: null, cityName: '', region: null })}

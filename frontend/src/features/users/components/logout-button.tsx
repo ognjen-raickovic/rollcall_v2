@@ -1,13 +1,23 @@
-import { useEffect, useId, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState, type ReactNode, type RefObject } from 'react'
 import { useIsMutating } from '@tanstack/react-query'
 import { LogOut } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useAuth, useAuthLogout } from '../api/use-auth'
 import { useLogout, useSession } from '../api/use-session'
 
-type LogoutButtonProps = { demo?: boolean; iconOnly?: boolean }
+type LogoutButtonProps = {
+  demo?: boolean
+  iconOnly?: boolean
+  trigger?: (open: () => void, busy: boolean) => ReactNode
+  returnFocusRef?: RefObject<HTMLElement | null>
+}
 
-export function LogoutButton({ demo = false, iconOnly = false }: LogoutButtonProps) {
+export function LogoutButton({
+  demo = false,
+  iconOnly = false,
+  trigger: renderTrigger,
+  returnFocusRef,
+}: LogoutButtonProps) {
   const headingId = useId(),
     descriptionId = useId()
   const auth = useAuth(),
@@ -32,9 +42,13 @@ export function LogoutButton({ demo = false, iconOnly = false }: LogoutButtonPro
     cancel.current?.focus()
     return () => {
       node?.close()
-      trigger.current?.focus()
+      ;(returnFocusRef?.current ?? trigger.current)?.focus()
     }
-  }, [open])
+  }, [open, returnFocusRef])
+  function openDialog() {
+    logout.reset()
+    setOpen(true)
+  }
   async function confirm() {
     if (submitting.current || busy) return
     submitting.current = true
@@ -49,21 +63,22 @@ export function LogoutButton({ demo = false, iconOnly = false }: LogoutButtonPro
   }
   return (
     <>
-      <Button
-        ref={trigger}
-        variant={iconOnly ? 'ghost' : 'outline'}
-        size={iconOnly ? 'icon' : 'default'}
-        aria-label="Log out"
-        title="Log out"
-        disabled={busy}
-        onClick={() => {
-          logout.reset()
-          setOpen(true)
-        }}
-      >
-        <LogOut aria-hidden="true" />
-        {!iconOnly && 'Log out'}
-      </Button>
+      {renderTrigger ? (
+        renderTrigger(openDialog, busy)
+      ) : (
+        <Button
+          ref={trigger}
+          variant={iconOnly ? 'ghost' : 'outline'}
+          size={iconOnly ? 'icon' : 'default'}
+          aria-label="Log out"
+          title="Log out"
+          disabled={busy}
+          onClick={openDialog}
+        >
+          <LogOut aria-hidden="true" />
+          {!iconOnly && 'Log out'}
+        </Button>
+      )}
       {open && (
         <dialog
           ref={dialog}

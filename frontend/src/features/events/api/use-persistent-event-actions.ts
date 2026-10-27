@@ -31,6 +31,7 @@ function detailKey(id: string, viewerId: string) {
 }
 
 function invalidatePublic(client: QueryClient) {
+  void client.invalidateQueries({ queryKey: ['my-events'] })
   void client.invalidateQueries({ queryKey: ['persistent-events'] })
 }
 

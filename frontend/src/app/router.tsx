@@ -25,6 +25,7 @@ const AuthCallbackRoute = lazy(() =>
 )
 const Account = lazy(() => import('@/app/routes/account').then((module) => ({ default: module.Account })))
 const Profile = lazy(() => import('@/app/routes/profile').then((module) => ({ default: module.Profile })))
+const MyEventsRoute = lazy(()=>import('@/app/routes/my-events').then(module=>({default:module.MyEventsRoute})))
 const EditProfile = lazy(() =>
   import('@/app/routes/edit-profile').then((module) => ({ default: module.EditProfile })),
 )
@@ -94,6 +95,7 @@ export const router = createBrowserRouter([
       { path: '/reset-password', element: <ResetPassword />, errorElement: <AuthError /> },
       { path: '/auth/callback', element: <AuthCallbackRoute />, errorElement: <AuthError /> },
       { path: '/account', element: <Account /> },
+      { path: '/my-events', element: <RequireAccount><MyEventsRoute /></RequireAccount> },
       {
         path: '/profile',
         element: (

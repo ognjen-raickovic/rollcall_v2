@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { eventCursorSchema } from './event-pagination.js'
+import { eventCursorSchema, cursorPositionSchema } from './event-pagination.js'
 import { EVENT_TAGS, tagsMatchExperience } from './event-tags.js'
 import { eventCoverSchema } from './event-cover-schema.js'
 
@@ -22,7 +22,10 @@ const venue = z
   .string()
   .trim()
   .max(120)
-  .refine((value) => value === '' || value.length >= 2, 'Use at least 2 characters or leave venue blank.')
+  .refine(
+    (value) => value === '' || value.length >= 2,
+    'Use at least 2 characters or leave venue blank.',
+  )
   .transform((value) => value || null)
   .nullable()
 
@@ -98,7 +101,10 @@ export const newEventSchema = z
 export const updateEventSchema = z
   .strictObject({ ...writableFields, status })
   .partial()
-  .refine((value) => Object.values(value).some((entry) => entry !== undefined), 'Supply at least one field.')
+  .refine(
+    (value) => Object.values(value).some((entry) => entry !== undefined),
+    'Supply at least one field.',
+  )
   .superRefine(checkEditableValues)
 
 const queryId = z
@@ -120,6 +126,39 @@ export const eventDiscoverySchema = z
     gameId: queryId.optional(),
     startsAfter: instant.optional(),
     startsBefore: instant.optional(),
+    startsBeforeExclusive: queryBoolean.optional(),
+    sort: z.enum(['soonest', 'latest', 'title-asc', 'title-desc']).optional(),
+    period: z.enum(['upcoming', 'past', 'all']).optional(),
+    availability: z.enum(['all', 'open', 'full']).optional(),
+    category: category.optional(),
+    tags: z
+      .string()
+      .max(200)
+      .transform((value) => value.split(','))
+      .pipe(
+        z
+          .array(z.enum(EVENT_TAGS))
+          .min(1)
+          .max(6)
+          .refine((value) => new Set(value).size === value.length),
+      )
+      .optional(),
+    experience: experience.optional(),
+    maxMinimumAge: z
+      .string()
+      .regex(/^\d{1,2}$/)
+      .transform(Number)
+      .pipe(z.number().int().min(0).max(99))
+      .optional(),
+    timeFrom: z
+      .string()
+      .regex(/^([01]\d|2[0-3]):[0-5]\d$/)
+      .optional(),
+    timeTo: z
+      .string()
+      .regex(/^([01]\d|2[0-3]):[0-5]\d$/)
+      .optional(),
+    timeZone: z.string().min(1).max(100).optional(),
     upcomingOnly: queryBoolean.default(true),
     availableOnly: queryBoolean.default(false),
     status: z.literal('scheduled').default('scheduled'),
@@ -141,9 +180,31 @@ export const eventDiscoverySchema = z
       message: 'End of the date range must not precede its start.',
     },
   )
+  .refine((value) => !value.cursor || value.cursor.sort === (value.sort ?? 'soonest'), {
+    path: ['cursor'],
+    message: 'Cursor ordering does not match sort.',
+  })
+  .refine((value) => !(value.timeFrom || value.timeTo) || Boolean(value.timeZone), {
+    path: ['timeZone'],
+    message: 'Choose the timezone for time filters.',
+  })
+  .refine((value) => !value.timeFrom || !value.timeTo || value.timeFrom <= value.timeTo, {
+    path: ['timeTo'],
+    message: 'Time range must not run overnight.',
+  })
+  .refine((value) => !(value.availableOnly && value.availability === 'full'), {
+    path: ['availability'],
+    message: 'Availability filters conflict.',
+  })
   .transform(({ cursor, ...filters }) => ({
     ...filters,
-    ...(cursor ? { afterStartsAt: cursor.startsAt, afterId: cursor.id } : {}),
+    ...(cursor
+      ? {
+          afterStartsAt: cursor.startsAt,
+          afterId: cursor.id,
+          ...(cursor.titleKey !== undefined ? { afterTitle: cursor.titleKey } : {}),
+        }
+      : {}),
   }))
 
 export const eventIdSchema = z.strictObject({ eventId: z.uuid() })
@@ -277,4 +338,5 @@ export const attendanceResultSchema = z
 export const databaseEventPageSchema = z.object({
   items: z.array(discoverySummarySchema).max(50),
   hasMore: z.boolean(),
+  position: cursorPositionSchema.optional(),
 })
