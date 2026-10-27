@@ -19,7 +19,7 @@ export function RootLayout() {
     pathname === '/events' ||
     (pathname.startsWith('/events/') && pathname !== '/events/new' && !pathname.endsWith('/edit')) ||
     pathname.startsWith('/users/') ||
-    ['/auth/callback', '/reset-password', '/forgot-password'].includes(pathname)
+    ['/about', '/contact', '/auth/callback', '/reset-password', '/forgot-password'].includes(pathname)
   return (
     <>
       <AppLayout

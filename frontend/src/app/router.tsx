@@ -9,6 +9,8 @@ import { demoModeEnabled } from '@/features/users/api/auth-client'
 import { AuthError } from '@/features/users/components/auth-error'
 
 const Home = lazy(() => import('@/app/routes/home').then((module) => ({ default: module.Home })))
+const About = lazy(() => import('@/app/routes/about').then((module) => ({ default: module.About })))
+const Contact = lazy(() => import('@/app/routes/contact').then((module) => ({ default: module.Contact })))
 const AdministrationRoute = lazy(() =>
   import('@/app/routes/admin').then((module) => ({ default: module.AdministrationRoute })),
 )
@@ -63,6 +65,8 @@ export const router = createBrowserRouter([
     element: <RootLayout />,
     children: [
       { path: '/', element: <Home /> },
+      { path: '/about', element: <About /> },
+      { path: '/contact', element: <Contact /> },
       ...['/admin', '/admin/users', '/admin/role-audit', '/admin/reports', '/admin/accounts'].map((path) => ({
         path,
         element: (

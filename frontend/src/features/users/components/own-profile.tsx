@@ -34,12 +34,15 @@ export function OwnProfile() {
     )
   const data = profile.data
   const incomplete =
-    data.displayName === 'RollCall player' && !data.biography && !data.country && !data.gameExperience.length
+    data.displayName === 'RollCall player' &&
+    !data.biography &&
+    !data.country &&
+    !data.gameExperience.length
   return (
     <div className="mx-auto max-w-4xl space-y-6 py-4 md:py-8">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="space-y-2">
-          <p className="text-sm font-medium text-primary">My Profile</p>
+          <h1 className="text-3xl font-bold tracking-tight">My Profile</h1>
         </div>
         <div className="flex flex-wrap gap-3">
           <Button asChild variant="outline">
@@ -68,12 +71,12 @@ export function OwnProfile() {
         <section className="space-y-2 rounded-xl border border-primary/30 bg-accent p-6">
           <h2 className="text-xl font-semibold">Make yourself at home</h2>
           <p className="text-sm leading-relaxed text-muted-foreground">
-            Your account is ready. Add your name, a little about yourself and the games you enjoy whenever
-            you’re ready.
+            Your account is ready. Add your name, a little about yourself and the games you enjoy
+            whenever you’re ready.
           </p>
         </section>
       )}
-      <ProfileSummary profile={data} />
+      <ProfileSummary profile={data} headingLevel="h2" />
     </div>
   )
 }

@@ -7,7 +7,6 @@ import { cn } from '@/lib/utils'
 import { ThemeToggle } from './theme-toggle'
 
 const links = [
-  { to: '/', label: 'Discover' },
   { to: '/events', label: 'Explore events' },
   { to: '/events/new', label: 'Host an event' },
 ]
@@ -97,7 +96,20 @@ export function AppLayout({ account, showDemoEvents = false, content, notice }: 
           <p>
             <span className="font-semibold text-foreground">RollCall</span> · Made for good company.
           </p>
-          <p className="text-xs">Community preview · Find your next table</p>
+          <nav aria-label="Footer navigation" className="flex flex-wrap items-center gap-6">
+            <NavLink
+              to="/about"
+              className="hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring aria-[current=page]:font-semibold aria-[current=page]:text-foreground"
+            >
+              About Us
+            </NavLink>
+            <NavLink
+              to="/contact"
+              className="hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring aria-[current=page]:font-semibold aria-[current=page]:text-foreground"
+            >
+              Contact
+            </NavLink>
+          </nav>
         </div>
       </footer>
     </div>
