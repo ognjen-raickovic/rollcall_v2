@@ -1,0 +1,23 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "vite",
+  "installCommand": "corepack pnpm install --frozen-lockfile",
+  "buildCommand": "pnpm build:hosting",
+  "outputDirectory": "frontend/dist",
+  "git": { "deploymentEnabled": false },
+  "rewrites": [
+    { "source": "/api/health", "destination": "https://rollcall-api.invalid/health" },
+    { "source": "/api", "destination": "https://rollcall-api.invalid/api" },
+    { "source": "/api/:path*", "destination": "https://rollcall-api.invalid/api/:path*" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ],
+  "headers": [
+    {
+      "source": "/api/:path*",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-store" },
+        { "key": "CDN-Cache-Control", "value": "no-store" }
+      ]
+    }
+  ]
+}

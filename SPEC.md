@@ -2,12 +2,26 @@
 
 ## Product
 
+Current registration adds unique canonical usernames and required private DOB for new
+accounts. Legacy accounts are preserved; ordinary display names remain editable. No
+event-age eligibility is added. See [registration contract](docs/registration.md).
+This requires reviewed additive migration 17 and the existing backend operation capability;
+hosted application/security acceptance remains pending. New launchers start both local
+services or use isolated application staging configuration without operator-file access.
+
 RollCall helps people discover, organize, and join tabletop gaming events: Dungeons & Dragons,
 Magic: The Gathering, Yu-Gi-Oh!, board game meetups, and social deduction games.
 Serve new and experienced players on phones and desktops. Brand the product **RollCall**,
 never "RollCall v2" in the UI.
 
 ## Delivery stages
+
+Milestone 6B-1 prepares application hosting only: Vercel static frontend with a same-origin
+API rewrite, Render compiled Fastify with maintenance enabled, separate environment placement
+and focused local hosting checks. No application deployment is performed. The operator reports
+6A-2 database/reference-data/key provisioning; hosted Auth/security acceptance, deliberate
+verified-account/superadmin setup and SMTP remain incomplete. Public release requires those
+gates and explicit approval. See [hosting procedure](docs/application-hosting.md).
 
 Current delivery is Milestone 5B-2B; see docs/account-suspensions.md. Earlier sections record historical boundaries.
 

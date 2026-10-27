@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input'
 type AuthFieldProps = {
   label: string
   id: string
-  type: 'email' | 'password'
+  type: 'email' | 'password' | 'text' | 'date'
   autoComplete: string
   registration: UseFormRegisterReturn
   error?: string

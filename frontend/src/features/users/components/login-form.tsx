@@ -9,6 +9,7 @@ import { authConfigurationError, demoModeEnabled } from '../api/auth-client'
 import { useAuth, useAuthLogin, useResendConfirmation } from '../api/use-auth'
 import { AuthField } from './auth-fields'
 import { AuthShell } from './auth-shell'
+import { AuthenticationError } from '../api/auth-errors'
 
 const schema = z.object({ email: emailSchema, password: z.string().min(1, 'Enter your password.').max(256) })
 
@@ -79,27 +80,31 @@ export function LoginForm() {
             Create an account
           </Link>
         </p>
-        <Button
-          variant="outline"
-          className="w-full"
-          disabled={Boolean(configuration) || resend.isPending}
-          onClick={() => {
-            void form.trigger('email').then((valid) => {
-              if (valid) resend.mutate(form.getValues('email'))
-            })
-          }}
-        >
-          Resend confirmation
-        </Button>
-        {resend.isSuccess && (
-          <p role="status" className="text-muted-foreground">
-            If this address needs confirmation, a new link has been sent. Check your inbox.
-          </p>
-        )}
-        {resend.error && (
-          <p role="alert" className="text-destructive">
-            {resend.error.message}
-          </p>
+        {login.error instanceof AuthenticationError && login.error.code === 'email_not_confirmed' && (
+          <div className="space-y-3">
+            <Button
+              variant="outline"
+              className="w-full"
+              disabled={Boolean(configuration) || resend.isPending}
+              onClick={() => {
+                void form.trigger('email').then((valid) => {
+                  if (valid) resend.mutate(form.getValues('email'))
+                })
+              }}
+            >
+              Resend confirmation
+            </Button>
+            {resend.isSuccess && (
+              <p role="status" className="text-muted-foreground">
+                If this address needs confirmation, a new link has been sent. Check your inbox.
+              </p>
+            )}
+            {resend.error && (
+              <p role="alert" className="text-destructive">
+                {resend.error.message}
+              </p>
+            )}
+          </div>
         )}
         {demoModeEnabled && (
           <Link

@@ -4,6 +4,8 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "test:registration": "node --test scripts/check-registration-api.mjs",
+    "test:registration-ui": "node --test scripts/check-registration-ui.mjs",
     "test:suspensions": "node --test scripts/check-suspensions-api.mjs",
     "test:moderation": "node --test scripts/check-moderation-api.mjs",
     "dev": "vite",

@@ -1,6 +1,7 @@
 -- SQL authorization/lifecycle proofs only. Physical file upload/read/delete is
 -- verified separately through supported Storage HTTP integration tests.
 begin;
+\ir ../helpers/legacy-registration.inc
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 do $$

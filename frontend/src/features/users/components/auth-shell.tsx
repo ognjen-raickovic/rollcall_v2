@@ -23,8 +23,7 @@ export function AuthShell({ title, description, children }: AuthShellProps) {
           <p className="text-base leading-relaxed text-muted-foreground">{description}</p>
         </div>
         <p className="rounded-lg border bg-card p-4 text-sm leading-relaxed text-muted-foreground">
-          Your account is real. Events and bookings are still a workshop demonstration; accounts are not
-          linked to demo players.
+          Discover local games and find your next table. Your email and date of birth stay private.
         </p>
       </section>
       <section className="min-w-0 self-start space-y-6 rounded-xl border bg-card p-6 md:p-8">

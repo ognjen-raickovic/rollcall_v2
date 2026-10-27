@@ -1,3 +1,4 @@
+import { signUpFixture } from './registration-fixture.js'
 import assert from 'node:assert/strict'
 import { randomUUID } from 'node:crypto'
 import { setTimeout as pause } from 'node:timers/promises'
@@ -89,7 +90,7 @@ test(
       const email = `attendance-integration-${randomUUID()}@example.test`
       emails.push(email)
       const auth = createDatabaseClient(env).auth
-      const signup = await auth.signUp({ email, password: `Rc!${randomUUID()}aA7` })
+      const signup = await signUpFixture(auth, db, { email, password: `Rc!${randomUUID()}aA7` })
       assert.equal(Boolean(signup.error), false, 'Local registration must work.')
       const id = signup.data.user?.id
       assert.ok(id)

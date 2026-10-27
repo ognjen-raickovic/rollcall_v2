@@ -1,3 +1,4 @@
+import { signUpFixture } from './registration-fixture.js'
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { randomUUID } from 'node:crypto'
@@ -45,7 +46,7 @@ test(
     })
     async function account(role?: 'admin' | 'superadmin') {
       const auth = createDatabaseClient(env).auth,
-        result = await auth.signUp({
+        result = await signUpFixture(auth, db, {
           email: `moderation-${randomUUID()}@example.test`,
           password: `Rc!${randomUUID()}aA7`,
         })

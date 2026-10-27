@@ -2,6 +2,14 @@
 
 ## Milestone 4D additions
 
+The later additive `20261027000100_registration_identity.sql` adds nullable unique
+`profiles.username`, private `profile_private.date_of_birth`, closed RLS reservation/
+rate-counter tables and checked preparation/claim/metadata-sanitization triggers.
+It preserves existing account rows and active-account profile enforcement. Full DOB
+never enters public DTOs or persisted Auth metadata. No historical migration changes.
+See [registration details and hosted prerequisites](registration.md); migration 17 is
+locally tested but not yet approved/applied to hosted staging.
+
 `20261026000100_event_covers.sql` configures the private `event-covers` bucket (3 MiB,
 JPEG/PNG/WebP MIME allowlist) and its operation-aware Storage RLS. No file metadata is
 fabricated or deleted through SQL; runtime file operations use the supported Storage API.

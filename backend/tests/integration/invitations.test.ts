@@ -1,3 +1,4 @@
+import { signUpFixture } from './registration-fixture.js'
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { randomUUID } from 'node:crypto'
@@ -37,7 +38,7 @@ test(
       const email = `invitation-${randomUUID()}@example.test`
       emails.push(email)
       const auth = createDatabaseClient(env).auth
-      const signup = await auth.signUp({ email, password: `Rc!${randomUUID()}aA7` })
+      const signup = await signUpFixture(auth, db, { email, password: `Rc!${randomUUID()}aA7` })
       assert.equal(Boolean(signup.error), false)
       const id = signup.data.user?.id
       assert.ok(id)

@@ -37,7 +37,11 @@ export type PublicProfile = {
   gameExperience: ProfileGameExperience[]
 }
 
-export type OwnProfile = PublicProfile & { birthYear: number | null; ageDeclaredAt: string | null }
+export type OwnProfile = PublicProfile & {
+  birthYear: number | null
+  ageDeclaredAt: string | null
+  hasDateOfBirth?: boolean
+}
 
 export type ProfileUpdate = {
   displayName?: string

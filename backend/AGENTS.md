@@ -95,3 +95,18 @@ remote mutations, CLI linking or deployment. Keep ordinary local env/config/data
 use separate ignored operator configuration and dry-run defaults. Preserve local-only guards
 and unprivileged runtime access. Full reviewed 5B-2B source is a rollout prerequisite; do not
 copy just its SQL to bypass the audit. 6A-2 requires separate explicit deployment approval.
+
+## Milestone 6B-1: hosting preparation
+
+Read [application hosting](../docs/application-hosting.md). Production startup uses compiled
+code and platform environment variables, not local/operator env files. Preserve unprivileged
+caller-scoped clients, live suspension checks and existing logging redaction. Keep the API
+in maintenance mode until acceptance/approval; no migration/setup command belongs in builds.
+
+## Registration identity and application startup
+
+Read docs/registration.md before registration changes. New accounts require canonical unique
+usernames and private DOB through additive migration 17 and backend-prepared tickets. Never
+send DOB to Auth metadata/JWTs or public DTOs. Preserve legacy accounts, email confirmation,
+private owner RLS, durable rate counters and backend-only capability checks. dev:all is local;
+staging:smoke reads only separate ignored application configuration, never operator files.

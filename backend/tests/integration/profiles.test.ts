@@ -1,3 +1,4 @@
+import { signUpFixture } from './registration-fixture.js'
 import assert from 'node:assert/strict'
 import { randomUUID } from 'node:crypto'
 import { test } from 'node:test'
@@ -41,7 +42,7 @@ test(
     t.after(() => app.close())
     async function register(email: string) {
       const auth = createDatabaseClient(env).auth
-      const registered = await auth.signUp({ email, password: `Rc!${randomUUID()}aA7` })
+      const registered = await signUpFixture(auth, db, { email, password: `Rc!${randomUUID()}aA7` })
       assert.equal(registered.error, null, 'Local registration and SMTP must be available.')
       const id = registered.data.user?.id
       assert.ok(id)

@@ -1,6 +1,7 @@
 -- Milestone 4B authorization, persistent membership, idempotency and safe DTOs.
 -- Every fixture and temporary pgTAP grant rolls back; concurrency is tested separately.
 begin;
+\ir ../helpers/legacy-registration.inc
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 do $$

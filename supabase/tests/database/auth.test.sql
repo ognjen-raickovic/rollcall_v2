@@ -1,6 +1,7 @@
 -- Registration creates only a minimal UUID-linked profile; no onboarding or access grants.
 -- All fixtures are rolled back, including auth.users records.
 begin;
+\ir ../helpers/legacy-registration.inc
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 select no_plan();

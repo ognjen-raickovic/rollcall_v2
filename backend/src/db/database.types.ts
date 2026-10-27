@@ -49,12 +49,25 @@ export type Database = {
     }
     Views: Record<string, never>
     Functions: {
-      my_account_status: { Args: Record<string,never>; Returns: Json }
-      suspension_account: { Args: {p_target:string}; Returns: Json }
-      change_account_suspension: { Args: {p_target:string;p_suspend:boolean;p_reason:string}; Returns: Json }
-      get_suspension_audit: { Args: {p_target?:string;p_limit:number;p_before?:string}; Returns: Json }
-      submit_event_report: { Args: { p_event_id: string; p_reason: string; p_description: string | null }; Returns: Json }
-      list_event_reports: { Args: { p_status: string; p_limit: number; p_before_time?: string; p_before_id?: string }; Returns: Json }
+      prepare_registration: {
+        Args: { p_username: string; p_email: string; p_date_of_birth: string; p_fingerprint: string }
+        Returns: Json
+      }
+      my_account_status: { Args: Record<string, never>; Returns: Json }
+      suspension_account: { Args: { p_target: string }; Returns: Json }
+      change_account_suspension: {
+        Args: { p_target: string; p_suspend: boolean; p_reason: string }
+        Returns: Json
+      }
+      get_suspension_audit: { Args: { p_target?: string; p_limit: number; p_before?: string }; Returns: Json }
+      submit_event_report: {
+        Args: { p_event_id: string; p_reason: string; p_description: string | null }
+        Returns: Json
+      }
+      list_event_reports: {
+        Args: { p_status: string; p_limit: number; p_before_time?: string; p_before_id?: string }
+        Returns: Json
+      }
       get_event_report: { Args: { p_report_id: string }; Returns: Json }
       resolve_event_report: { Args: { p_report_id: string; p_action: string; p_note: string }; Returns: Json }
       my_permissions: { Args: Record<string, never>; Returns: Json }

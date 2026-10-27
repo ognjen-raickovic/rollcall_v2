@@ -198,3 +198,14 @@ source includes 5B-2B; the source audit continues to verify its prerequisites.
 6A-2 requires separate approval for migrations/reference data/Auth/Storage/secrets/
 bootstrap and hosted security acceptance. 6B handles application hosting, final origins,
 proxy/CORS decisions and deployment configuration. Neither stage is implied by 6A-1.
+
+## Milestone 6B-1: application deployment preparation
+
+Prepared repository-root Vercel/Render configuration, same-origin API routing, compiled API
+startup and [hosting instructions](application-hosting.md). No app hosting was executed.
+6A-2 remains partially complete per operator report: database/reference data/keys are provisioned;
+verified accounts/bootstrap, hosted Auth/security acceptance and SMTP remain pending.
+Hosting protection, final exact Auth origins and proxy smoke checks must be verified before
+public/general-tester access. Automatic deployments remain disabled.
+
+Registration follow-up: unique usernames, private DOB, safe Auth errors and dual-service startup are implemented and locally verified. Additive migration 17 and hosted email/PKCE acceptance require separate approval/verification; 6A-2 remains incomplete. See [registration](registration.md).

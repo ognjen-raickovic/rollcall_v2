@@ -1,0 +1,30 @@
+# Preparation only. Creating a Blueprint is a deployment and requires separate approval.
+# Starter is a paid plan: maintenance mode keeps all public API traffic inaccessible.
+services:
+  - type: web
+    name: rollcall-staging-api
+    runtime: node
+    region: frankfurt
+    plan: starter
+    rootDir: .
+    autoDeployTrigger: off
+    maintenanceMode:
+      enabled: true
+    buildCommand: corepack pnpm install --frozen-lockfile --prod=false && corepack pnpm --filter backend build
+    startCommand: corepack pnpm --filter backend start:production
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: HOST
+        value: 0.0.0.0
+      - key: LOG_LEVEL
+        value: info
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_PUBLISHABLE_KEY
+        sync: false
+      - key: EVENT_INVITATION_KEY
+        sync: false
+      - key: EVENT_COVER_OPERATION_KEY
+        sync: false
