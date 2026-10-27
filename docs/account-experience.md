@@ -9,9 +9,10 @@ Profile editing retains its existing guard and actual `/profile` return route.
 groups account information, security and an informational Danger Zone. Active-account
 status gates the private profile component; suspended users retain recovery/logout
 without private profile requests. Existing own-profile DTOs provide creation date,
-birth year and DOB presence only. Full DOB and username are not exposed by current
-profile DTOs, so this redesign adds no backend access or invented username values.
-Supporting those displays would require separately reviewed safe DTO changes.
+birth year and DOB presence. Full DOB remains unexposed. The later
+[auth casing follow-up](auth-experience.md) adds a safe optional nullable username via
+migration 18 and matching DTOs; settings and the shared public profile now show its
+actual spelling when available, never an invented value derived from display name.
 
 On one's own `/users/:userId`, navigation offers actual `/profile` and `/account`
 destinations; another player's profile and anonymous views offer no owner controls.

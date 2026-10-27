@@ -4,13 +4,13 @@ import { registrationSchema } from "../src/modules/auth/registration.js";
 import { buildApp } from "../src/app.js";
 import { testEnvironment } from "./helpers.js";
 
-test("registration validates canonical usernames and real private dates without accepting actor/role fields", () => {
+test("registration preserves trimmed username casing and validates private dates without accepting actor/role fields", () => {
   const valid = {
     username: " Player_One ",
     email: "fixture@example.test",
     dateOfBirth: "2000-02-29",
   };
-  assert.equal(registrationSchema.parse(valid).username, "player_one");
+  assert.equal(registrationSchema.parse(valid).username, "Player_One");
   for (const patch of [
     { username: "a" },
     { username: "9player" },

@@ -101,7 +101,7 @@ test(
       await page.getByRole('button', { name: 'Log in', exact: true }).click()
       await page.getByRole('button', { name: 'Resend confirmation', exact: true }).waitFor()
       await page.goto(origin + '/auth/callback')
-      await page.getByRole('heading', { name: 'Confirm your account.' }).waitFor()
+      await page.getByRole('heading', { name: 'Unable to confirm' }).waitFor()
     } finally {
       await browser?.close()
       await server.close()

@@ -339,11 +339,12 @@ grants, service-role runtime access or permissive policies to obtain a passing s
 
 ## Recovery limits
 
-**Subsequent registration change:** the repository now includes additive migration 17,
-`20261027000100_registration_identity.sql`, tested only on disposable local Supabase.
-The previously applied 16 migrations remain the historical staging baseline. Review
-and approve this new migration separately before enabling username/DOB registration;
-do not replay historical files or treat this code change as completed hosted acceptance.
+**Subsequent registration changes:** the operator reports migration 17,
+`20261027000100_registration_identity.sql`, now applied locally and hosted. The original
+16 migrations remain the historical staging preparation baseline. Case-preserving
+usernames require separately reviewed forward migration 18, tested on disposable local
+Supabase only; follow the [database/backend/frontend order](auth-experience.md).
+Do not replay historical files or treat this code change as completed hosted acceptance.
 Use [dedicated application configuration](registration.md) for local smoke testing;
 it does not read operator configuration or perform migrations/bootstrap.
 

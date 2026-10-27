@@ -10,6 +10,11 @@ tickets bind username, email hash and DOB to Auth INSERT, with persistent bounde
 counters. No service role, new operator endpoint or proxy trust is introduced.
 See [registration and startup](registration.md) for migration 17 and runtime requirements.
 
+Forward migration 18 preserves validated username spelling while retaining lower-based
+uniqueness for profiles and adding it for intents. Profile RPC/API DTOs add only optional
+nullable public `username`; grants/RLS, Auth/DOB triggers and suspension checks stay intact.
+Deploy database, backend, then frontend per [auth rollout](auth-experience.md).
+
 Real covers now use a private Supabase bucket and backend-mediated multipart endpoints.
 Sharp validates bounded image content, strips metadata and produces canonical WebP. A
 server-only operation capability complements the existing verified caller JWT; SQL/RLS

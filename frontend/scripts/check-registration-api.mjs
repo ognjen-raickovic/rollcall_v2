@@ -46,12 +46,13 @@ test('Auth errors and registration transport preserve privacy and identify the i
       return { data: { user: null, session: null }, error: null }
     }
     await authApi.register({
-      username: 'fixture_user',
+      username: 'Fixture_User',
       email: 'fixture@example.test',
       dateOfBirth: '2000-02-29',
       password: 'Synthetic-password-123!',
     })
     assert.equal(prepared.dateOfBirth, '2000-02-29')
+    assert.equal(prepared.username, 'Fixture_User')
     assert.equal(prepared.password, undefined)
     assert.deepEqual(signup.options.data, {
       rollcall_registration_token: '10000000-0000-4000-8000-000000000001',

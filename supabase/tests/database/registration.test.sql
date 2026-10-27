@@ -15,7 +15,7 @@ select is(public.prepare_registration('UNIQUE_PLAYER','other@example.test','2000
 select throws_ok($$select public.prepare_registration('invalid_date','fixture@example.test','2001-02-29',repeat('a',64))$$,'22023','Invalid date of birth.','Invalid calendar date rejected by SQL');
 insert into auth.users(id,email,raw_user_meta_data) select id,'fixture@example.test',jsonb_build_object('rollcall_registration_token',intent->>'token') from registration_fixture;
 select is((select count(*)::int from public.profiles where id=(select id from registration_fixture)),1,'One profile initialized before confirmation');
-select is((select username from public.profiles where id=(select id from registration_fixture)),'unique_player','Canonical username persisted');
+select is((select username from public.profiles where id=(select id from registration_fixture)),'Unique_Player','Validated username casing persisted');
 select is((select date_of_birth::text from private.profile_private where profile_id=(select id from registration_fixture)),'2000-02-29','Full date persisted privately');
 select is((select raw_user_meta_data from auth.users where id=(select id from registration_fixture)),'{}'::jsonb,'Transport ticket removed from Auth metadata');
 update auth.users set raw_user_meta_data='{"dateOfBirth":"2000-02-29","date_of_birth":"2000-02-29","rollcall_registration_token":"consumed","theme":"dark"}' where id=(select id from registration_fixture);

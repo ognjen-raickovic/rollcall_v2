@@ -208,4 +208,8 @@ verified accounts/bootstrap, hosted Auth/security acceptance and SMTP remain pen
 Hosting protection, final exact Auth origins and proxy smoke checks must be verified before
 public/general-tester access. Automatic deployments remain disabled.
 
-Registration follow-up: unique usernames, private DOB, safe Auth errors and dual-service startup are implemented and locally verified. Additive migration 17 and hosted email/PKCE acceptance require separate approval/verification; 6A-2 remains incomplete. See [registration](registration.md).
+Registration follow-up: unique usernames, private DOB, safe Auth errors and dual-service
+startup are implemented. The operator reports migration 17 applied locally/hosted.
+Forward migration 18 and matching API/UI preserve new username casing with lower-based
+uniqueness; it is tested locally only and needs separate hosted approval. Hosted
+email/PKCE/security acceptance remains incomplete. See [auth rollout](auth-experience.md).

@@ -1,5 +1,11 @@
 # Milestone 3B: real profiles and per-game experience
 
+The auth-casing follow-up (forward migration 18) preserves new username spelling while
+keeping identity uniqueness case-insensitive. Public/own DTOs accept optional nullable
+`username`; shared profiles/settings display it as `@username`, separately from display
+name. Existing lowercase handles remain unchanged and cannot be recased by profile PATCH.
+Full DOB, email and roles remain absent from public DTOs. See [rollout](auth-experience.md).
+
 New registration additionally requires a unique immutable username and private DOB;
 legacy accounts keep optional birth-year editing. Own profile exposes `hasDateOfBirth`
 and a read-only derived birth year for DOB-backed accounts. Full DOB is not in any

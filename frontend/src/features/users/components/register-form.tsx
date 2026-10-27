@@ -15,8 +15,10 @@ const schema = z
     username: z
       .string()
       .trim()
-      .toLowerCase()
-      .regex(/^[a-z][a-z0-9_]{2,23}$/, 'Use 3–24 letters, numbers or underscores, starting with a letter.'),
+      .regex(
+        /^[A-Za-z][A-Za-z0-9_]{2,23}$/,
+        'Use 3–24 letters, numbers or underscores, starting with a letter.',
+      ),
     email: emailSchema,
     dateOfBirth: z
       .string()
@@ -48,22 +50,28 @@ export function RegisterForm() {
   })
   if (auth.data) return <Navigate to="/account" replace />
   return (
-    <AuthShell title="Find your people." description="Choose your username and find your next table.">
+    <AuthShell
+      title={register.data?.confirmationRequired ? 'Check your email' : 'Create your account'}
+      description={
+        register.data?.confirmationRequired
+          ? undefined
+          : 'Choose a username and confirm your email to get started.'
+      }
+    >
       {register.data?.confirmationRequired ? (
-        <div className="space-y-4">
-          <h2 className="text-xl font-semibold">Check your email</h2>
+        <div className="space-y-4 text-center">
           <p role="status" className="text-sm text-muted-foreground">
             If registration is available for this address, a confirmation link is on its way. Open it in this
             browser to finish. Existing accounts can log in or reset their password.
           </p>
-          <Button asChild>
+          <Button asChild className="w-full">
             <Link to="/login">Go to login</Link>
           </Button>
         </div>
       ) : (
         <form
           noValidate
-          className="space-y-6"
+          className="space-y-4"
           onSubmit={form.handleSubmit(({ confirmation: _confirmation, ...values }) =>
             register.mutate(values, {
               onError: (error) => {
@@ -133,8 +141,8 @@ export function RegisterForm() {
           >
             {register.isPending ? 'Creating account...' : 'Create account'}
           </Button>
-          <p className="text-sm text-muted-foreground">
-            Already registered?{' '}
+          <p className="text-center text-sm text-muted-foreground">
+            Already have an account?{' '}
             <Link to="/login" className="text-primary hover:underline">
               Log in
             </Link>

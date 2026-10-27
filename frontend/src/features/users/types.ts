@@ -21,6 +21,7 @@ export type ProfileGameExperience = {
 
 export type PublicProfile = {
   id: string
+  username?: string | null
   displayName: string
   biography: string | null
   country: { id: number; isoCode: string; name: string } | null

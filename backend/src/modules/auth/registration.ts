@@ -10,9 +10,8 @@ export const registrationSchema = z.strictObject({
   username: z
     .string()
     .trim()
-    .toLowerCase()
     .regex(
-      /^[a-z][a-z0-9_]{2,23}$/,
+      /^[A-Za-z][A-Za-z0-9_]{2,23}$/,
       "Use 3–24 letters, numbers or underscores, starting with a letter.",
     ),
   email: z.email().trim().max(254),

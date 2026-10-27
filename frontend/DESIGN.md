@@ -8,7 +8,13 @@ Logout uses a centered native dialog with equal-width side-by-side buttons: prim
 Yes, log out on the left, outlined No, stay on the right. Initially focus cancellation;
 preserve keyboard wrapping, token-based palettes and 375px/1440px layouts.
 
-Registration uses the existing responsive AuthShell and tokens, with Username, Email,
+Authentication uses one centered 448px column at all widths: a quiet centered brand/
+heading/help area, one bordered form or status card, then centered secondary navigation.
+Remove the promotional paragraph/sidebar; labels and input text stay left aligned.
+Callback loading, success and failure use centered icons/copy with clear full-width actions.
+Use natural scrolling, compact form gaps and tokens in both themes.
+
+Registration uses AuthShell and tokens, with Username, Email,
 Date of birth, Password and Confirm password in order. Explain DOB privacy beside the
 field, keep validation inline and show resend confirmation only after an unconfirmed-email
 login response. Preserve native accessible date entry and dark/light theme support.

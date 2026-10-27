@@ -38,16 +38,18 @@ and [API keys](https://supabase.com/docs/guides/api/api-keys).
 
 ## New registration contract
 
-Apply the separately reviewed additive migration
-`20261027000100_registration_identity.sql` before enabling this registration UI.
-The previously deployed 16 migrations do not implement this contract. No historical
-migration is changed. Existing accounts remain usable, with nullable legacy usernames
-and optional birth-year declarations; no fabricated DOB backfill occurs.
+The operator reports migration 17 (`20261027000100_registration_identity.sql`) is
+already applied locally and hosted. Its private registration/DOB contract is preserved.
+Forward migration 18 (`20261027000200_username_casing.sql`) adds case preservation;
+it is tested locally only and requires separate hosted approval. No historical
+migration is changed. Nullable legacy usernames and optional legacy birth-year
+declarations remain; no fabricated DOB backfill occurs.
 
 The form order is Username, Email, Date of birth, Password, Confirm password.
-Username is canonical lowercase ASCII, 3–24 characters, starts with a letter and
+Username preserves validated ASCII casing, 3–24 characters, starts with a letter and
 then allows letters, digits and underscores. A database unique index and serialized
-reservation/claim path enforce global case-insensitive uniqueness. Username is immutable
+reservation/claim path enforce global case-insensitive uniqueness using `lower(username)`.
+Existing lowercase values are unchanged. Username is immutable
 through ordinary profile editing; display name remains independently editable.
 
 `POST /api/auth/registration-intent` accepts strictly `{username,email,dateOfBirth}`,
@@ -149,7 +151,8 @@ Windows process tests require execution outside this session's restricted sandbo
 they passed with that access. Disposable Docker resources were removed; original data
 and the mail backup were preserved. No hosted checks or registrations were attempted.
 
-Before hosted use: review/apply migration 17 only with approval, configure the correct
+Before enabling case-preserving hosted registration: review/apply migration 18 only
+with approval, following [database/backend/frontend ordering](auth-experience.md), and verify the correct
 public project/key pairing and approved backend capability, then manually verify email
 confirmation/PKCE/recovery in the intended browser. Custom SMTP remains necessary for
 broader/non-team email testing; an invalid API key is not evidence of SMTP failure.

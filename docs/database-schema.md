@@ -7,8 +7,12 @@ The later additive `20261027000100_registration_identity.sql` adds nullable uniq
 rate-counter tables and checked preparation/claim/metadata-sanitization triggers.
 It preserves existing account rows and active-account profile enforcement. Full DOB
 never enters public DTOs or persisted Auth metadata. No historical migration changes.
-See [registration details and hosted prerequisites](registration.md); migration 17 is
-locally tested but not yet approved/applied to hosted staging.
+The operator reports migration 17 applied locally and hosted. Forward migration 18,
+`20261027000200_username_casing.sql`, permits validated mixed-case usernames while
+retaining the profile lower-based unique index, adding an intent lower-based unique
+index and exposing safe optional `username` in profile DTOs. No existing spelling is
+rewritten; no RLS/ACL or DOB changes. It is locally tested only. See
+[registration](registration.md) and [database-first rollout](auth-experience.md).
 
 `20261026000100_event_covers.sql` configures the private `event-covers` bucket (3 MiB,
 JPEG/PNG/WebP MIME allowlist) and its operation-aware Storage RLS. No file metadata is
