@@ -38,9 +38,9 @@ export function ProfileEditor({ renderLocation, ...games }: ProfileEditorProps) 
           className="inline-flex items-center gap-2 text-sm text-primary hover:underline focus-visible:outline-2 focus-visible:outline-ring"
         >
           <ArrowLeft className="size-4" aria-hidden="true" />
-          Back to your profile
+          Back to My Profile
         </Link>
-        <h1 className="text-3xl font-bold tracking-tight">Edit your profile</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Edit Profile</h1>
         <p className="max-w-2xl text-muted-foreground">
           A familiar name, a few favorite games, and a little about you. Make it easier to find good company.
         </p>

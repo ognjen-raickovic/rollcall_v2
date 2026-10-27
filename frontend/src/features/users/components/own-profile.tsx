@@ -1,12 +1,14 @@
 import { Link, useLocation } from 'react-router'
-import { ArrowRight, LockKeyhole, Pencil } from 'lucide-react'
+import { Pencil, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useOwnProfile } from '../api/use-profiles'
+import { usePublicProfile } from '../api/use-profiles'
+import { useAuth } from '../api/use-auth'
 import { ProfileSummary } from './profile-summary'
 
 export function OwnProfile() {
-  const profile = useOwnProfile()
+  const auth = useAuth()
+  const profile = usePublicProfile(auth.data?.id ?? '')
   const location = useLocation()
   const saved =
     typeof location.state === 'object' &&
@@ -37,25 +39,19 @@ export function OwnProfile() {
     <div className="mx-auto max-w-4xl space-y-6 py-4 md:py-8">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="space-y-2">
-          <p className="text-sm font-medium text-primary">Your player profile</p>
-          <Link
-            to="/account"
-            className="text-sm text-muted-foreground underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-ring"
-          >
-            Account settings
-          </Link>
+          <p className="text-sm font-medium text-primary">My Profile</p>
         </div>
         <div className="flex flex-wrap gap-3">
           <Button asChild variant="outline">
-            <Link to={`/users/${data.id}`}>
-              View public profile
-              <ArrowRight aria-hidden="true" />
+            <Link to="/account">
+              <Settings aria-hidden="true" />
+              Account Settings
             </Link>
           </Button>
           <Button asChild>
             <Link to="/profile/edit">
               <Pencil aria-hidden="true" />
-              Edit profile
+              Edit Profile
             </Link>
           </Button>
         </div>
@@ -78,20 +74,6 @@ export function OwnProfile() {
         </section>
       )}
       <ProfileSummary profile={data} />
-      <section className="space-y-3 rounded-xl border bg-card p-6">
-        <h2 className="flex items-center gap-2 text-xl font-semibold">
-          <LockKeyhole className="size-5 text-primary" aria-hidden="true" />
-          Only visible to you
-        </h2>
-        <p className="text-sm text-muted-foreground">
-          {data.birthYear === null
-            ? 'You haven’t shared a birth year. This is optional.'
-            : `Birth year: ${data.birthYear}. Self-declared; not verified.`}
-        </p>
-        <p className="text-xs text-muted-foreground">
-          Your birth year and account email are never shown on your public profile.
-        </p>
-      </section>
     </div>
   )
 }

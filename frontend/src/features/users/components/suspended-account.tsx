@@ -1,11 +1,11 @@
 import { Link } from 'react-router'
 import { Button } from '@/components/ui/button'
-import { useAuth, useAuthLogout } from '../api/use-auth'
+import { useAuth } from '../api/use-auth'
+import { LogoutButton } from './logout-button'
 import { useAccountStatus } from '../api/use-account-status'
 export function SuspendedAccount() {
   const auth = useAuth(),
-    status = useAccountStatus(auth.data?.id ?? null),
-    logout = useAuthLogout()
+    status = useAccountStatus(auth.data?.id ?? null)
   return (
     <section
       className="mx-auto max-w-2xl space-y-5 rounded-xl border bg-card p-6"
@@ -28,12 +28,12 @@ export function SuspendedAccount() {
         <Button variant="outline" asChild>
           <Link to="/events">Browse public events</Link>
         </Button>
-        <Button variant="outline" disabled={logout.isPending} onClick={() => logout.mutate()}>
-          Log out of RollCall
+        <LogoutButton />
+        <Button variant="outline" asChild>
+          <Link to="/forgot-password">Reset password</Link>
         </Button>
       </div>
       {status.error && <p role="alert">Your account status could not be checked. Please retry.</p>}
-      {logout.error && <p role="alert">Logout failed. Please retry.</p>}
     </section>
   )
 }

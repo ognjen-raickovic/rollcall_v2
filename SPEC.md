@@ -2,6 +2,11 @@
 
 ## Product
 
+The account experience separates public My Profile from private Account Settings,
+with shared accessible logout confirmation. Account deletion remains design-only;
+see [account experience](docs/account-experience.md) and its separate approval proposal.
+No profile API, RLS, role, Storage or migration changes are introduced by this UI work.
+
 Current registration adds unique canonical usernames and required private DOB for new
 accounts. Legacy accounts are preserved; ordinary display names remain editable. No
 event-age eligibility is added. See [registration contract](docs/registration.md).

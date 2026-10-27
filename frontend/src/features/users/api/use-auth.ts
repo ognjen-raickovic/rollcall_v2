@@ -78,7 +78,13 @@ export function useRegister() {
 export function useAuthLogout() {
   const client = useQueryClient()
   return useMutation({
+    mutationKey: ['auth-logout'],
     mutationFn: authApi.logout,
+    onMutate: () => {
+      const cache = client.getMutationCache()
+      for (const mutation of cache.findAll({ mutationKey: ['auth-logout'], status: 'error' }))
+        cache.remove(mutation)
+    },
     onSuccess: () => {
       client.removeQueries({ queryKey: ACCOUNT_STATUS_QUERY_KEY })
       client.removeQueries({ queryKey: ADMIN_QUERY_KEY })

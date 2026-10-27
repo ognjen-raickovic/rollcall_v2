@@ -2,6 +2,12 @@
 
 ## Product and users
 
+My Profile shares the public player layout; private account details live in Account
+Settings, grouped into account information, security and an informational Danger Zone.
+Logout uses a centered native dialog with equal-width side-by-side buttons: primary
+Yes, log out on the left, outlined No, stay on the right. Initially focus cancellation;
+preserve keyboard wrapping, token-based palettes and 375px/1440px layouts.
+
 Registration uses the existing responsive AuthShell and tokens, with Username, Email,
 Date of birth, Password and Confirm password in order. Explain DOB privacy beside the
 field, keep validation inline and show resend confirmation only after an unconfirmed-email

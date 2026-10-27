@@ -5,11 +5,14 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { HttpError } from '@/lib/http-client'
 import { usePublicProfile } from '../api/use-profiles'
 import { ProfileSummary } from './profile-summary'
+import { useAuth } from '../api/use-auth'
 
 type PublicProfileProps = { userId: string }
 
 export function PublicProfile({ userId }: PublicProfileProps) {
   const profile = usePublicProfile(userId)
+  const auth = useAuth()
+  const own = auth.data?.id === userId
   if (
     !z.uuid().safeParse(userId).success ||
     (profile.error instanceof HttpError && profile.error.status === 404)
@@ -44,12 +47,19 @@ export function PublicProfile({ userId }: PublicProfileProps) {
     )
   return (
     <div className="mx-auto max-w-4xl space-y-6 py-4 md:py-8">
-      <Link
-        to="/events"
-        className="inline-block text-sm text-primary hover:underline focus-visible:outline-2 focus-visible:outline-ring"
-      >
-        Back to events
-      </Link>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <Link
+          to={own ? '/profile' : '/events'}
+          className="inline-block text-sm text-primary hover:underline focus-visible:outline-2 focus-visible:outline-ring"
+        >
+          {own ? 'Back to My Profile' : 'Back to events'}
+        </Link>
+        {own && (
+          <Button asChild variant="outline">
+            <Link to="/account">Account Settings</Link>
+          </Button>
+        )}
+      </div>
       <ProfileSummary profile={profile.data} />
     </div>
   )

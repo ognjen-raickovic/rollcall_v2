@@ -3,6 +3,7 @@ import { useAuth } from '@/features/users/api/use-auth'
 import { useAccountStatus } from '@/features/users/api/use-account-status'
 import { SuspendedAccount } from '@/features/users/components/suspended-account'
 import { SuspensionNotice } from '@/features/users/components/suspension-notice'
+import { LogoutFeedback } from '@/features/users/components/logout-feedback'
 
 import { AppLayout } from '@/components/layout/app-layout'
 import { SessionMenu } from '@/features/users/components/session-menu'
@@ -25,7 +26,12 @@ export function RootLayout() {
         account={<SessionMenu />}
         showDemoEvents={demoModeEnabled}
         content={suspended && !safe ? <SuspendedAccount /> : undefined}
-        notice={suspended && safe ? <SuspensionNotice /> : undefined}
+        notice={
+          <>
+            <LogoutFeedback />
+            {suspended && safe && <SuspensionNotice />}
+          </>
+        }
       />
       <ScrollRestoration />
     </>
