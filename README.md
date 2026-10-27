@@ -1,5 +1,11 @@
 ﻿# RollCall
 
+Registration now requires a unique username and private date of birth. See
+[registration, safe 401 diagnostics and startup](docs/registration.md) before using
+the new flow: additive migration 17 has not been applied to hosted staging.
+Use `pnpm.cmd dev:all` for both local services, or `pnpm.cmd staging:smoke`
+with a separate ignored `.env.staging-app`. Neither command deploys or migrates data.
+
 RollCall helps people discover, organize, and join tabletop gaming events: D&D, Magic:
 The Gathering, Yu-Gi-Oh!, board games, and social deduction games.
 
@@ -375,3 +381,15 @@ connecting. All operator actions default to dry-run and use a separate ignored
 The rebased source includes 5B-2B account suspension/reinstatement alongside the staging
 preparation. The source audit still checks that prerequisite; hosted preflight and separate
 6A-2 approval remain required. Hosted application deployment and final origins remain 6B work.
+
+## Application hosting preparation (6B-1)
+
+Read the [Vercel/Render hosting guide](docs/application-hosting.md) for exact root/build/start
+settings, environment placement and protected-preview steps. `pnpm hosting:check` validates
+the template; `pnpm test:hosting` runs focused checks after `pnpm build`. The stricter
+`pnpm build:hosting` requires the approved Render origin and public frontend settings.
+The tracked `.invalid` destination is deliberately blocked until replaced with the actual origin.
+
+No deployment was performed. Render defaults to maintenance mode; automatic Git deployment
+is disabled on both platforms. Reported 6A-2 database provisioning does not complete hosted
+Auth/security acceptance, verified-account/superadmin setup or SMTP. These remain public-access gates.

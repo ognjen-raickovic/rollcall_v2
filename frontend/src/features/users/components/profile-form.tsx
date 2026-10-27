@@ -93,7 +93,7 @@ export function ProfileForm({ profile, renderLocation }: ProfileFormProps) {
             biography: values.biography || null,
             countryId: values.countryId,
             cityId: values.location?.cityId ?? null,
-            birthYear: values.birthYear,
+            birthYear: profile.hasDateOfBirth ? undefined : values.birthYear,
           },
           {
             onSuccess: () => {
@@ -209,26 +209,31 @@ export function ProfileForm({ profile, renderLocation }: ProfileFormProps) {
           Private age information
         </h2>
         <p className="text-sm leading-relaxed text-muted-foreground">
-          This optional birth year is visible only to you. It is self-declared, not verified, and is never
-          shown on your public profile.
+          {profile.hasDateOfBirth
+            ? 'Your birth year comes from your private registration date and cannot be changed here. Your full date of birth is never shown publicly.'
+            : 'This optional birth year is visible only to you. It is self-declared, not verified, and is never shown on your public profile.'}
         </p>
         <div className="space-y-2">
           <Label htmlFor="profile-birth-year">Birth year (private)</Label>
-          <select
-            id="profile-birth-year"
-            className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            aria-invalid={Boolean(form.formState.errors.birthYear)}
-            {...form.register('birthYear', {
-              setValueAs: (value) => (value === '' || value == null ? null : Number(value)),
-            })}
-          >
-            <option value="">Prefer not to say</option>
-            {Array.from({ length: currentYear - 1899 }, (_, index) => currentYear - index).map((year) => (
-              <option key={year} value={year}>
-                {year}
-              </option>
-            ))}
-          </select>
+          {profile.hasDateOfBirth ? (
+            <Input id="profile-birth-year" readOnly value={profile.birthYear ?? ''} />
+          ) : (
+            <select
+              id="profile-birth-year"
+              className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              aria-invalid={Boolean(form.formState.errors.birthYear)}
+              {...form.register('birthYear', {
+                setValueAs: (value) => (value === '' || value == null ? null : Number(value)),
+              })}
+            >
+              <option value="">Prefer not to say</option>
+              {Array.from({ length: currentYear - 1899 }, (_, index) => currentYear - index).map((year) => (
+                <option key={year} value={year}>
+                  {year}
+                </option>
+              ))}
+            </select>
+          )}
           {form.formState.errors.birthYear && (
             <p className="text-sm text-destructive">{form.formState.errors.birthYear.message}</p>
           )}

@@ -142,3 +142,19 @@ remote mutations, CLI linking or deployment. Keep ordinary local env/config/data
 use separate ignored operator configuration and dry-run defaults. Preserve local-only guards
 and unprivileged runtime access. Full reviewed 5B-2B source is a rollout prerequisite; do not
 copy just its SQL to bypass the audit. 6A-2 requires separate explicit deployment approval.
+
+## Milestone 6B-1: hosting preparation
+
+Read [application hosting](docs/application-hosting.md) before hosting changes. Preserve same-origin API paths,
+production demo isolation, unprivileged Supabase clients and viewer privacy. Application
+hosting does not use operator files or database credentials; never inspect private operator
+material for this work. Keep maintenance enabled, previews protected and automatic deployments
+disabled until the relevant acceptance/approval gates pass. Preparation is not deployment.
+
+## Registration identity and application startup
+
+Read docs/registration.md before registration changes. New accounts require canonical unique
+usernames and private DOB through additive migration 17 and backend-prepared tickets. Never
+send DOB to Auth metadata/JWTs or public DTOs. Preserve legacy accounts, email confirmation,
+private owner RLS, durable rate counters and backend-only capability checks. dev:all is local;
+staging:smoke reads only separate ignored application configuration, never operator files.

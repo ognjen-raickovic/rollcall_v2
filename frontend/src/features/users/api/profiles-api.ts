@@ -31,6 +31,7 @@ export const publicProfileSchema = z.object({
 const ownProfileSchema = publicProfileSchema.extend({
   birthYear: z.number().int().nullable(),
   ageDeclaredAt: z.string().nullable(),
+  hasDateOfBirth: z.boolean().optional(),
 })
 
 async function accessToken(ownerId: string): Promise<string> {
@@ -44,7 +45,7 @@ export const profilesApi = {
   getOwn: async (ownerId: string, signal?: AbortSignal): Promise<OwnProfile> => {
     const profile = await httpRequest('/api/me/profile', ownProfileSchema, {
       token: await accessToken(ownerId),
-      viewerId:ownerId,
+      viewerId: ownerId,
       signal,
     })
     if (profile.id !== ownerId) throw new Error('Your profile could not be verified. Log in again.')
@@ -57,7 +58,7 @@ export const profilesApi = {
       method: 'PATCH',
       body: update,
       token: await accessToken(ownerId),
-      viewerId:ownerId,
+      viewerId: ownerId,
     })
     if (profile.id !== ownerId) throw new Error('Your profile could not be verified. Log in again.')
     return profile
@@ -65,7 +66,7 @@ export const profilesApi = {
   experience: async (ownerId: string, signal?: AbortSignal) =>
     httpRequest('/api/me/game-experience', z.array(gameExperienceSchema), {
       token: await accessToken(ownerId),
-      viewerId:ownerId,
+      viewerId: ownerId,
       signal,
     }),
   setExperience: async (
@@ -76,12 +77,12 @@ export const profilesApi = {
       method: 'PUT',
       body: { experience },
       token: await accessToken(ownerId),
-      viewerId:ownerId,
+      viewerId: ownerId,
     }),
   removeExperience: async (gameId: number, ownerId: string) =>
     httpRequest(`/api/me/game-experience/${gameId}`, z.undefined(), {
       method: 'DELETE',
       token: await accessToken(ownerId),
-      viewerId:ownerId,
+      viewerId: ownerId,
     }),
 }

@@ -2,6 +2,14 @@
 
 ## Milestone 4D cover boundary
 
+Registration preparation now lives in the Auth module at
+`POST /api/auth/registration-intent`. It sends strict username/email/DOB input through
+an unprivileged RPC client plus the existing backend-only operation capability; the
+browser sends no password to Fastify and no DOB to Auth metadata. Transactional private
+tickets bind username, email hash and DOB to Auth INSERT, with persistent bounded abuse
+counters. No service role, new operator endpoint or proxy trust is introduced.
+See [registration and startup](registration.md) for migration 17 and runtime requirements.
+
 Real covers now use a private Supabase bucket and backend-mediated multipart endpoints.
 Sharp validates bounded image content, strips metadata and produces canonical WebP. A
 server-only operation capability complements the existing verified caller JWT; SQL/RLS
@@ -340,3 +348,13 @@ operator work; import transactions retain their existing country-level lock/boun
 Privileged maintenance credentials are isolated in ignored `.staging/operator.env`; the
 runtime remains publishable-key/caller-token only. Raw generated staging roots are isolated
 from ordinary local keys. [Rollout and pending hosted checks](hosted-supabase-staging.md).
+
+## Prepared hosted application topology (6B-1)
+
+Vercel serves only Vite static output and rewrites browser `/api/*` to the reviewed Render
+HTTPS origin, preserving `/api`. Render runs the compiled API with platform environment
+variables; no local env file, database password or maintenance tools are loaded. Supabase
+Auth remains direct from the browser; Fastify uses an unprivileged key plus verified caller
+tokens. Existing live suspension/RLS/Storage checks remain authoritative. No CORS or forwarded-IP
+trust expansion is introduced. Render maintenance and Vercel Preview protection gate access
+while 6A-2 acceptance remains pending. [Setup and limits](application-hosting.md).

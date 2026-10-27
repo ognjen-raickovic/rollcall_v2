@@ -183,6 +183,11 @@ journeys. With `RUN_LOCAL_AUTH_UI` absent, the real-account browser journeys are
 skipped, rather than counted as passing. Do not publish browser traces or mailbox exports;
 they may contain temporary credentials and one-use links. Generated artifacts are ignored.
 
+The current registration flow requires additive migration 17, a unique username and
+private DOB. Consult [registration and safe key diagnostics](registration.md) before
+running older signup fixtures. Existing login/confirmation/recovery remain enabled;
+no hosted email or PKCE acceptance is implied by local checks.
+
 - [Supabase password authentication](https://supabase.com/docs/guides/auth/passwords)
 - [Supabase PKCE flow](https://supabase.com/docs/guides/auth/sessions/pkce-flow)
 - [Supabase JavaScript getClaims](https://supabase.com/docs/reference/javascript/auth-getclaims)

@@ -298,3 +298,14 @@ See [architecture](../docs/backend-architecture.md), [schema](../docs/database-s
 [entity contracts](../docs/entities.md) and [roadmap](../docs/backend-roadmap.md). Official
 setup references: [Supabase CLI](https://supabase.com/docs/guides/local-development/cli/getting-started)
 and [local migrations](https://supabase.com/docs/guides/local-development/overview).
+
+## Render startup (6B-1 preparation)
+
+Use repository-root context and the reviewed [hosting guide](../docs/application-hosting.md).
+Install the shared frozen lockfile, compile with `pnpm --filter backend build`, and run
+`pnpm --filter backend start:production` with platform environment values. That script loads
+no local env file. Render supplies PORT; HOST is `0.0.0.0`. The prepared Blueprint enables
+paid maintenance mode and disables automatic deployment. No database/operator credentials
+belong in the application deployment. No service was deployed during preparation.
+
+Registration requires additive migration 17 and the existing backend operation capability. See [registration/startup](../docs/registration.md). Use pnpm.cmd dev:all or pnpm.cmd staging:smoke from the repository root; the latter never loads operator files.

@@ -1,5 +1,10 @@
 # Milestone 3B: real profiles and per-game experience
 
+New registration additionally requires a unique immutable username and private DOB;
+legacy accounts keep optional birth-year editing. Own profile exposes `hasDateOfBirth`
+and a read-only derived birth year for DOB-backed accounts. Full DOB is not in any
+profile HTTP response or persisted Auth metadata. See [registration](registration.md).
+
 RollCall now persists real UUID profiles and per-game experience in PostgreSQL. These
 features use Fastify and the existing Supabase account session. Numeric demo users/events
 remain separate; no UUID is converted into a mock actor. No persistent event, invitation,

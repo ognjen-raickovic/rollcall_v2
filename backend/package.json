@@ -11,6 +11,7 @@
     "admin:bootstrap": "node --env-file-if-exists=.env --import tsx scripts/bootstrap-superadmin.ts",
     "dev": "node --env-file-if-exists=.env --import tsx --watch src/server.ts",
     "start": "node --env-file-if-exists=.env dist/server.js",
+    "start:production": "node dist/server.js",
     "typecheck": "tsc --noEmit && tsc -p tsconfig.tests.json",
     "lint": "oxlint --deny-warnings src tests scripts",
     "build": "tsc",

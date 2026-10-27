@@ -1,3 +1,4 @@
+import { signUpFixture } from './registration-fixture.js'
 import assert from 'node:assert/strict'
 import { randomUUID } from 'node:crypto'
 import { setTimeout as pause } from 'node:timers/promises'
@@ -95,7 +96,7 @@ test(
       const email = `events-integration-${randomUUID()}@example.test`
       emails.push(email)
       const auth = createDatabaseClient(env).auth
-      const registered = await auth.signUp({
+      const registered = await signUpFixture(auth, db, {
         email,
         password: `Rc!${randomUUID()}aA7`,
         options: { data: { role: 'superadmin' } },

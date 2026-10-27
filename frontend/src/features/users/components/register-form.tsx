@@ -8,9 +8,31 @@ import { authConfigurationError } from '../api/auth-client'
 import { useAuth, useRegister } from '../api/use-auth'
 import { AuthField } from './auth-fields'
 import { AuthShell } from './auth-shell'
+import { HttpError } from '@/lib/http-client'
 
 const schema = z
-  .object({ email: emailSchema, password: passwordSchema, confirmation: z.string() })
+  .object({
+    username: z
+      .string()
+      .trim()
+      .toLowerCase()
+      .regex(/^[a-z][a-z0-9_]{2,23}$/, 'Use 3–24 letters, numbers or underscores, starting with a letter.'),
+    email: emailSchema,
+    dateOfBirth: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, 'Enter your date of birth.')
+      .refine((value) => {
+        const parsed = new Date(value + 'T00:00:00Z')
+        return (
+          Number.isFinite(parsed.getTime()) &&
+          parsed.toISOString().slice(0, 10) === value &&
+          value >= '1900-01-01' &&
+          value <= new Date().toISOString().slice(0, 10)
+        )
+      }, 'Enter a real birth date from 1900 through today.'),
+    password: passwordSchema,
+    confirmation: z.string(),
+  })
   .refine((value) => value.password === value.confirmation, {
     path: ['confirmation'],
     message: 'Passwords must match.',
@@ -22,14 +44,11 @@ export function RegisterForm() {
   const configuration = authConfigurationError()
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
-    defaultValues: { email: '', password: '', confirmation: '' },
+    defaultValues: { username: '', email: '', dateOfBirth: '', password: '', confirmation: '' },
   })
   if (auth.data) return <Navigate to="/account" replace />
   return (
-    <AuthShell
-      title="Find your people."
-      description="Create a RollCall account with your email and a password."
-    >
+    <AuthShell title="Find your people." description="Choose your username and find your next table.">
       {register.data?.confirmationRequired ? (
         <div className="space-y-4">
           <h2 className="text-xl font-semibold">Check your email</h2>
@@ -45,13 +64,28 @@ export function RegisterForm() {
         <form
           noValidate
           className="space-y-6"
-          onSubmit={form.handleSubmit(({ email, password }) => register.mutate({ email, password }))}
+          onSubmit={form.handleSubmit(({ confirmation: _confirmation, ...values }) =>
+            register.mutate(values, {
+              onError: (error) => {
+                if (error instanceof HttpError && error.fields.username?.[0])
+                  form.setError('username', { message: error.fields.username[0] })
+              },
+            }),
+          )}
         >
           {configuration && (
             <p role="alert" className="text-sm text-destructive">
               {configuration}
             </p>
           )}
+          <AuthField
+            id="register-username"
+            label="Username"
+            type="text"
+            autoComplete="username"
+            registration={form.register('username')}
+            error={form.formState.errors.username?.message}
+          />
           <AuthField
             id="register-email"
             label="Email"
@@ -61,6 +95,17 @@ export function RegisterForm() {
             error={form.formState.errors.email?.message}
           />
           <AuthField
+            id="register-date-of-birth"
+            label="Date of birth"
+            type="date"
+            autoComplete="bday"
+            registration={form.register('dateOfBirth')}
+            error={form.formState.errors.dateOfBirth?.message}
+          />
+          <p className="text-xs text-muted-foreground">
+            Your date of birth stays private and is not shown on your public profile.
+          </p>
+          <AuthField
             id="register-password"
             label="Password"
             type="password"
@@ -68,7 +113,6 @@ export function RegisterForm() {
             registration={form.register('password')}
             error={form.formState.errors.password?.message}
           />
-          <p className="text-xs text-muted-foreground">Use 8–72 characters. Choose a unique password.</p>
           <AuthField
             id="register-confirmation"
             label="Confirm password"

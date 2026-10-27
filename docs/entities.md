@@ -745,6 +745,24 @@ Private event_reports stores report UUID, nullable live event/reporter FKs (SET 
 
 Private account_suspensions uses the profile UUID PK/FK, active/suspended state, last suspend/reinstate times, verified moderator UUIDs and internal 5–500-character reasons. Missing state = active; no public profile role/status/note fields are added. Append-only suspension_audit stores actor/target UUID snapshots, transition, action, reason and timestamp. Self status returns only {status}; exact moderator lookup returns minimal account/role/status/canManage data. State/audit writes are atomic and idempotent. See [HTTP/validation/privacy contracts](account-suspensions.md).
 
+## Registration identity (additive migration 17)
+
+`POST /api/auth/registration-intent` is an unauthenticated, backend-capability-checked
+preparation operation. Strict input: `{username,email,dateOfBirth}`; success `{token:UUID}`;
+validation 400, username conflict 409 with `fields.username`, durable rate limit 429,
+unavailable setup 503. No passwords, account IDs or roles are accepted. Email and DOB
+go only to private preparation; Auth signup receives an opaque expiring ticket.
+
+`profiles.username`: nullable for legacy users, otherwise unique canonical lowercase
+3–24 ASCII letters/digits/underscores starting with a letter. Clients cannot change it.
+`private.profile_private.date_of_birth`: required during new registration, valid calendar
+date 1900..today, owner-private and immutable through profile editing. Public responses
+exclude all age/email. Own profile adds `hasDateOfBirth:boolean` and retains private
+birth year; full DOB is omitted. Auth metadata insert/update paths strip dates/tickets.
+`private.registration_intents` and `registration_attempts` have RLS and no direct client
+grants. Atomic claims initialize exactly one profile before confirmation; usernames
+are not joining requirements. See [full contract, expiry and limits](registration.md).
+
 ## Staging provisioning metadata (6A-1)
 
 `private.staging_provisioning` is operator-only metadata, not a user/domain endpoint:

@@ -2,6 +2,11 @@
 
 ## Product and users
 
+Registration uses the existing responsive AuthShell and tokens, with Username, Email,
+Date of birth, Password and Confirm password in order. Explain DOB privacy beside the
+field, keep validation inline and show resend confirmation only after an unconfirmed-email
+login response. Preserve native accessible date entry and dark/light theme support.
+
 Help tabletop players find a table and organizers fill events. Serve new and experienced
 players on phones and desktops. Tone: welcoming, clear, understated. Brand: **RollCall**.
 

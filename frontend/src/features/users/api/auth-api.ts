@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import type { Session } from '@supabase/supabase-js'
-import { HttpError } from '@/lib/http-client'
+import { HttpError, httpRequest } from '@/lib/http-client'
+import { authError } from './auth-errors'
 
 import type { Account } from '../types'
 import { authClient, authConfigurationError } from './auth-client'
@@ -15,31 +16,6 @@ export const passwordSchema = z
 
 export function sessionAccount(session: Session | null): Account | null {
   return session ? accountSchema.parse({ id: session.user.id, email: session.user.email ?? null }) : null
-}
-
-function errorMessage(error: { code?: string; message?: string }): Error {
-  switch (error.code) {
-    case 'invalid_credentials':
-      return new Error('Email or password is incorrect.')
-    case 'email_not_confirmed':
-      return new Error(
-        'Confirm your email before logging in. Check your inbox or request another confirmation below.',
-      )
-    case 'user_already_exists':
-    case 'email_exists':
-      return new Error('This account could not be registered. Try logging in or resetting your password.')
-    case 'over_email_send_rate_limit':
-    case 'over_request_rate_limit':
-      return new Error('Too many attempts. Please wait a moment before trying again.')
-    case 'same_password':
-      return new Error('Choose a password different from your previous password.')
-    case 'weak_password':
-      return new Error('Choose a stronger password with at least 8 characters.')
-    default:
-      return new Error(
-        'Authentication could not be completed. Check your connection and try again. Email links may have expired; request a new one if needed.',
-      )
-  }
 }
 
 function callback(path: string): string {
@@ -60,7 +36,7 @@ export const authApi = {
   get: async (): Promise<Account | null> => {
     if (authConfigurationError()) return null
     const { data, error } = await authClient().auth.getSession()
-    if (error) throw errorMessage(error)
+    if (error) throw authError(error)
     return sessionAccount(data.session)
   },
   login: async ({ email, password }: { email: string; password: string }): Promise<Account | null> => {
@@ -69,22 +45,40 @@ export const authApi = {
       email: emailSchema.parse(email.trim()),
       password,
     })
-    if (error) throw errorMessage(error)
+    if (error) throw authError(error)
     return sessionAccount(data.session)
   },
-  register: async ({ email, password }: { email: string; password: string }) => {
+  register: async ({
+    email,
+    password,
+    username,
+    dateOfBirth,
+  }: {
+    email: string
+    password: string
+    username: string
+    dateOfBirth: string
+  }) => {
     await sessionApi.logout()
+    const intent = await httpRequest('/api/auth/registration-intent', z.object({ token: z.uuid() }), {
+      resource: 'auth',
+      method: 'POST',
+      body: { username, email, dateOfBirth },
+    })
     const { data, error } = await authClient().auth.signUp({
       email: emailSchema.parse(email.trim()),
       password: passwordSchema.parse(password),
-      options: { emailRedirectTo: callback('/auth/callback') },
+      options: {
+        emailRedirectTo: callback('/auth/callback'),
+        data: { rollcall_registration_token: intent.token },
+      },
     })
-    if (error) throw errorMessage(error)
+    if (error) throw authError(error)
     return { account: sessionAccount(data.session), confirmationRequired: !data.session }
   },
   logout: async () => {
     const { error } = await authClient().auth.signOut({ scope: 'local' })
-    if (error) throw errorMessage(error)
+    if (error) throw authError(error)
     await sessionApi.logout()
     return null
   },
@@ -92,7 +86,7 @@ export const authApi = {
     const { error } = await authClient().auth.resetPasswordForEmail(emailSchema.parse(email.trim()), {
       redirectTo: callback('/reset-password'),
     })
-    if (error) throw errorMessage(error)
+    if (error) throw authError(error)
   },
   resend: async (email: string) => {
     const { error } = await authClient().auth.resend({
@@ -100,14 +94,14 @@ export const authApi = {
       email: emailSchema.parse(email.trim()),
       options: { emailRedirectTo: callback('/auth/callback') },
     })
-    if (error) throw errorMessage(error)
+    if (error) throw authError(error)
   },
   updatePassword: async (password: string) => {
     const { error } = await authClient().auth.updateUser({ password: passwordSchema.parse(password) })
-    if (error) throw errorMessage(error)
+    if (error) throw authError(error)
     // End the recovery session; use the new password to sign in explicitly.
     const result = await authClient().auth.signOut({ scope: 'local' })
-    if (result.error) throw errorMessage(result.error)
+    if (result.error) throw authError(result.error)
   },
   me: async (signal?: AbortSignal): Promise<Account> => {
     const { data, error } = await authClient().auth.getSession()

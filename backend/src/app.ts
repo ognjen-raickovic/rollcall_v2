@@ -1,4 +1,5 @@
 import Fastify from 'fastify'
+import { registerRegistrationRoutes } from './modules/auth/registration.js'
 import multipart from '@fastify/multipart'
 import { registerInvitationRoutes } from './modules/events/event-invitations.js'
 import type { Environment } from './config/env.js'
@@ -61,6 +62,7 @@ export function buildApp(
     trustProxy: false,
   })
   installErrorHandler(app)
+  registerRegistrationRoutes(app, env)
   app.decorate('assertActiveAccount',options.assertActiveAccount??(async(token:string)=>{
     const status=await readAccountStatus(createDatabaseClient(env,fetch,token))
     if(status.status==='suspended')throw suspendedError()

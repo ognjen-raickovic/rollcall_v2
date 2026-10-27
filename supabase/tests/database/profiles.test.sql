@@ -1,5 +1,6 @@
 -- Focused real-profile access tests. All fixtures and test-only pgTAP grants roll back.
 begin;
+\ir ../helpers/legacy-registration.inc
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 do $$

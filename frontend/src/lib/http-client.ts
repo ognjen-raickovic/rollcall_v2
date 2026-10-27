@@ -44,7 +44,7 @@ type HttpOptions = {
   body?: unknown
   token?: string
   signal?: AbortSignal
-  resource?: 'profile' | 'event'
+  resource?: 'profile' | 'event' | 'auth'
 }
 
 export async function httpRequest<T>(

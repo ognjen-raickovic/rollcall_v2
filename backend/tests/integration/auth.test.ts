@@ -1,3 +1,4 @@
+import { signUpFixture } from './registration-fixture.js'
 import assert from 'node:assert/strict'
 import { randomUUID } from 'node:crypto'
 import { test } from 'node:test'
@@ -48,7 +49,7 @@ test(
     const settings = (await settingsResponse.json()) as { mailer_autoconfirm?: boolean }
     assert.equal(settings.mailer_autoconfirm, false, 'Local auth.email.enable_confirmations must be true.')
 
-    const registration = await auth.signUp({ email, password })
+    const registration = await signUpFixture(auth, db, { email, password })
     assert.equal(registration.error, null, 'Local registration should succeed with SMTP configured.')
     assert.equal(registration.data.session, null, 'Unconfirmed registration must not create a session.')
     const accountId = registration.data.user?.id
@@ -102,7 +103,7 @@ test(
     assert.ok(refreshedSession)
 
     const duplicateClient = createDatabaseClient(env).auth
-    const duplicate = await duplicateClient.signUp({ email, password })
+    const duplicate = await signUpFixture(duplicateClient, db, { email, password })
     assert.equal(duplicate.data.session, null)
     assert.ok(
       duplicate.error || duplicate.data.user?.identities?.length === 0,

@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import { randomBytes, randomUUID } from 'node:crypto'
 import test from 'node:test'
 import pg from 'pg'
+import { insertAuthFixture } from './registration-fixture.js'
 import { initializeStagingCatalog } from '../../scripts/staging/catalog.js'
 import { provisionStagingKeys } from '../../scripts/staging/keys.js'
 import { importCountry } from '../../scripts/geography/store.js'
@@ -28,10 +29,8 @@ test(
     await client.connect()
     await blocker.connect()
     try {
-      await client.query(
-        'insert into auth.users(id,email,email_confirmed_at) values($1,$2,now()),($3,$4,null)',
-        [confirmed, `staging-${confirmed}@example.test`, unconfirmed, `staging-${unconfirmed}@example.test`],
-      )
+      await insertAuthFixture(client, confirmed, `staging-${confirmed}@example.test`, true)
+      await insertAuthFixture(client, unconfirmed, `staging-${unconfirmed}@example.test`, false)
       await assert.rejects(bootstrapStagingAccount(client, unconfirmed), /confirmed account/)
       await blocker.query('begin; select pg_advisory_xact_lock_shared(82631,51)')
       const pending = bootstrapStagingAccount(client, confirmed).then(

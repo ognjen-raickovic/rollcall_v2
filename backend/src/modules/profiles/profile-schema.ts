@@ -29,6 +29,7 @@ export const publicProfileSchema = z.object({
 export const ownProfileSchema = publicProfileSchema.extend({
   birthYear: z.number().int().min(1900).nullable(),
   ageDeclaredAt: z.iso.datetime({ offset: true }).nullable(),
+  hasDateOfBirth: z.boolean().optional(),
 })
 export const profilePatchSchema = z
   .strictObject({

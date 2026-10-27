@@ -1,0 +1,21 @@
+# Exclude private/local material even when using CLI uploads from a developer checkout.
+**/.env
+**/.env.*
+**/.staging/**
+**/.tmp/**
+**/.geography/**
+**/.temp/**
+**/node_modules/**
+**/dist/**
+**/test-results/**
+**/playwright-report/**
+**/*.pem
+**/*.key
+**/*.crt
+**/*.dump
+**/*.sql.gz
+.git/**
+.codex/**
+.claude/settings.local.json
+.vercel/**
+backups/**

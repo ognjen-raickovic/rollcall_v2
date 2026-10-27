@@ -1,6 +1,7 @@
 -- Run against the migrated LOCAL Supabase database: pnpm db:test.
 -- Transaction rolls back all fixtures and temporary testing grants.
 begin;
+\ir ../helpers/legacy-registration.inc
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 -- Test-only grants, restricted to pgTAP rather than unrelated extension functions.

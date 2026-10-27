@@ -316,7 +316,9 @@ guards. The following are **pending hosted acceptance checks**, not completed 6A
   of `(external_source, external_source_id)`, alias search and city ID lookup. Rerunning
   catalog/import preserves IDs, associations and legitimate edits; record actual aliases.
 - Register, confirm, log in/out, recover password, refresh sessions and edit profile/experience.
-  Profile initialization produces one profile/private row. Public responses omit email/age/roles.
+  Registration initializes exactly one public profile. The optional private-age row may remain
+  absent until age information is saved; that is not an initialization failure. Public responses
+  omit email/age/roles. Missing role assignment means ordinary user, not a missing profile.
 - Create/edit events, join/leave, duplicate/full-event rejection and concurrent last-slot admission;
   only host/members receive exact addresses/private details. Test private code issue/rotation/
   revocation/expiry and durable rate limits. No stale code admits after event state changes.
@@ -336,6 +338,14 @@ If any authorization/RLS/audit/concurrency check fails, stop rollout. Do not ena
 grants, service-role runtime access or permissive policies to obtain a passing smoke test.
 
 ## Recovery limits
+
+**Subsequent registration change:** the repository now includes additive migration 17,
+`20261027000100_registration_identity.sql`, tested only on disposable local Supabase.
+The previously applied 16 migrations remain the historical staging baseline. Review
+and approve this new migration separately before enabling username/DOB registration;
+do not replay historical files or treat this code change as completed hosted acceptance.
+Use [dedicated application configuration](registration.md) for local smoke testing;
+it does not read operator configuration or perform migrations/bootstrap.
 
 Migrations apply sequentially, each existing file uses its transaction boundary. Stop on an
 error and inspect actual history/state; a successful earlier migration remains applied.
