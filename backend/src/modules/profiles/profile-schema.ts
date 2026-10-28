@@ -72,6 +72,15 @@ export const gameIdSchema = z.strictObject({
     .pipe(id),
 })
 export const experienceInputSchema = z.strictObject({ experience: experienceSchema })
+export const usernameCaseSchema = z
+  .strictObject({
+    username: z.string().regex(/^[A-Za-z][A-Za-z0-9_]{2,23}$/),
+    expected: z.string().regex(/^[A-Za-z][A-Za-z0-9_]{2,23}$/),
+  })
+  .refine(
+    (value) => value.username.toLowerCase() === value.expected.toLowerCase(),
+    'Only capitalization may change.',
+  )
 const experienceSetSchema = z
   .array(z.strictObject({ gameId: id, experience: experienceSchema }))
   .max(50)

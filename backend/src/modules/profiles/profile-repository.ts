@@ -17,7 +17,7 @@ function databaseError(error: DatabaseError): ApiError {
     return new ApiError(
       409,
       'CONFLICT',
-      'Your games changed in another session. Reload before saving.',
+      'Profile data changed in another session. Reload before saving.',
       {
         _form: ['Your saved games changed. Reload the saved set before applying this draft.'],
       },
@@ -63,6 +63,11 @@ export function createProfileRepository(client: DatabaseClient): ProfileReposito
     getPublic: (userId) =>
       result(client.rpc('public_profile', { p_user_id: userId }), publicProfileSchema, true),
     getOwn: () => result(client.rpc('get_my_profile'), ownProfileSchema, true),
+    correctUsername: (username, expected) =>
+      result(
+        client.rpc('correct_my_username_case', { p_username: username, p_expected: expected }),
+        ownProfileSchema,
+      ),
     updateOwn: (patch) =>
       result(client.rpc('update_my_profile', { p_patch: patch }), ownProfileSchema, true),
     getExperience: async (userId) =>

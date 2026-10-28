@@ -1,5 +1,13 @@
 ﻿# RollCall
 
+The profile/event UX follow-up fixes draft game saving, normalized Profile dirty state and
+the stable display-name navbar greeting. New forward migrations 22–23 add case-only username
+correction, current event recommendations/tag rules, safe age/experience card badges and
+transactional private-DOB age eligibility on public/private-code admission. Existing seats
+remain grandfathered. See [contracts, rollout and focused verification](docs/profile-event-ux.md).
+These migrations have only been applied to disposable local test projects; hosted execution
+requires separate approval. Run `pnpm.cmd test:profile-event-ux` for synthetic browser checks.
+
 Navigation uses a horizontal desktop header at 1280px+ and a full-height right-side menu
 on smaller screens. Account greetings use verified public profile names, never email.
 Run `pnpm.cmd test:responsive-navigation` for focused responsive/focus/session checks;

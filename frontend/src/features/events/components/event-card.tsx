@@ -4,6 +4,7 @@ import { Link } from 'react-router'
 import type { EventSummary, MyEventSummary } from '../api/event-dtos'
 import { PersistentEventImage } from './persistent-event-image'
 import type { EventActionSession } from '../api/event-write-dtos'
+import { EventRequirementBadges } from './event-requirement-badges'
 
 type EventCardProps = { event: EventSummary | MyEventSummary; session?: EventActionSession }
 
@@ -57,8 +58,11 @@ export function EventCard({ event, session }: EventCardProps) {
           {event.title}
         </Link>
         {event.visibility !== 'public' && (
-          <p className="text-xs font-medium text-muted-foreground capitalize">{event.visibility} event</p>
+          <p className="text-xs font-medium text-muted-foreground capitalize">
+            {event.visibility} event
+          </p>
         )}
+        <EventRequirementBadges experienceLevel={event.experienceLevel} minimumAge={event.minimumAge} />
         <p className="flex items-start gap-2 text-sm text-muted-foreground">
           <MapPin className="mt-1 size-4 shrink-0" aria-hidden="true" />
           {[event.venue, event.city.name, event.country.name].filter(Boolean).join(', ')}

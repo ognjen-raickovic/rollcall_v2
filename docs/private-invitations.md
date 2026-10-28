@@ -23,6 +23,11 @@ or PATCH includes code material. Participants cannot retrieve/manage codes.
 
 ## Security and lifecycle
 
+Migration 23 additionally applies current minimum age to new private admissions under
+the same event lock. Missing/ineligible DOB returns safe internal statuses (no event ID)
+so durable attempts commit before HTTP 403 mapping. Existing members are grandfathered;
+invalid codes do not disclose eligibility. See [age policy and verification](profile-event-ux.md).
+
 Codes have 16 uniform characters (80 bits), grouped four-by-four, using
 `23456789ABCDEFGHJKLMNPQRSTUVWXYZ`. ASCII lowercase, spaces and hyphens normalize; other
 characters fail. Node crypto random bytes generate codes. A unique keyed hash constraint

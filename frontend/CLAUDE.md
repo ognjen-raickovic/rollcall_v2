@@ -118,7 +118,14 @@ Dependency direction: shared code -> features -> app, never the other way around
 - Demo `EventForm`/`useEventForm` reuse `api/event-validation.ts` and `event-form-values.ts`.
   Real controllers use `event-write-dtos.ts` and `persistent-event-form-values.ts`, sharing
   `EventFormView` presentation and `event-date-time.ts` conversion without numeric adapters.
-- Use `event-tags.ts` for the canonical EventTag values and experience compatibility. Native
+- Read `../docs/profile-event-ux.md` for migrations 22–23. Desktop Welcome uses current
+  verified public displayName, never username or email; preserve it during background
+  refetch but clear on access/account changes. Username spelling correction is a separate
+  case-only owner action. Save only effective normalized profile/game changes.
+- Use `event-tags.ts` for canonical read tags and the six selectable current tags. New
+  events use All levels / Intermediate+ / Veteran+ recommendations; label legacy values
+  explicitly. Age badges use actual summaries, never private DOB. Handle safe age errors
+  from public and private-code joins without bypassing backend enforcement. Native
   checkboxes in the Radix popover provide multi-selection; no arbitrary tags are accepted.
 - `api/event-covers.ts` validates/prepares JPG/PNG/WebP files up to 3 MiB, resizing to a maximum
   1600px edge and encoding a bounded data URL. Preserve custom covers across game changes;

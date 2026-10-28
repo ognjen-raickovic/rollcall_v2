@@ -22,6 +22,10 @@ export const eventCoverSchema = z.discriminatedUnion('kind', [
 ])
 export type EventCover = z.infer<typeof eventCoverSchema>
 const summaryFields = {
+  minimumAge: z.number().int().min(0).max(99).optional(),
+  experienceLevel: z
+    .enum(['all-levels', 'beginner', 'experienced', 'intermediate-plus', 'veteran-plus'])
+    .optional(),
   id: z.uuid(),
   title: z.string().min(3).max(100),
   game: z.object({ id: referenceId, name: z.string().min(2).max(100), category }),
@@ -63,7 +67,10 @@ export const myEventSummarySchema = z.object(summaryFields).refine(validSummary)
 export type MyEventSummary = z.infer<typeof myEventSummarySchema>
 export const myEventPageSchema = z.object({
   items: z.array(myEventSummarySchema).max(50),
-  pageInfo: z.object({ limit: z.number().int().min(1).max(50), nextCursor: z.string().max(1024).nullable() }),
+  pageInfo: z.object({
+    limit: z.number().int().min(1).max(50),
+    nextCursor: z.string().max(1024).nullable(),
+  }),
 })
 export const eventPageSchema = z.object({
   items: z.array(eventSummarySchema).max(50),
@@ -83,7 +90,13 @@ const detailFields = {
   description: z.string().min(10).max(5000),
   host: z.object({ id: z.uuid(), displayName: z.string().min(2).max(80) }),
   minimumAge: z.number().int().min(0).max(99),
-  experienceLevel: z.enum(['all-levels', 'beginner', 'experienced']),
+  experienceLevel: z.enum([
+    'all-levels',
+    'beginner',
+    'experienced',
+    'intermediate-plus',
+    'veteran-plus',
+  ]),
   price: z.number().min(0).max(10000).multipleOf(0.01),
   currency: z.literal('EUR'),
   createdAt: instant,
@@ -92,7 +105,11 @@ const detailFields = {
 const publicDetail = z.object({
   ...detailFields,
   visibility: z.enum(['public', 'unlisted']),
-  viewer: z.object({ userId: z.uuid().nullable(), isHost: z.literal(false), hasJoined: z.literal(false) }),
+  viewer: z.object({
+    userId: z.uuid().nullable(),
+    isHost: z.literal(false),
+    hasJoined: z.literal(false),
+  }),
 })
 const hostDetail = z.object({
   ...detailFields,
@@ -137,7 +154,9 @@ export const eventDiscoveryFiltersSchema = z
       .max(6)
       .refine((value) => new Set(value).size === value.length)
       .optional(),
-    experience: z.enum(['all-levels', 'beginner', 'experienced']).optional(),
+    experience: z
+      .enum(['all-levels', 'beginner', 'experienced', 'intermediate-plus', 'veteran-plus'])
+      .optional(),
     maxMinimumAge: z.number().int().min(0).max(99).optional(),
     timeFrom: z
       .string()

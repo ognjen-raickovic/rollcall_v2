@@ -44,6 +44,9 @@ export function EventDetails({
   const mounted = useRef(true)
   const acting = useRef(false)
   const [feedback, setFeedback] = useState('')
+  useEffect(() => {
+    setFeedback('')
+  }, [eventId, viewerId])
   const [deleteOpen, setDeleteOpen] = useState(false)
   useEffect(() => {
     mounted.current = true

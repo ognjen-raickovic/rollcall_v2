@@ -47,6 +47,17 @@ async function accessToken(ownerId: string): Promise<string> {
 }
 
 export const profilesApi = {
+  correctUsername: async (username: string, expected: string, ownerId: string) => {
+    const result = await httpRequest('/api/me/username-casing', ownProfileSchema, {
+      method: 'PATCH',
+      body: { username, expected },
+      token: await accessToken(ownerId),
+      viewerId: ownerId,
+    })
+    await accessToken(ownerId)
+    if (result.id !== ownerId) throw new Error('Your profile could not be verified.')
+    return result
+  },
   getOwn: async (ownerId: string, signal?: AbortSignal): Promise<OwnProfile> => {
     const profile = await httpRequest('/api/me/profile', ownProfileSchema, {
       token: await accessToken(ownerId),

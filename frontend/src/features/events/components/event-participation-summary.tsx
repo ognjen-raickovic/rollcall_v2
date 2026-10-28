@@ -4,6 +4,7 @@ import { Link } from 'react-router'
 
 import { Button } from '@/components/ui/button'
 import { HttpError } from '@/lib/http-client'
+import { ActionFeedback } from '@/components/action-feedback'
 import type { EventDetails } from '../api/event-dtos'
 
 type EventParticipationSummaryProps = {
@@ -118,19 +119,18 @@ export function EventParticipationSummary({
                   : 'Join Event'}
         </Button>
       )}
-      {feedback && (
-        <p
-          role="status"
-          aria-live="polite"
-          className="rounded-lg bg-accent p-4 text-sm text-accent-foreground"
-        >
-          {feedback}
-        </p>
-      )}
+      {feedback && <ActionFeedback message={feedback} />}
       {error && (
         <p role="alert" className="text-sm text-destructive">
-          {error.message} Check the latest event details and try again.
+          {error instanceof HttpError && error.code === 'AGE_REQUIREMENT_NOT_MET'
+            ? `This event requires players to be at least ${event.minimumAge} years old on its start date.`
+            : error.message}
         </p>
+      )}
+      {error instanceof HttpError && error.code === 'AGE_INFORMATION_REQUIRED' && (
+        <Link to="/account" className="text-sm text-primary underline">
+          Review account information
+        </Link>
       )}
       {error instanceof HttpError && error.status === 401 && (
         <Link className="text-sm text-primary underline" to={loginTo}>
@@ -138,7 +138,9 @@ export function EventParticipationSummary({
         </Link>
       )}
       <p className="text-sm leading-relaxed text-muted-foreground">
-        Player seats exclude the host. Experience and minimum age are guidance, not verified eligibility.
+        Player seats exclude the host. Experience is a recommendation, not verified skill. Minimum age is
+        checked for new joins using your self-declared private date of birth; it is not independent age
+        verification.
       </p>
       <p className="text-xs leading-relaxed text-muted-foreground">
         {event.minimumAge === 0 ? 'All ages welcome' : `For players aged ${event.minimumAge}+`}

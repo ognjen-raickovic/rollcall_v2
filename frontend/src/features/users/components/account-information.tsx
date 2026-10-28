@@ -1,5 +1,6 @@
 import { formatAccountDate } from '@/lib/account-date'
 import { Button } from '@/components/ui/button'
+import { Link } from 'react-router'
 import { useOwnProfile } from '../api/use-profiles'
 
 export function AccountInformation() {
@@ -45,6 +46,18 @@ export function AccountInformation() {
         <div className="space-y-1">
           <dt className="text-muted-foreground">Private birth year</dt>
           <dd>{profile.data.birthYear} · Self-declared</dd>
+        </div>
+      )}
+      {!profile.data.hasDateOfBirth && (
+        <div className="space-y-2 text-muted-foreground">
+          <dt>Age-restricted events</dt>
+          <dd>
+            Birth year alone cannot establish eligibility. A complete private date of birth is needed.{' '}
+            <Link to="/contact" className="text-primary underline">
+              Contact support for account-information guidance
+            </Link>
+            ; do not send your birth date by email.
+          </dd>
         </div>
       )}
     </dl>

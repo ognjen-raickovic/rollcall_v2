@@ -80,7 +80,7 @@ test(
           const games = [
             { id: 1, name: 'Dungeons & Dragons', category: 'role-playing' },
             { id: 2, name: 'Catan', category: 'board-game' },
-            { id: 3, name: 'Magic: The Gathering', category: 'trading-card' },
+            { id: 3, name: 'Yu-Gi-Oh!', category: 'trading-card' },
           ].map((game) => ({ ...game, description: 'A tabletop game.', minPlayers: 2, maxPlayers: 6 }))
           const countries = [
             { id: 1, isoCode: 'ME', name: 'Montenegro' },
@@ -187,6 +187,13 @@ test(
           await expect(page.getByLabel('Birth year (private)')).toHaveAttribute('readonly', '')
           await expect(page.getByText('27. October 2026.', { exact: false })).toBeVisible()
           assert.equal(await page.getByText('Share what feels right').count(), 0)
+          await expect(page.getByRole('button', { name: 'Save changes', exact: true })).toBeDisabled()
+          await page.getByLabel('Display name').fill('  Profile Player  ')
+          await expect(page.getByRole('button', { name: 'Save changes', exact: true })).toBeDisabled()
+          await page.getByLabel('Display name').fill('Changed name')
+          await expect(page.getByRole('button', { name: 'Save changes', exact: true })).toBeEnabled()
+          await page.getByLabel('Display name').fill('Profile Player')
+          await expect(page.getByRole('button', { name: 'Save changes', exact: true })).toBeDisabled()
           await page.getByLabel('Display name').fill('Draft name')
           await page.getByRole('tab', { name: 'Profile', exact: true }).focus()
           await page.keyboard.press('ArrowRight')
@@ -196,7 +203,7 @@ test(
           )
           await page.getByLabel('Game', { exact: true }).selectOption('2')
           await page.getByLabel('Experience', { exact: true }).selectOption('intermediate')
-          await page.getByRole('button', { name: 'Add game', exact: true }).click()
+          await page.getByRole('button', { name: 'Add another game', exact: true }).click()
           assert.equal(puts, 0)
           await page.getByRole('tab', { name: 'Profile', exact: true }).click()
           await expect(page.getByLabel('Display name')).toHaveValue('Draft name')
@@ -220,7 +227,7 @@ test(
           await page.goto(origin + '/profile/edit?tab=games')
           await expect(page.getByRole('button', { name: 'Save changes', exact: true })).toBeDisabled()
           await page.getByLabel('Game', { exact: true }).selectOption('2')
-          await page.getByRole('button', { name: 'Add game', exact: true }).click()
+          await page.getByRole('button', { name: 'Add another game', exact: true }).click()
           assert.equal(
             await page.getByLabel('Game', { exact: true }).locator('option[value="2"]').count(),
             0,
@@ -243,6 +250,18 @@ test(
           await page.getByRole('button', { name: 'Save changes', exact: true }).click()
           await expect(page).toHaveURL(origin + '/profile')
           assert.equal(saved.length, 1)
+          await page.goto(origin + '/profile/edit?tab=games')
+          await page.getByLabel('Game', { exact: true }).selectOption('3')
+          await page.getByLabel('Experience', { exact: true }).selectOption('veteran')
+          await expect(page.getByRole('button', { name: 'Save changes', exact: true })).toBeEnabled()
+          const beforeSave = puts
+          await expect(page.getByRole('status').filter({ hasText: 'Yu-Gi-Oh!' })).toBeVisible()
+          assert.equal(puts, beforeSave)
+          await page.getByRole('button', { name: 'Save changes', exact: true }).click()
+          await expect(page).toHaveURL(origin + '/profile')
+          assert.equal(saved.find((game) => game.gameId === 3).experience, 'veteran')
+          await page.reload()
+          await expect(page.getByText('Yu-Gi-Oh!', { exact: true })).toBeVisible()
           await page.goto(origin + '/users/' + id)
           await expect(page.getByText('Dungeons & Dragons', { exact: true })).toBeVisible()
           assert.equal(await page.getByText('2000', { exact: true }).count(), 0)

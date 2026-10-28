@@ -7,6 +7,21 @@ values and replaces atomically, returning PT409 for a stale set. Legacy/raw auth
 writes share serialization. Existing table schema, grants, RLS, private DOB and registration
 triggers remain intact. See [current profile contracts](profiles.md).
 
+## Forward migrations 22–23: profile/event requirements
+
+`20261028000100_username_case_correction.sql` adds owner-only compare-and-swap username
+capitalization correction; profile lower-case uniqueness remains unchanged. Its NOLOGIN/
+NOBYPASS executor has only id/username SELECT and username UPDATE under active-owner RLS.
+
+`20261028000200_event_requirements.sql` expands the experience check without rewriting
+historical rows, adds a rule-change trigger and extends safe summaries/filters. It adds
+a separate NOLOGIN/NOBYPASS age executor with owner-only DOB SELECT, no client membership
+and no client helper EXECUTE. Existing event/invitation executors call the narrow helper
+inside locked admission without gaining DOB grants. Function replacement preserves
+existing owner/ACL/search-path/security checks. Temporary operator memberships/schema CREATE
+are revoked. No Auth trigger, Storage policy or historical migration is changed. See
+[policy, rollout and verification](profile-event-ux.md) for the current age/tag rules.
+
 ## Milestone 4D additions
 
 Forward migrations 19–20 add discovery filters/sort-aware keyset positions and the
@@ -277,11 +292,11 @@ verified through `/api/me`. Milestone 3B adds scoped profile permissions below. 
 | `starts_at`, `ends_at`          | Required finite timestamptz values; end strictly after start; new/editable events must start in the future                                |
 | `capacity`                      | Integer 1–100; host is excluded                                                                                                           |
 | `participant_count`             | Integer default 0; always 0..capacity; maintained by membership triggers, never a future client-editable field                            |
-| `experience_level`              | `all-levels`, `beginner`, or `experienced`                                                                                                |
+| `experience_level`              | New: `all-levels`, `intermediate-plus`, `veteran-plus`; preserved legacy: `beginner`, `experienced` |
 | `price`, `currency`             | Nonnegative numeric ≤10000, at most two decimals; currency fixed to EUR; invalid extra precision is rejected rather than silently rounded |
 | `cover_storage_path`            | Nullable registered private Storage object path with a manifest FK in 4D; no data URLs or signed URLs are stored here                  |
 | `tags`                          | Required text array, default empty; 0–6 unique canonical values and compatibility checks below                                            |
-| `minimum_age`                   | Integer 0–99; 0 means all ages; informational guidance                                                                                    |
+| `minimum_age`                   | Integer 0–99; 0 means all ages; enforced for new seats using private DOB at event-local start date |
 | `visibility`                    | `public`, `private`, or `unlisted`, default public                                                                                        |
 | `status`                        | `scheduled` or `cancelled`, default scheduled                                                                                             |
 | `created_at`, `updated_at`      | Required timestamps with now defaults; updates touch updated time                                                                         |

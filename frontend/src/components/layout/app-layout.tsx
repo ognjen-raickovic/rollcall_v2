@@ -108,11 +108,14 @@ export function AppLayout({
         </Suspense>
       </main>
       <footer className="border-t">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-6 text-sm text-muted-foreground">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-4 px-4 py-6 text-center text-sm md:justify-between md:text-left text-muted-foreground">
           <p>
             <span className="font-semibold text-foreground">RollCall</span> · Made for good company.
           </p>
-          <nav aria-label="Footer navigation" className="flex flex-wrap items-center gap-6">
+          <nav
+            aria-label="Footer navigation"
+            className="flex flex-wrap items-center justify-center gap-6 md:justify-start"
+          >
             <NavLink
               to="/about"
               className="hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring aria-[current=page]:font-semibold aria-[current=page]:text-foreground"

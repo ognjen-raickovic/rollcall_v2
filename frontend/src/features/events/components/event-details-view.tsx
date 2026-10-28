@@ -11,13 +11,16 @@ import {
   Users,
 } from 'lucide-react'
 import { EventImage } from './event-image'
+import type { ExperienceLevel } from '../types'
+import { EXPERIENCE_LABELS } from '../event-tags'
+import { EventRequirementBadges } from './event-requirement-badges'
 
 type EventDetailsPresentation = {
   title: string
   description: string
   startsAt: string
   endsAt: string
-  experienceLevel: 'all-levels' | 'beginner' | 'experienced'
+  experienceLevel: ExperienceLevel
   visibility: 'public' | 'private' | 'unlisted'
   status: 'scheduled' | 'cancelled'
   minimumAge: number
@@ -53,11 +56,7 @@ export function EventDetailsView({
 }: EventDetailsViewProps) {
   const start = new Date(event.startsAt)
   const end = new Date(event.endsAt)
-  const experience = {
-    'all-levels': 'All experience levels',
-    beginner: 'Beginner friendly',
-    experienced: 'Experienced players',
-  }[event.experienceLevel]
+  const experience = EXPERIENCE_LABELS[event.experienceLevel]
   const visibility = { public: 'Public event', private: 'Private event', unlisted: 'Unlisted event' }[
     event.visibility
   ]
@@ -78,6 +77,7 @@ export function EventDetailsView({
           <span className="rounded-md bg-accent px-3 py-1 text-accent-foreground">{visibility}</span>
         </div>
         <h1 className="max-w-4xl text-3xl font-bold tracking-tight md:text-4xl">{event.title}</h1>
+        <EventRequirementBadges experienceLevel={event.experienceLevel} minimumAge={event.minimumAge} />
         <p className="text-base text-muted-foreground">
           {start.toLocaleDateString('en-GB', {
             weekday: 'long',
@@ -109,7 +109,10 @@ export function EventDetailsView({
               {event.description}
             </p>
           </section>
-          <section aria-labelledby="event-essentials" className="space-y-6 rounded-xl border bg-card p-6">
+          <section
+            aria-labelledby="event-essentials"
+            className="space-y-6 rounded-xl border bg-card p-6"
+          >
             <h2 id="event-essentials" className="text-2xl font-bold tracking-tight">
               The essentials
             </h2>
@@ -209,7 +212,10 @@ export function EventDetailsView({
             {event.tags.length ? (
               <ul className="flex flex-wrap gap-2">
                 {event.tags.map((tag) => (
-                  <li key={tag} className="rounded-md border bg-card px-3 py-2 text-sm text-muted-foreground">
+                  <li
+                    key={tag}
+                    className="rounded-md border bg-card px-3 py-2 text-sm text-muted-foreground"
+                  >
                     {tag}
                   </li>
                 ))}

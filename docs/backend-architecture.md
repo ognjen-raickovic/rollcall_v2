@@ -5,6 +5,17 @@ sets and the caller-RLS `replace_my_game_experience` RPC. Migration 21 serialize
 legacy and direct authenticated writes, rejecting stale sets with 409. Runtime stays
 unprivileged; no deletion worker or deletion endpoint is enabled. See [profiles](profiles.md).
 
+## Profile/event UX security follow-up
+
+Forward migrations 22–23 add a narrow owner-only case-correction executor and a separate
+age executor. Only the latter can read owner DOB through RLS; event/invitation executors
+receive EXECUTE on the closed age helper, never DOB-column access. Existing checked admission
+functions retain signatures, ACLs, owners and event locks. Invitation age failures return
+internal statuses so rate-limit attempts commit before HTTP 403 is produced. New event rule
+validation runs in Zod and an additive trigger; safe summaries gain stored age/recommendation.
+No service role, Auth metadata DOB, public private-age projection or new runtime secret is
+introduced. See [contracts and tested boundaries](profile-event-ux.md).
+
 ## Milestone 4D cover boundary
 
 Registration preparation now lives in the Auth module at

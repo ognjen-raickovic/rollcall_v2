@@ -7,7 +7,7 @@ const id = z.number().int().min(1).max(2147483647)
 const instant = z.iso.datetime({ offset: true })
 const visibility = z.enum(['public', 'unlisted', 'private'])
 const status = z.enum(['scheduled', 'cancelled'])
-const experience = z.enum(['all-levels', 'beginner', 'experienced'])
+const experience = z.enum(['all-levels', 'beginner', 'experienced', 'intermediate-plus', 'veteran-plus'])
 const category = z.enum(['role-playing', 'trading-card', 'board-game', 'social-deduction'])
 const price = z.number().min(0).max(10000).multipleOf(0.01)
 const tags = z
@@ -57,6 +57,18 @@ function checkEditableValues(
   },
   context: z.RefinementCtx,
 ): void {
+  if (value.tags?.includes('Casual') && value.tags.includes('Competitive'))
+    context.addIssue({
+      code: 'custom',
+      path: ['tags'],
+      message: 'Casual and Competitive cannot be selected together.',
+    })
+  if (value.tags?.includes('One-shot') && value.tags.includes('Campaign'))
+    context.addIssue({
+      code: 'custom',
+      path: ['tags'],
+      message: 'Choose either One-shot or Campaign, not both.',
+    })
   if (value.startsAt !== undefined && Date.parse(value.startsAt) <= Date.now())
     context.addIssue({
       code: 'custom',
@@ -96,6 +108,14 @@ export const newEventSchema = z
     coverStoragePath: writableFields.coverStoragePath.default(null),
   })
   .superRefine(checkEditableValues)
+  .refine((value) => !['beginner', 'experienced'].includes(value.experienceLevel), {
+    path: ['experienceLevel'],
+    message: 'Choose a current recommended experience level.',
+  })
+  .refine((value) => !value.tags.some((tag) => tag === 'Beginner friendly' || tag === 'Veterans only'), {
+    path: ['tags'],
+    message: 'Use the experience selector instead of legacy experience tags.',
+  })
 
 // No defaults in a patch: omitting a value must preserve its stored value.
 export const updateEventSchema = z
@@ -212,6 +232,8 @@ export const noQuerySchema = z.strictObject({})
 export const attendanceBodySchema = z.strictObject({}).optional()
 
 const summaryFields = {
+  minimumAge: writableFields.minimumAge.optional(),
+  experienceLevel: experience.optional(),
   id: z.uuid(),
   title: z.string().min(3).max(100),
   game: z.object({ id, name: z.string().min(2).max(100), category }),

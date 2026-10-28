@@ -1,4 +1,6 @@
-import { Link, useLocation } from 'react-router'
+import { Link } from 'react-router'
+import { ActionFeedback } from '@/components/action-feedback'
+import { useRouteFeedback } from '@/lib/use-route-feedback'
 import { Pencil, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -9,12 +11,7 @@ import { ProfileSummary } from './profile-summary'
 export function OwnProfile() {
   const auth = useAuth()
   const profile = usePublicProfile(auth.data?.id ?? '')
-  const location = useLocation()
-  const saved =
-    typeof location.state === 'object' &&
-    location.state !== null &&
-    'profileSaved' in location.state &&
-    location.state.profileSaved === true
+  const saved = useRouteFeedback('profileSaved', auth.data?.id) === true
   if (profile.isPending)
     return (
       <div role="status" aria-label="Loading your profile" className="mx-auto max-w-4xl space-y-6 py-8">
@@ -59,14 +56,7 @@ export function OwnProfile() {
           </Button>
         </div>
       </div>
-      {saved && (
-        <p
-          role="status"
-          className="rounded-lg border border-primary/30 bg-accent p-4 text-sm text-accent-foreground"
-        >
-          Your profile has been saved.
-        </p>
-      )}
+      {saved && <ActionFeedback message="Your profile has been saved." />}
       {incomplete && (
         <section className="space-y-2 rounded-xl border border-primary/30 bg-accent p-6">
           <h2 className="text-xl font-semibold">Make yourself at home</h2>

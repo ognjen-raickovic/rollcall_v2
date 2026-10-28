@@ -78,7 +78,7 @@ test(
           status = 'active',
           admin = true,
           username = 'Ognjen3211',
-          displayName = 'A tabletop player',
+          displayName = 'Ognjen the Player',
           mode = 'normal',
           logoutCalls = 0
         let releaseIdentity
@@ -219,9 +219,9 @@ test(
             await expect(page).toHaveURL(origin + '/about')
           } else {
             await expect(opener).toHaveCount(0)
-            await expect(header.getByText('Welcome, Ognjen3211', { exact: true })).toBeVisible()
+            await expect(header.getByText('Welcome, Ognjen the Player', { exact: true })).toBeVisible()
             const greeting = await header
-                .getByText('Welcome, Ognjen3211', { exact: true })
+                .getByText('Welcome, Ognjen the Player', { exact: true })
                 .boundingBox(),
               avatar = await header
                 .getByRole('button', { name: 'Account menu', exact: true })
@@ -336,6 +336,7 @@ test(
         await expect(page.getByText(/^Welcome,/)).toHaveCount(0)
         mode = 'normal'
         username = 'SecondPlayer'
+        displayName = 'Second player display name'
         viewer = other
         identityGate = new Promise((resolve) => {
           releaseIdentity = resolve
@@ -352,7 +353,9 @@ test(
         await expect(page.getByText(/^Welcome,/)).toHaveCount(0)
         assert.equal(await page.getByText('Welcome, ' + displayName, { exact: true }).count(), 0)
         releaseIdentity()
-        await expect(page.getByText('Welcome, SecondPlayer', { exact: true })).toBeVisible()
+        await expect(
+          page.getByText('Welcome, Second player display name', { exact: true }),
+        ).toBeVisible()
         await page.setViewportSize({ width: 375, height: 650 })
         status = 'suspended'
         await page.goto(origin + '/about')

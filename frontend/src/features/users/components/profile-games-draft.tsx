@@ -33,7 +33,13 @@ export function ProfileGamesDraft({
   const navigate = useNavigate()
   const entries = (items: ProfileGameExperience[]) =>
     items.map(({ gameId, experience }) => ({ gameId, experience })).sort((a, b) => a.gameId - b.gameId)
-  const dirty = JSON.stringify(entries(draft)) !== JSON.stringify(entries(baseline))
+  const selected = games?.find(
+    (game) => String(game.id) === gameId && !draft.some((item) => item.gameId === game.id),
+  )
+  const effectiveDraft = selected
+    ? [...draft, { gameId: selected.id, gameName: selected.name, experience: level }]
+    : draft
+  const dirty = JSON.stringify(entries(effectiveDraft)) !== JSON.stringify(entries(baseline))
   const available = games?.filter((game) => !draft.some((selected) => selected.gameId === game.id)) ?? []
   const busy = save.isPending || reloading
   return (
@@ -43,7 +49,7 @@ export function ProfileGamesDraft({
         event.preventDefault()
         if (!dirty || busy) return
         save.mutate(
-          { games: entries(draft), expected: entries(baseline) },
+          { games: entries(effectiveDraft), expected: entries(baseline) },
           {
             onSuccess: () => {
               void navigate('/profile', { state: { profileSaved: true, gamesSaved: true } })
@@ -58,7 +64,8 @@ export function ProfileGamesDraft({
           My games
         </h2>
         <p className="text-sm text-muted-foreground">
-          Experience is self-declared. Changes stay in this draft until you save.
+          Experience is self-declared. Selecting a game stages it for saving; nothing is saved until you
+          choose Save changes.
         </p>
       </div>
       <fieldset disabled={busy} className="min-w-0 space-y-6">
@@ -130,6 +137,11 @@ export function ProfileGamesDraft({
                 </FormSelect>
               </div>
             </div>
+            {selected && (
+              <p role="status" className="text-sm text-primary">
+                {selected.name}: {level} is staged for saving. Save now, or add another game.
+              </p>
+            )}
             <Button
               type="button"
               variant="outline"
@@ -147,7 +159,7 @@ export function ProfileGamesDraft({
               }}
             >
               <Plus aria-hidden="true" />
-              Add game
+              Add another game
             </Button>
           </div>
         )}

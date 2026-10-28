@@ -10,7 +10,7 @@ export function DiscoveryHero({ locationFilters }: { locationFilters: ReactNode 
   return (
     <section aria-labelledby="hero-title" className="py-6 md:py-12">
       <div className="grid items-center gap-8 lg:grid-cols-2 lg:gap-16">
-        <div className="space-y-6">
+        <div className="space-y-6 text-center md:text-left">
           <p className="inline-flex items-center gap-2 text-xs font-semibold tracking-widest text-primary uppercase">
             <span className="size-2 rounded-full bg-primary" /> Offline games. Real connections.
           </p>
@@ -19,11 +19,11 @@ export function DiscoveryHero({ locationFilters }: { locationFilters: ReactNode 
             <br />
             <span className="text-primary">Better company.</span>
           </h1>
-          <p className="max-w-lg text-base leading-relaxed text-muted-foreground md:text-lg">
-            Your next adventure starts around a table. Find local game nights, meet your party, and make room
-            for one more. Discover local tables as our community grows across the Balkans.
+          <p className="mx-auto max-w-lg text-base md:mx-0 leading-relaxed text-muted-foreground md:text-lg">
+            Your next adventure starts around a table. Find local game nights, meet your party, and make
+            room for one more. Discover local tables as our community grows across the Balkans.
           </p>
-          <div className="flex flex-wrap items-center gap-4">
+          <div className="flex flex-wrap items-center justify-center gap-4 md:justify-start">
             <Button asChild size="lg">
               <a href="#upcoming">
                 Find your next game <ArrowDown aria-hidden="true" />

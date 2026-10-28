@@ -107,7 +107,9 @@ You may talk to me in any language.
   Attendance uses verified subjects, event row locks and the existing membership/counter
   infrastructure; private outsiders cannot join. Raw tables stay closed to API roles; use
   checked RPCs, non-bypass executor/trigger roles, explicit ACLs/RLS and empty search paths.
-  Invitation admission follows 5A; no self-declared eligibility checks or admin override. Keep numeric demo
+  Invitation admission follows 5A; migration 23 adds private self-declared DOB eligibility
+  for new seats (including codes), under the existing event lock. No skill gate or admin
+  override. See @docs/profile-event-ux.md. Keep numeric demo
   controllers isolated from real UUID records. See @docs/attendance-verification.md for
   backend checks, @docs/event-frontend-verification.md for 4C-1 and
   @docs/event-actions-verification.md for 4C-2 mutation/browser verification.

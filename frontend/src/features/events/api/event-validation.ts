@@ -4,7 +4,7 @@ import { mockReferences } from '@/lib/mock-db'
 import { locationReferenceSchema } from '@/lib/location'
 
 import type { Event, NewEvent } from '../types'
-import { EVENT_TAGS, tagMatchesExperience } from '../event-tags'
+import { EVENT_TAGS, tagMatchesExperience, tagConflict } from '../event-tags'
 import { validEventImageDataUrl } from './event-covers'
 
 const venueSchema = z
@@ -48,7 +48,13 @@ export const eventFields = z.strictObject({
     .int('Use a whole number of seats.')
     .min(1, 'Provide at least one player seat.')
     .max(100, 'Use no more than 100 player seats.'),
-  experienceLevel: z.enum(['all-levels', 'beginner', 'experienced']),
+  experienceLevel: z.enum([
+    'all-levels',
+    'beginner',
+    'experienced',
+    'intermediate-plus',
+    'veteran-plus',
+  ]),
   price: z
     .number({ error: 'Enter a price, or 0 for a free event.' })
     .min(0, 'Price cannot be negative.')
@@ -61,7 +67,9 @@ export const eventFields = z.strictObject({
         .string()
         .max(2000)
         .regex(/^\/images\/[a-z0-9-]+\.(svg|webp|png|jpg)$/),
-      z.string().refine(validEventImageDataUrl, 'Choose a valid JPG, PNG, or WebP cover of 3 MB or less.'),
+      z
+        .string()
+        .refine(validEventImageDataUrl, 'Choose a valid JPG, PNG, or WebP cover of 3 MB or less.'),
     ])
     .nullable(),
   tags: z
@@ -96,11 +104,18 @@ export const newEventSchema = eventFields.superRefine((input, context) => {
       path: ['countryCode'],
       message: 'The country must match the selected city.',
     })
+  if (tagConflict(input.tags))
+    context.addIssue({
+      code: 'custom',
+      path: ['tags'],
+      message: tagConflict(input.tags) ?? 'Choose compatible tags.',
+    })
   if (input.tags.some((tag) => !tagMatchesExperience(tag, input.experienceLevel)))
     context.addIssue({
       code: 'custom',
       path: ['tags'],
-      message: 'Choose tags that match the experience level. Veterans only requires Experienced players.',
+      message:
+        'Choose tags that match the experience level. Veterans only requires Experienced players.',
     })
   if (Date.parse(input.startsAt) <= Date.now())
     context.addIssue({
@@ -115,7 +130,10 @@ export const newEventSchema = eventFields.superRefine((input, context) => {
 export const updateEventSchema = eventFields
   .extend({ status: z.enum(['scheduled', 'cancelled']), venue: venueSchema })
   .partial()
-  .refine((input) => Object.values(input).some((field) => field !== undefined), 'Supply at least one field.')
+  .refine(
+    (input) => Object.values(input).some((field) => field !== undefined),
+    'Supply at least one field.',
+  )
 
 export function editableEventValues(event: Event): NewEvent {
   return {

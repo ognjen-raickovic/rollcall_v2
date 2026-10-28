@@ -14,9 +14,8 @@ test('RollCall mock contracts and event lifecycle', async (t) => {
     const { usersApi } = await server.ssrLoadModule('/src/features/users/api/users-api.ts')
     const { gamesApi } = await server.ssrLoadModule('/src/features/games/api/games-api.ts')
     const { eventsApi } = await server.ssrLoadModule('/src/features/events/api/events-api.ts')
-    const { eventFormSchema, eventFormDefaults, localDateTime, isoDateTime } = await server.ssrLoadModule(
-      '/src/features/events/api/event-form-values.ts',
-    )
+    const { eventFormSchema, eventFormDefaults, localDateTime, isoDateTime } =
+      await server.ssrLoadModule('/src/features/events/api/event-form-values.ts')
     const { sessionApi } = await server.ssrLoadModule('/src/features/users/api/session-api.ts')
     const { safeReturnTo, loginPath } = await server.ssrLoadModule('/src/lib/auth-navigation.ts')
     const { mockReferences } = await server.ssrLoadModule('/src/lib/mock-db.ts')
@@ -24,9 +23,8 @@ test('RollCall mock contracts and event lifecycle', async (t) => {
     const { eventFields, newEventSchema } = await server.ssrLoadModule(
       '/src/features/events/api/event-validation.ts',
     )
-    const { MAX_EVENT_IMAGE_BYTES, validEventImageDataUrl, prepareEventCover } = await server.ssrLoadModule(
-      '/src/features/events/api/event-covers.ts',
-    )
+    const { MAX_EVENT_IMAGE_BYTES, validEventImageDataUrl, prepareEventCover } =
+      await server.ssrLoadModule('/src/features/events/api/event-covers.ts')
     const host = { userId: 1 }
     const player = { userId: 2 }
     const errorCode = (code) => (error) => error.code === code && Number.isInteger(error.status)
@@ -41,10 +39,10 @@ test('RollCall mock contracts and event lifecycle', async (t) => {
       startsAt: new Date(Date.now() + day).toISOString(),
       endsAt: new Date(Date.now() + 2 * day).toISOString(),
       capacity: 1,
-      experienceLevel: 'beginner',
+      experienceLevel: 'all-levels',
       price: 0,
       imageUrl: null,
-      tags: ['Beginner friendly'],
+      tags: ['Casual'],
       minimumAge: 16,
       visibility: 'public',
     }
@@ -56,7 +54,9 @@ test('RollCall mock contracts and event lifecycle', async (t) => {
       assert.deepEqual(new Set(games.map((game) => game.id)), mockReferences.gameIds)
       assert.ok((await usersApi.list({ search: 'MILA', city: 'budapest' })).length > 0)
       assert.ok(
-        (await gamesApi.list({ category: 'trading-card' })).every((game) => game.category === 'trading-card'),
+        (await gamesApi.list({ category: 'trading-card' })).every(
+          (game) => game.category === 'trading-card',
+        ),
       )
       const user = await usersApi.get(1)
       user.displayName = 'Mutated response'
@@ -66,7 +66,9 @@ test('RollCall mock contracts and event lifecycle', async (t) => {
       for (const event of await eventsApi.list()) {
         assert.ok(mockReferences.userIds.has(event.organizerId))
         assert.ok(mockReferences.gameIds.has(event.gameId))
-        assert.ok(event.attendeeIds.every((id) => mockReferences.userIds.has(id) && id !== event.organizerId))
+        assert.ok(
+          event.attendeeIds.every((id) => mockReferences.userIds.has(id) && id !== event.organizerId),
+        )
         assert.equal(new Set(event.attendeeIds).size, event.attendeeIds.length)
         assert.ok(event.attendeeIds.length <= event.capacity)
         assert.ok(event.tags.every((tag) => EVENT_TAGS.includes(tag)))
@@ -77,7 +79,10 @@ test('RollCall mock contracts and event lifecycle', async (t) => {
       const before = await eventsApi.list()
       await assert.rejects(eventsApi.create(input, { userId: null }), errorCode('UNAUTHORIZED'))
       await assert.rejects(eventsApi.create(input, { userId: 999 }), errorCode('UNAUTHORIZED'))
-      await assert.rejects(eventsApi.create({ ...input, gameId: 999 }, host), errorCode('VALIDATION_ERROR'))
+      await assert.rejects(
+        eventsApi.create({ ...input, gameId: 999 }, host),
+        errorCode('VALIDATION_ERROR'),
+      )
       await assert.rejects(
         eventsApi.create({ ...input, startsAt: '2020-01-01T00:00:00Z' }, host),
         errorCode('VALIDATION_ERROR'),
@@ -90,8 +95,14 @@ test('RollCall mock contracts and event lifecycle', async (t) => {
         eventsApi.create({ ...input, organizerId: 2 }, host),
         errorCode('VALIDATION_ERROR'),
       )
-      await assert.rejects(eventsApi.create({ ...input, capacity: 0 }, host), errorCode('VALIDATION_ERROR'))
-      await assert.rejects(eventsApi.create({ ...input, price: 1.234 }, host), errorCode('VALIDATION_ERROR'))
+      await assert.rejects(
+        eventsApi.create({ ...input, capacity: 0 }, host),
+        errorCode('VALIDATION_ERROR'),
+      )
+      await assert.rejects(
+        eventsApi.create({ ...input, price: 1.234 }, host),
+        errorCode('VALIDATION_ERROR'),
+      )
       await assert.rejects(
         eventsApi.create({ ...input, minimumAge: -1 }, host),
         errorCode('VALIDATION_ERROR'),
@@ -212,7 +223,9 @@ test('RollCall mock contracts and event lifecycle', async (t) => {
         !(await eventsApi.list({ ...filters, country: 'ME' })).some((event) => event.id === created.id),
       )
       assert.ok(
-        !(await eventsApi.list({ ...filters, cityId: 9000003 })).some((event) => event.id === created.id),
+        !(await eventsApi.list({ ...filters, cityId: 9000003 })).some(
+          (event) => event.id === created.id,
+        ),
       )
       const edited = await eventsApi.update(created.id, { venue: 'A friendly club' }, host)
       assert.equal(
@@ -233,7 +246,8 @@ test('RollCall mock contracts and event lifecycle', async (t) => {
       assert.equal(validEventImageDataUrl(png), true)
       assert.equal(validEventImageDataUrl('data:image/svg+xml;base64,PHN2Zz48L3N2Zz4='), false)
       assert.equal(validEventImageDataUrl('data:image/png;base64,bm90IGFuIGltYWdl'), false)
-      const oversized = 'data:image/png;base64,' + Buffer.alloc(MAX_EVENT_IMAGE_BYTES + 1).toString('base64')
+      const oversized =
+        'data:image/png;base64,' + Buffer.alloc(MAX_EVENT_IMAGE_BYTES + 1).toString('base64')
       assert.equal(validEventImageDataUrl(oversized), false)
       assert.equal(eventFields.shape.imageUrl.safeParse(oversized).success, false)
       await assert.rejects(
@@ -259,6 +273,8 @@ test('RollCall mock contracts and event lifecycle', async (t) => {
         { tags: ['Veterans only'], experienceLevel: 'all-levels' },
         { tags: ['Beginner friendly'], experienceLevel: 'experienced' },
         { tags: ['Veterans only', 'Beginner friendly'] },
+        { tags: ['Casual', 'Competitive'] },
+        { tags: ['One-shot', 'Campaign'] },
       ])
         assert.equal(newEventSchema.safeParse({ ...input, ...changes }).success, false)
       const created = await eventsApi.create(
@@ -273,11 +289,13 @@ test('RollCall mock contracts and event lifecycle', async (t) => {
       assert.deepEqual((await eventsApi.get(created.id)).tags, ['Casual', 'Equipment provided'])
       const updated = await eventsApi.update(
         created.id,
-        { experienceLevel: 'experienced', tags: ['Veterans only'] },
+        { experienceLevel: 'veteran-plus', tags: ['Competitive'] },
         host,
       )
       assert.equal(updated.imageUrl, png)
-      assert.ok((await eventsApi.list()).some((event) => event.id === created.id && event.imageUrl === png))
+      assert.ok(
+        (await eventsApi.list()).some((event) => event.id === created.id && event.imageUrl === png),
+      )
       await eventsApi.remove(created.id, host)
     })
 
@@ -329,12 +347,19 @@ test('RollCall mock contracts and event lifecycle', async (t) => {
         assert.ok(matches.every((item) => item.city.toLowerCase() === city.toLowerCase()))
       }
       assert.equal(
-        (await eventsApi.list({ search: 'COMMANDER NIGHT', city: 'niksic', gameId: 2, upcomingOnly: true }))
-          .length,
+        (
+          await eventsApi.list({
+            search: 'COMMANDER NIGHT',
+            city: 'niksic',
+            gameId: 2,
+            upcomingOnly: true,
+          })
+        ).length,
         1,
       )
       assert.equal(
-        (await eventsApi.list({ search: 'COMMANDER NIGHT', availableOnly: true, upcomingOnly: true })).length,
+        (await eventsApi.list({ search: 'COMMANDER NIGHT', availableOnly: true, upcomingOnly: true }))
+          .length,
         0,
       )
       assert.equal(
@@ -357,7 +382,9 @@ test('RollCall mock contracts and event lifecycle', async (t) => {
         full,
         'Repeated join stays idempotent even when full',
       )
-      const images = new Set(publicEvents.filter((item) => item.id !== event.id).map((item) => item.imageUrl))
+      const images = new Set(
+        publicEvents.filter((item) => item.id !== event.id).map((item) => item.imageUrl),
+      )
       const { stat } = await import('node:fs/promises')
       for (const image of images) {
         assert.ok(image?.startsWith('/images/'))

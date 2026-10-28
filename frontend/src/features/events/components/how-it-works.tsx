@@ -8,7 +8,7 @@ export function HowItWorks() {
       aria-labelledby="how-it-works-title"
       className="mb-8 rounded-xl border bg-card px-6 py-8 md:p-12"
     >
-      <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
+      <div className="mb-8 flex flex-wrap items-end justify-center gap-4 text-center md:justify-between md:text-left">
         <div>
           <p className="mb-2 text-xs font-semibold tracking-widest text-primary uppercase">
             From “maybe” to game night
