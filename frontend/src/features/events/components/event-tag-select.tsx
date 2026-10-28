@@ -5,7 +5,7 @@ import { Popover } from 'radix-ui'
 
 import { Button } from '@/components/ui/button'
 
-import { EVENT_TAGS, tagMatchesExperience } from '../event-tags'
+import { SELECTABLE_EVENT_TAGS, tagMatchesExperience, tagConflict } from '../event-tags'
 import type { EventTag } from '../event-tags'
 import type { ExperienceLevel } from '../types'
 
@@ -31,6 +31,17 @@ export function EventTagSelect({
   const trigger = useRef<HTMLButtonElement | null>(null)
   return (
     <div className="space-y-3">
+      {tagConflict(value) && (
+        <p role="alert" className="text-sm text-destructive">
+          {tagConflict(value)}
+        </p>
+      )}
+      {value.some((tag) => tag === 'Beginner friendly' || tag === 'Veterans only') && (
+        <p className="text-sm text-muted-foreground">
+          This event has legacy experience tags. Keep them unchanged or remove them explicitly; they are
+          no longer offered for new selections.
+        </p>
+      )}
       <Popover.Root>
         <Popover.Trigger asChild>
           <Button
@@ -58,10 +69,15 @@ export function EventTagSelect({
           >
             <fieldset className="space-y-3" disabled={disabled}>
               <legend className="mb-3 text-sm font-semibold">Choose up to six tags</legend>
-              {EVENT_TAGS.map((tag) => {
+              {[
+                ...SELECTABLE_EVENT_TAGS,
+                ...value.filter((tag) => tag === 'Beginner friendly' || tag === 'Veterans only'),
+              ].map((tag) => {
                 const checked = value.includes(tag)
-                const incompatible = !tagMatchesExperience(tag, experience)
+                const reason = tagConflict([...value, tag])
+                const incompatible = Boolean(reason) || !tagMatchesExperience(tag, experience)
                 const unavailable = !checked && (value.length >= 6 || incompatible)
+                const explanation = !checked ? reason : null
                 return (
                   <label
                     key={tag}
@@ -76,14 +92,17 @@ export function EventTagSelect({
                         onChange(checked ? value.filter((item) => item !== tag) : [...value, tag])
                       }
                     />
-                    {tag}
+                    <span>
+                      {tag}
+                      {explanation && <span className="mt-1 block text-xs">{explanation}</span>}
+                    </span>
                   </label>
                 )
               })}
             </fieldset>
             <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
-              Experience level controls availability. Veterans only requires Experienced players; Beginner
-              friendly is unavailable for that level.
+              Choose one atmosphere and one session format. Equipment tags may coexist. Legacy experience
+              tags must be explicitly removed to change recommendations.
             </p>
             <Popover.Close asChild>
               <Button type="button" size="sm" variant="outline" className="mt-4 w-full">

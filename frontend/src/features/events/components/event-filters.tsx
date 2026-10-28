@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { FormSelect } from '@/components/form-select'
-import { EVENT_TAGS } from '../event-tags'
+import { SELECTABLE_EVENT_TAGS } from '../event-tags'
 import { SORT_LABELS } from '../event-discovery-filters'
 
 type EventFiltersProps = {
@@ -56,7 +56,9 @@ export function EventFilters({ params, locationFilters, games, pending }: EventF
         <p className="flex items-center gap-2 text-sm font-semibold">
           <SlidersHorizontal className="size-4 text-primary" aria-hidden="true" />
           Find your table{' '}
-          {active > 0 && <span className="text-xs text-muted-foreground">· {active} active filters</span>}
+          {active > 0 && (
+            <span className="text-xs text-muted-foreground">· {active} active filters</span>
+          )}
         </p>
         <Button asChild variant="ghost" size="sm">
           <Link to="/events">
@@ -112,7 +114,13 @@ export function EventFilters({ params, locationFilters, games, pending }: EventF
         <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <div className="space-y-2">
             <Label htmlFor="event-from">Start date from</Label>
-            <Input id="event-from" name="from" type="date" defaultValue={value('from')} className="h-11" />
+            <Input
+              id="event-from"
+              name="from"
+              type="date"
+              defaultValue={value('from')}
+              className="h-11"
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="event-to">Start date to</Label>
@@ -147,12 +155,14 @@ export function EventFilters({ params, locationFilters, games, pending }: EventF
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="event-experience">Event experience</Label>
+            <Label htmlFor="event-experience">Recommended experience</Label>
             <FormSelect id="event-experience" name="experience" defaultValue={value('experience')}>
               <option value="">Any experience</option>
               <option value="all-levels">All-levels events only</option>
-              <option value="beginner">Beginner or all levels</option>
-              <option value="experienced">Experienced or all levels</option>
+              <option value="intermediate-plus">Intermediate+ events only</option>
+              <option value="veteran-plus">Veteran+ events only</option>
+              <option value="beginner">Beginner or all levels (legacy)</option>
+              <option value="experienced">Experienced or all levels (legacy)</option>
             </FormSelect>
           </div>
           <div className="space-y-2">
@@ -181,14 +191,14 @@ export function EventFilters({ params, locationFilters, games, pending }: EventF
         </div>
         <input type="hidden" name="timeZone" value={zone} />
         <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
-          Dates include both selected days in your browser timezone. Time filters match event start times,
-          including the selected minute, in {zone}; overnight ranges are not supported. Experience includes
-          all-levels tables where stated. Age is an event requirement, not your private age.
+          Dates include both selected days in your browser timezone. Time filters match event start
+          times, including the selected minute, in {zone}; overnight ranges are not supported. Experience
+          includes all-levels tables where stated. Age is an event requirement, not your private age.
         </p>
         <fieldset className="mt-4 space-y-3">
           <legend className="text-sm font-medium">Tags · match all selected (up to six)</legend>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {EVENT_TAGS.map((tag) => (
+            {SELECTABLE_EVENT_TAGS.map((tag) => (
               <label key={tag} className="flex cursor-pointer items-start gap-2 text-sm">
                 <input
                   type="checkbox"

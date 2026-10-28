@@ -9,10 +9,16 @@ list. Only one navigation mode is mounted, avoiding hidden menus/dialogs and dup
 visible theme controls. Smaller viewports have a compact logo/hamburger header.
 
 The greeting reads the current UUID's public-safe profile after matching backend identity
-and active status verification. Prefer case-preserved username, then display name, then
-Account. Pending/failed verification shows no name; cache keys and response UUID checks
+and active status verification. Desktop Welcome uses displayName, then Account; the mobile
+profile link prefers username, then displayName, then Account. Same-UUID background fetches
+retain verified data; a fixed desktop greeting slot prevents control shifts. Initial
+pending/failed verification shows no name; cache keys and response UUID checks
 prevent another account's cached identity appearing. Email and private profile fields are
 never used. Existing Auth/session, status and permission APIs/guards are unchanged.
+
+Display-name saves update only the safe public projection in the navigation cache.
+Age/experience badges and new recommendation filters are documented in
+[the current profile/event follow-up](profile-event-ux.md); no card makes a private-detail request.
 
 Mobile navigation uses the existing Radix Dialog dependency: right-side full-height drawer,
 backdrop, focus trap/return, scroll lock, Close button and Escape/outside interaction. Links

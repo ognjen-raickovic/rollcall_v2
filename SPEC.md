@@ -17,6 +17,19 @@ game changes with an atomic owner-only Save endpoint (migration 21), inverted Ba
 and consistent UTC account dates. Account deletion stays disabled pending the independently
 reviewed security and retention requirements. See [profiles](docs/profiles.md).
 
+## Current profile/event UX follow-up
+
+Migrations 22–23 add owner-requested case-only handle correction and database-enforced
+minimum age for new event seats. Desktop Welcome uses displayName, independently of
+username. Profile Save compares normalized editable values; selecting a game/level stages
+it for the existing atomic Save. New event recommendations are All levels, Intermediate+
+and Veteran+ (advisory); six selectable tags reject incompatible atmosphere/session pairs.
+Historical experience values/tags remain readable without automatic reinterpretation.
+Safe summaries add actual minimumAge/experienceLevel for card badges. Private DOB stays
+private; public join and code redemption check age under the event lock, grandfathering
+existing seats. See [policy, rollout and verification](docs/profile-event-ux.md), which
+supersedes historical age-guidance/tag behavior below. No account-age minimum is introduced.
+
 ## Product
 
 Current navigation/discovery work adds an account-icon menu, active UUID My Events,
@@ -33,8 +46,9 @@ changes. The later auth-casing follow-up below adds only a safe username project
 the reviewed forward registration schema change, preserving those security boundaries.
 
 Current registration preserves username casing with case-insensitive uniqueness and required private DOB for new
-accounts. Legacy accounts are preserved; ordinary display names remain editable. No
-event-age eligibility is added. See [registration contract](docs/registration.md).
+accounts. Legacy accounts are preserved; ordinary display names remain editable. Registration
+itself added no eligibility gate; migration 23 now checks age at event admission. See
+[registration contract](docs/registration.md).
 The operator reports migration 17 applied; case preservation requires separately approved
 forward migration 18 and the existing backend operation capability. See [auth experience](docs/auth-experience.md);
 hosted application/security acceptance remains pending. New launchers start both local

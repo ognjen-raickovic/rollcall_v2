@@ -83,6 +83,69 @@ test('real event mutation requests, authorization, acknowledgements and cache sa
       '/src/features/events/api/event-date-time.ts',
     )
 
+    await t.test(
+      'current recommendations and exclusive tags preserve legacy read/update values',
+      async () => {
+        const { createEventInputSchema, updateEventInputSchema } = await server.ssrLoadModule(
+          '/src/features/events/api/event-write-dtos.ts',
+        )
+        for (const experienceLevel of ['all-levels', 'intermediate-plus', 'veteran-plus'])
+          assert.equal(createEventInputSchema.safeParse({ ...input, experienceLevel }).success, true)
+        for (const experienceLevel of ['beginner', 'experienced']) {
+          assert.equal(createEventInputSchema.safeParse({ ...input, experienceLevel }).success, false)
+          assert.equal(updateEventInputSchema.safeParse({ experienceLevel }).success, true)
+          const legacy = {
+            ...host,
+            experienceLevel,
+            tags: experienceLevel === 'experienced' ? ['Veterans only'] : ['Beginner friendly'],
+          }
+          const draft = { ...persistentEventFormDefaults(legacy), title: 'A renamed legacy table' }
+          assert.equal(
+            persistentEventFormSchema(legacy).safeParse(draft).success,
+            true,
+            'unchanged legacy rules remain editable',
+          )
+          assert.equal(
+            persistentEventFormSchema().safeParse(draft).success,
+            false,
+            'new event cannot use legacy rules',
+          )
+          assert.equal(
+            persistentEventFormSchema(legacy).safeParse({ ...draft, experienceLevel: 'veteran-plus' })
+              .success,
+            false,
+            'changing recommendation requires explicit tag removal',
+          )
+          assert.equal(
+            persistentEventFormSchema(legacy).safeParse({
+              ...draft,
+              experienceLevel: 'veteran-plus',
+              tags: [],
+            }).success,
+            true,
+          )
+        }
+        for (const tags of [
+          ['Casual', 'Competitive'],
+          ['One-shot', 'Campaign'],
+        ]) {
+          assert.equal(createEventInputSchema.safeParse({ ...input, tags }).success, false)
+          assert.equal(updateEventInputSchema.safeParse({ tags }).success, false)
+        }
+        assert.equal(
+          createEventInputSchema.safeParse({
+            ...input,
+            tags: ['Bring your own deck', 'Equipment provided'],
+          }).success,
+          true,
+        )
+        assert.equal(
+          createEventInputSchema.safeParse({ ...input, tags: ['Beginner friendly'] }).success,
+          false,
+        )
+      },
+    )
+
     await t.test('real form mapping sends only backend fields and the confirmed city ID', () => {
       const draft = { ...persistentEventFormDefaults(host), venue: '  ' }
       const mapped = persistentEventFormSchema().parse(draft)
@@ -246,11 +309,17 @@ test('real event mutation requests, authorization, acknowledgements and cache sa
           visibility: 'public',
           coverStoragePath: null,
         })
-        assert.deepEqual(await api.update(eventId, { venue: '', title: 'Updated table' }, session()), host)
+        assert.deepEqual(
+          await api.update(eventId, { venue: '', title: 'Updated table' }, session()),
+          host,
+        )
         assert.deepEqual(calls[1].body, { venue: null, title: 'Updated table' })
         assert.equal(await api.remove(eventId, session()), undefined)
         assert.deepEqual(await api.join(eventId, session(playerId)), attendance)
-        assert.deepEqual(await api.leave(eventId, session(playerId)), { ...attendance, hasJoined: false })
+        assert.deepEqual(await api.leave(eventId, session(playerId)), {
+          ...attendance,
+          hasJoined: false,
+        })
         assert.deepEqual(
           calls.map((call) => call.method),
           ['POST', 'PATCH', 'DELETE', 'POST', 'DELETE'],
@@ -266,33 +335,36 @@ test('real event mutation requests, authorization, acknowledgements and cache sa
       },
     )
 
-    await t.test('forged owners/images/actors, invalid IDs and invalid forms fail before HTTP', async () => {
-      let calls = 0
-      globalThis.fetch = async () => {
-        calls++
-        throw new Error('Unexpected request')
-      }
-      for (const extra of [
-        { hostId },
-        { organizerId: 1 },
-        { participantCount: 9 },
-        { countryId: 1 },
-        { imageUrl: 'data:image/png;base64,invalid' },
-        { coverStoragePath: 'untrusted/path' },
-        { tags: ['Casual', 'Casual'] },
-        { capacity: 0 },
-        { startsAt: '2020-01-01T00:00:00Z' },
-        { tags: ['Veterans only'] },
-      ])
-        await assert.rejects(api.create({ ...input, ...extra }, session()), statusIs(400))
-      await assert.rejects(api.update(eventId, {}, session()), statusIs(400))
-      await assert.rejects(api.update(eventId, { userId: playerId }, session()), statusIs(400))
-      for (const operation of ['remove', 'join', 'leave'])
-        await assert.rejects(api[operation]('1', session()), statusIs(400))
-      await assert.rejects(api.create(input, session(null)), statusIs(401))
-      await assert.rejects(api.create(input, session('1')), statusIs(401))
-      assert.equal(calls, 0)
-    })
+    await t.test(
+      'forged owners/images/actors, invalid IDs and invalid forms fail before HTTP',
+      async () => {
+        let calls = 0
+        globalThis.fetch = async () => {
+          calls++
+          throw new Error('Unexpected request')
+        }
+        for (const extra of [
+          { hostId },
+          { organizerId: 1 },
+          { participantCount: 9 },
+          { countryId: 1 },
+          { imageUrl: 'data:image/png;base64,invalid' },
+          { coverStoragePath: 'untrusted/path' },
+          { tags: ['Casual', 'Casual'] },
+          { capacity: 0 },
+          { startsAt: '2020-01-01T00:00:00Z' },
+          { tags: ['Veterans only'] },
+        ])
+          await assert.rejects(api.create({ ...input, ...extra }, session()), statusIs(400))
+        await assert.rejects(api.update(eventId, {}, session()), statusIs(400))
+        await assert.rejects(api.update(eventId, { userId: playerId }, session()), statusIs(400))
+        for (const operation of ['remove', 'join', 'leave'])
+          await assert.rejects(api[operation]('1', session()), statusIs(400))
+        await assert.rejects(api.create(input, session(null)), statusIs(401))
+        await assert.rejects(api.create(input, session('1')), statusIs(401))
+        assert.equal(calls, 0)
+      },
+    )
 
     await t.test(
       'bad host/attendance acknowledgements fail closed and errors retain safe codes and fields',
@@ -345,35 +417,38 @@ test('real event mutation requests, authorization, acknowledgements and cache sa
       },
     )
 
-    await t.test('identity checks reject switches before and after a committed HTTP response', async () => {
-      let calls = 0
-      globalThis.fetch = async () => {
-        calls++
-        return Response.json(host, { status: 201 })
-      }
-      await assert.rejects(
-        api.create(input, {
-          viewerId: hostId,
-          getAccessToken: async () => {
-            throw new Error('Account changed')
-          },
-        }),
-        /Account changed/,
-      )
-      assert.equal(calls, 0)
-      let tokenReads = 0
-      await assert.rejects(
-        api.create(input, {
-          viewerId: hostId,
-          getAccessToken: async () => {
-            if (++tokenReads > 1) throw new Error('Account changed')
-            return 'synthetic-action-token'
-          },
-        }),
-        /Account changed/,
-      )
-      assert.equal(calls, 1)
-    })
+    await t.test(
+      'identity checks reject switches before and after a committed HTTP response',
+      async () => {
+        let calls = 0
+        globalThis.fetch = async () => {
+          calls++
+          return Response.json(host, { status: 201 })
+        }
+        await assert.rejects(
+          api.create(input, {
+            viewerId: hostId,
+            getAccessToken: async () => {
+              throw new Error('Account changed')
+            },
+          }),
+          /Account changed/,
+        )
+        assert.equal(calls, 0)
+        let tokenReads = 0
+        await assert.rejects(
+          api.create(input, {
+            viewerId: hostId,
+            getAccessToken: async () => {
+              if (++tokenReads > 1) throw new Error('Account changed')
+              return 'synthetic-action-token'
+            },
+          }),
+          /Account changed/,
+        )
+        assert.equal(calls, 1)
+      },
+    )
 
     await t.test(
       'public leave cancels stale reads and immediately notifies active observers with an address-free DTO',
@@ -528,7 +603,10 @@ test('real event mutation requests, authorization, acknowledgements and cache sa
           return Response.json(options.method === 'POST' ? attendance : participant)
         }
         try {
-          const joined = await new MutationObserver(client, hooks.persistentJoinEventOptions(client)).mutate({
+          const joined = await new MutationObserver(
+            client,
+            hooks.persistentJoinEventOptions(client),
+          ).mutate({
             value: eventId,
             session: session(playerId),
           })

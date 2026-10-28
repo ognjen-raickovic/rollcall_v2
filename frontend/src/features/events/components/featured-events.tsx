@@ -12,7 +12,7 @@ export function FeaturedEvents() {
   const featured = events.data?.pages[0]?.items ?? []
   return (
     <section id="upcoming" aria-labelledby="upcoming-title" className="scroll-mt-8 border-t py-12">
-      <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+      <div className="mb-6 flex flex-wrap items-end justify-center gap-4 text-center md:justify-between md:text-left">
         <div>
           <p className="mb-2 text-xs font-semibold tracking-widest text-primary uppercase">
             Less scrolling. More rolling.

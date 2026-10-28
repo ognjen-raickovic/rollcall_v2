@@ -32,6 +32,7 @@ test('profile routes use verified identity and strictly validate writes before r
     profiles: (token) => {
       const note = (operation: string) => calls.push({ operation, token })
       const repository: ProfileRepository = {
+        correctUsername: async () => fixture,
         getOwn: async () => {
           note('getOwn')
           return fixture
@@ -56,7 +57,8 @@ test('profile routes use verified identity and strictly validate writes before r
         removeExperience: async () => {
           note('removeExperience')
         },
-        replaceExperience: async ({ games }) => games.map(game => ({ ...game, gameName: 'Catalog game' })),
+        replaceExperience: async ({ games }) =>
+          games.map((game) => ({ ...game, gameName: 'Catalog game' })),
         listGames: async () => {
           note('listGames')
           return []
@@ -87,8 +89,14 @@ test('profile routes use verified identity and strictly validate writes before r
     { createdAt: '2026-01-01T00:00:00Z' },
   ]) {
     assert.equal(
-      (await app.inject({ method: 'PATCH', url: '/api/me/profile', headers: { authorization }, payload }))
-        .statusCode,
+      (
+        await app.inject({
+          method: 'PATCH',
+          url: '/api/me/profile',
+          headers: { authorization },
+          payload,
+        })
+      ).statusCode,
       400,
     )
   }
@@ -149,8 +157,13 @@ test('profile routes use verified identity and strictly validate writes before r
   })
   assert.equal(experience.json().experience, 'veteran')
   assert.equal(
-    (await app.inject({ method: 'DELETE', url: '/api/me/game-experience/1', headers: { authorization } }))
-      .statusCode,
+    (
+      await app.inject({
+        method: 'DELETE',
+        url: '/api/me/game-experience/1',
+        headers: { authorization },
+      })
+    ).statusCode,
     204,
   )
 })
@@ -162,7 +175,8 @@ test('profile adapter uses isolated caller headers and strips private fields fro
     const path = new URL(String(input)).pathname
     inputs.push({ path, body: init?.body ? JSON.parse(String(init.body)) : null })
     headers.push(new Headers(init?.headers).get('Authorization') ?? '')
-    if (path.endsWith('/get_my_profile') || path.endsWith('/update_my_profile')) return Response.json(fixture)
+    if (path.endsWith('/get_my_profile') || path.endsWith('/update_my_profile'))
+      return Response.json(fixture)
     if (path.endsWith('/public_profile'))
       return Response.json({ ...fixture, email: 'private@example.test', role: 'superadmin' })
     if (path.endsWith('/set_my_game_experience'))
@@ -180,7 +194,9 @@ test('profile adapter uses isolated caller headers and strips private fields fro
     ])
   }
   const first = createProfileRepository(createDatabaseClient(testEnvironment(), fetcher, 'first-caller'))
-  const second = createProfileRepository(createDatabaseClient(testEnvironment(), fetcher, 'second-caller'))
+  const second = createProfileRepository(
+    createDatabaseClient(testEnvironment(), fetcher, 'second-caller'),
+  )
   await Promise.all([first.getOwn(), second.getOwn()])
   assert.deepEqual(headers.slice(0, 2).sort(), ['Bearer first-caller', 'Bearer second-caller'])
   const safe = await first.getPublic(userId)

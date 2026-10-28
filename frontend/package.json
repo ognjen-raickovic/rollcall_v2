@@ -4,6 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "test:profile-event-ux": "node --test scripts/check-profile-event-ux-ui.mjs",
     "test:responsive-navigation": "node --test scripts/check-responsive-navigation-ui.mjs",
     "test:info-ui": "node --test scripts/check-info-ui.mjs",
     "test:profile-editor-ui": "node --test scripts/check-profile-editor-ui.mjs",

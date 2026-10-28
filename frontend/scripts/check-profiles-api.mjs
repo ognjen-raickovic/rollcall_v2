@@ -54,6 +54,7 @@ test('profile client account isolation and public projection', async (t) => {
             () => profilesApi.setExperience({ gameId: 1, experience: 'veteran' }, first),
             () => profilesApi.removeExperience(1, first),
             () => profilesApi.replaceExperience({ games: [], expected: [] }, first),
+            () => profilesApi.correctUsername('Player', 'player', first),
           ])
             await assert.rejects(operation(), /account changed/)
           assert.equal(calls, 0)
@@ -84,6 +85,10 @@ test('profile client account isolation and public projection', async (t) => {
           await assert.rejects(profilesApi.getOwn(first), /could not be verified/)
           await assert.rejects(
             profilesApi.update({ displayName: 'Player' }, first),
+            /could not be verified/,
+          )
+          await assert.rejects(
+            profilesApi.correctUsername('Player', 'player', first),
             /could not be verified/,
           )
           globalThis.fetch = async (_url, options) => {

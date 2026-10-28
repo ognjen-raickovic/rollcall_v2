@@ -43,7 +43,10 @@ for both assistants. Read `../SPEC.md`, `../docs/entities.md`,
   roles/sharing flags grant no access. Attendance derives its actor from Auth, locks the
   event and rechecks visibility/state/actual time before mutations/no-ops. Reuse membership
   keys and counters; never read a count then insert without serialization. Private outsiders
-  cannot join; claimed experience/age does not gate attendance. Event and counter-trigger
+  cannot join by UUID; claimed experience never gates attendance. Migration 23 checks
+  private DOB for new age-restricted seats, including code redemption, under the event lock.
+  Existing seats are grandfathered; leave remains available under existing state rules.
+  Read `../docs/profile-event-ux.md`. Event and counter-trigger
   executors are NOLOGIN/NOBYPASSRLS with separate minimal privileges. Harden search paths
   and ACLs; trigger-only counter privileges must not become client grants. The argument-free
   Auth subject helper reads no tables. Keep development-only frontend mocks isolated from real APIs.

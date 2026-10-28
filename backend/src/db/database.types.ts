@@ -49,6 +49,7 @@ export type Database = {
     }
     Views: Record<string, never>
     Functions: {
+      correct_my_username_case: { Args: { p_username: string; p_expected: string }; Returns: Json }
       replace_my_game_experience: { Args: { p_games: Json; p_expected: Json }; Returns: Json }
       prepare_registration: {
         Args: { p_username: string; p_email: string; p_date_of_birth: string; p_fingerprint: string }
@@ -60,7 +61,10 @@ export type Database = {
         Args: { p_target: string; p_suspend: boolean; p_reason: string }
         Returns: Json
       }
-      get_suspension_audit: { Args: { p_target?: string; p_limit: number; p_before?: string }; Returns: Json }
+      get_suspension_audit: {
+        Args: { p_target?: string; p_limit: number; p_before?: string }
+        Returns: Json
+      }
       submit_event_report: {
         Args: { p_event_id: string; p_reason: string; p_description: string | null }
         Returns: Json
@@ -70,13 +74,25 @@ export type Database = {
         Returns: Json
       }
       get_event_report: { Args: { p_report_id: string }; Returns: Json }
-      resolve_event_report: { Args: { p_report_id: string; p_action: string; p_note: string }; Returns: Json }
+      resolve_event_report: {
+        Args: { p_report_id: string; p_action: string; p_note: string }
+        Returns: Json
+      }
       my_permissions: { Args: Record<string, never>; Returns: Json }
       admin_users: { Args: { p_limit: number; p_after?: string; p_user_id?: string }; Returns: Json }
       change_admin_role: { Args: { p_target: string; p_role: string }; Returns: Json }
-      admin_role_audit: { Args: { p_limit: number; p_before?: string; p_target?: string }; Returns: Json }
+      admin_role_audit: {
+        Args: { p_limit: number; p_before?: string; p_target?: string }
+        Returns: Json
+      }
       manage_event_invitation: {
-        Args: { p_event_id: string; p_hash: string; p_sealed: string; p_expires: string; p_action: string }
+        Args: {
+          p_event_id: string
+          p_hash: string
+          p_sealed: string
+          p_expires: string
+          p_action: string
+        }
         Returns: Json
       }
       redeem_event_invitation: { Args: { p_hash: string }; Returns: Json }

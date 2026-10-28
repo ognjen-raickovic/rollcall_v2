@@ -1,6 +1,22 @@
 # Milestone 3B: real profiles and per-game experience
 
-## Current profile editor (migration 21)
+## Current profile editor (migrations 21–22)
+
+Selecting a game/level now immediately contributes to the effective local draft; Save
+includes it without requiring Add another game. That action keeps the staged choice while
+clearing the chooser for another. No writes occur before Save; Cancel discards the draft.
+The existing atomic replacement, duplicate protection, expected-set comparison and 409
+reload flow remain. Profile Save compares normalized valid editable values (trimmed names/
+biography and location IDs); unchanged/reverted values send no PATCH. Read-only DOB-backed
+birth year and account dates cannot dirty the form.
+
+`PATCH /api/me/username-casing` accepts strict `{username, expected}` and returns OwnProfile.
+It derives the active UUID from the bearer token. Migration 22's narrow non-bypass executor
+locks only that owner's profile, requires the same case-folded handle and compares exact
+stored spelling with expected (409 on stale value). No raw username UPDATE grant or role
+membership is given to clients. The existing case-insensitive unique index is unchanged.
+Profile PATCH still rejects username; this separate form never infers/rewrites old spelling.
+Desktop Welcome uses displayName, not the unique handle. See [policy and verification](profile-event-ux.md).
 
 `/profile/edit` is a centered 672px single column with Profile and My games tabs.
 The explanatory sidebar is removed. Radix supplies keyboard/ARIA tab behavior; both
@@ -42,7 +58,8 @@ specific gates in [the separately reviewable design](account-deletion-design.md)
 The auth-casing follow-up (forward migration 18) preserves new username spelling while
 keeping identity uniqueness case-insensitive. Public/own DTOs accept optional nullable
 `username`; shared profiles/settings display it as `@username`, separately from display
-name. Existing lowercase handles remain unchanged and cannot be recased by profile PATCH.
+name. Existing lowercase handles remain unchanged automatically and cannot be recased by
+ordinary profile PATCH; migration 22 provides the explicit owner case-only action above.
 Full DOB, email and roles remain absent from public DTOs. See [rollout](auth-experience.md).
 
 New registration additionally requires a unique immutable username and private DOB;

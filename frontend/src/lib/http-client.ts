@@ -107,7 +107,9 @@ export async function httpRequest<T>(
               typeof window.dispatchEvent === 'function'
             )
               window.dispatchEvent(
-                new CustomEvent('rollcall:account-suspended', { detail: { viewerId: options.viewerId } }),
+                new CustomEvent('rollcall:account-suspended', {
+                  detail: { viewerId: options.viewerId },
+                }),
               )
             throw new HttpError(
               403,
@@ -117,6 +119,19 @@ export async function httpRequest<T>(
             )
           }
           if ('code' in payload && payload.code === errorCodes[response.status]) code = payload.code
+          if (
+            response.status === 403 &&
+            'code' in payload &&
+            (payload.code === 'AGE_REQUIREMENT_NOT_MET' || payload.code === 'AGE_INFORMATION_REQUIRED')
+          )
+            throw new HttpError(
+              403,
+              payload.code === 'AGE_REQUIREMENT_NOT_MET'
+                ? 'This event\u2019s minimum age requirement is not met on the event start date.'
+                : 'Your account needs a complete private date of birth to join age-restricted events. Check Account Settings or contact support.',
+              {},
+              payload.code,
+            )
           if (
             resource === 'event' &&
             response.status === 409 &&
@@ -143,7 +158,13 @@ export async function httpRequest<T>(
           }
         }
       } catch (error) {
-        if (error instanceof HttpError && error.code === 'ACCOUNT_SUSPENDED') throw error
+        if (
+          error instanceof HttpError &&
+          ['ACCOUNT_SUSPENDED', 'AGE_REQUIREMENT_NOT_MET', 'AGE_INFORMATION_REQUIRED'].includes(
+            error.code,
+          )
+        )
+          throw error
         /* Malformed error bodies never replace a safe message. */
       }
     }

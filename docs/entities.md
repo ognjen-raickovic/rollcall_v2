@@ -4,6 +4,32 @@ Shared contract for Workshop 3 mocks, backend milestones through 4B and frontend
 Milestone 4D extends this contract with persistent event covers below; earlier milestone
 sections retain their historical delivery boundaries.
 
+## Current profile/event requirements (migrations 22–23)
+
+`PATCH /api/me/username-casing` takes strict `{username, expected}`; only the active
+verified owner may request a same-casefold spelling. Returns OwnProfile; stale spelling
+is 409, arbitrary rename/caller identity fields are rejected. UUID, lower-based uniqueness,
+roles, authentication and existing references never change.
+
+EventSummary (including My Events) now projects actual `minimumAge` and `experienceLevel`.
+It still omits private addresses, participant identities, DOB, birth year and roles.
+Readers accept absent new summary fields during database-first rollout and omit those
+badges rather than inventing values; details retain required fields.
+
+New recommendation values: `all-levels`, `intermediate-plus`, `veteran-plus` (advisory).
+Legacy `beginner` / `experienced` and experience tags remain readable, explicitly labeled,
+without automatic mapping. New writes use six tags: Casual, Competitive, One-shot, Campaign,
+Bring your own deck, Equipment provided. Casual/Competitive and One-shot/Campaign are exclusive;
+equipment tags can coexist. Actual rule changes require resolving legacy experience tags
+and conflicts explicitly. Unchanged historical rules survive unrelated database edits.
+
+New age-restricted seats require complete private DOB at the event-local start date, under
+the event lock, both for ordinary joins and private-code redemption. Age failure is 403
+`AGE_REQUIREMENT_NOT_MET`; missing DOB is 403 `AGE_INFORMATION_REQUIRED`. No DOB is returned.
+Age zero requires none; existing seats are grandfathered; leave/rejoin checks current rules.
+See [timezone, legacy and concurrency policy](profile-event-ux.md). These current contracts
+supersede historical guidance/vocabulary in earlier milestone sections below.
+
 ## Persistent event covers: Milestone 4D
 
 | Endpoint | Contract and permissions |
@@ -179,7 +205,7 @@ never appear. Private details require host/current membership; roles/sharing fla
 override. Missing/inaccessible events share one 404. Discovery summaries remain unchanged.
 
 Create requires title 3–100, description 10–5000, existing gameId/cityId, address 3–200,
-future ISO start and later end, capacity 1–100, and all-levels/beginner/experienced expectation.
+future ISO start and later end, capacity 1–100, and all-levels/intermediate-plus/veteran-plus recommendation.
 Defaults: venue null (blank accepted; otherwise 2–120), minimumAge 0 (0–99), price 0
 (EUR 0–10000, two decimals), tags [], public visibility and null coverStoragePath. Up to six
 unique curated tags obey the existing compatibility rules. Country derives from an enabled
@@ -211,8 +237,8 @@ malformed requests 400, missing/inaccessible private events 404, and timing/host
 409 `CONFLICT`. Responses are no-store and vary on Authorization.
 
 Public/unlisted future scheduled events allow joining. Hosts do not occupy seats. Private
-outsiders cannot join; current private members may repeat join or leave. Experience/tags/
-minimum age remain guidance; no eligibility check reads private age or claimed experience.
+outsiders cannot join by UUID; current private members may repeat join or leave. Experience/
+tags remain advisory. Migration 23 checks minimum age for new seats with private DOB, as above.
 Timing/status/host checks precede no-op handling. Repeat join is idempotent even full; a
 nonmember public/unlisted leave is a no-op. No-ops preserve count/membership/event timestamps.
 Private leave removes detail/address access; repeat private leave/rejoin then returns 404.

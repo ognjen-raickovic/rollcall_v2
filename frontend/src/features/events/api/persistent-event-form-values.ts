@@ -2,7 +2,7 @@ import { z } from 'zod'
 import { locationReferenceSchema } from '@/lib/location'
 import type { EventFormValues } from './event-form-values'
 import { localDateTime, isoDateTime } from './event-date-time'
-import { createEventInputSchema } from './event-write-dtos'
+import { createEventInputSchema, eventContentInputSchema } from './event-write-dtos'
 import type { CreateEventInput, HostEventDetails } from './event-write-dtos'
 
 // Shared form controls describe editable values, never event/account identities.
@@ -27,6 +27,27 @@ const draftSchema = z.strictObject({
 })
 
 export function persistentEventFormSchema(event?: HostEventDetails) {
+  const contentSchema = event
+    ? eventContentInputSchema.superRefine((value, context) => {
+        const experienceChanged = value.experienceLevel !== event.experienceLevel
+        const tagsChanged = JSON.stringify(value.tags) !== JSON.stringify(event.tags)
+        if (experienceChanged && ['beginner', 'experienced'].includes(value.experienceLevel))
+          context.addIssue({
+            code: 'custom',
+            path: ['experienceLevel'],
+            message: 'Choose a current recommended experience level.',
+          })
+        if (
+          (experienceChanged || tagsChanged) &&
+          value.tags.some((tag) => tag === 'Beginner friendly' || tag === 'Veterans only')
+        )
+          context.addIssue({
+            code: 'custom',
+            path: ['tags'],
+            message: 'Remove legacy experience tags before changing tags or recommendations.',
+          })
+      })
+    : createEventInputSchema
   return draftSchema
     .superRefine((draft, context) => {
       if (!draft.location)
@@ -81,7 +102,7 @@ export function persistentEventFormSchema(event?: HostEventDetails) {
       tags: draft.tags,
       visibility: draft.visibility,
     }))
-    .pipe(createEventInputSchema) satisfies z.ZodType<CreateEventInput, EventFormValues>
+    .pipe(contentSchema) satisfies z.ZodType<CreateEventInput, EventFormValues>
 }
 
 export function persistentEventFormDefaults(event?: HostEventDetails): EventFormValues {

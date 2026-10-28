@@ -29,8 +29,21 @@ function unavailable(): ApiError {
 
 function databaseError(error: DatabaseError): ApiError {
   throwIfSuspended(error)
+  if (error.code === 'RA004')
+    return new ApiError(
+      403,
+      'AGE_REQUIREMENT_NOT_MET',
+      'This event requires players to meet its minimum age on the event start date.',
+    )
+  if (error.code === 'RA005')
+    return new ApiError(
+      403,
+      'AGE_INFORMATION_REQUIRED',
+      'A complete private date of birth is required for age-restricted events.',
+    )
   if (error.code === 'P0002') return eventNotFound()
-  if (error.code === 'RM001') return new ApiError(409, 'CONFLICT', 'Administratively cancelled events cannot be reactivated.')
+  if (error.code === 'RM001')
+    return new ApiError(409, 'CONFLICT', 'Administratively cancelled events cannot be reactivated.')
   if (error.code === 'RA001')
     return new ApiError(
       409,
@@ -79,7 +92,11 @@ function requireReturnedHost(value: HostEventDetails, expectedHostId: string): H
   return value
 }
 
-function requireAttendance(value: AttendanceResult, eventId: string, hasJoined: boolean): AttendanceResult {
+function requireAttendance(
+  value: AttendanceResult,
+  eventId: string,
+  hasJoined: boolean,
+): AttendanceResult {
   if (value.eventId !== eventId || value.hasJoined !== hasJoined) throw unavailable()
   return value
 }
@@ -93,11 +110,22 @@ export function createEventRepository(client: DatabaseClient): EventRepository {
       )
       if (page.items.length > filters.limit || (page.hasMore && !page.items.length)) throw unavailable()
       const last = page.items.at(-1)
-      if (page.hasMore && filters.sort && filters.sort!=='soonest' && !page.position) throw unavailable()
-      if (page.position && (!last || page.position.id!==last.id || page.position.startsAt!==last.startsAt || page.position.sort!==(filters.sort??'soonest'))) throw unavailable()
+      if (page.hasMore && filters.sort && filters.sort !== 'soonest' && !page.position)
+        throw unavailable()
+      if (
+        page.position &&
+        (!last ||
+          page.position.id !== last.id ||
+          page.position.startsAt !== last.startsAt ||
+          page.position.sort !== (filters.sort ?? 'soonest'))
+      )
+        throw unavailable()
       return {
         items: page.items,
-        pageInfo: { limit: filters.limit, nextCursor: page.hasMore && last ? encodeEventCursor(page.position ?? last) : null },
+        pageInfo: {
+          limit: filters.limit,
+          nextCursor: page.hasMore && last ? encodeEventCursor(page.position ?? last) : null,
+        },
       }
     },
     async get(eventId, expectedUserId) {
@@ -108,7 +136,8 @@ export function createEventRepository(client: DatabaseClient): EventRepository {
       if (safe.data.id !== eventId) throw unavailable()
       if (viewer.userId !== (expectedUserId ?? null)) throw unavailable()
       const isHost = expectedUserId !== undefined && safe.data.host.id === expectedUserId
-      if (viewer.isHost !== isHost || (viewer.hasJoined && (isHost || !expectedUserId))) throw unavailable()
+      if (viewer.isHost !== isHost || (viewer.hasJoined && (isHost || !expectedUserId)))
+        throw unavailable()
       if (safe.data.visibility === 'private' && !isHost && !viewer.hasJoined) throw eventNotFound()
       if (isHost) return project(hostEventDetailsSchema, value)
       if (viewer.hasJoined) return project(participantEventDetailsSchema, value)

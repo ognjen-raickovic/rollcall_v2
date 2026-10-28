@@ -2,7 +2,8 @@ import type { EventTag } from './event-tags'
 import type { LocationReference } from '@/lib/location'
 
 export type EventStatus = 'scheduled' | 'cancelled'
-export type ExperienceLevel = 'all-levels' | 'beginner' | 'experienced'
+export type ExperienceLevel =
+  'all-levels' | 'beginner' | 'experienced' | 'intermediate-plus' | 'veteran-plus'
 export type EventVisibility = 'public' | 'private' | 'unlisted'
 
 export type Event = {

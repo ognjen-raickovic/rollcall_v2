@@ -71,6 +71,7 @@ export function ProfileForm({ profile, renderLocation }: ProfileFormProps) {
       : null
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
+    mode: 'onChange',
     defaultValues: {
       displayName: profile.displayName,
       biography: profile.biography ?? '',
@@ -80,11 +81,22 @@ export function ProfileForm({ profile, renderLocation }: ProfileFormProps) {
     },
   })
 
+  const normalize = (values: z.infer<typeof schema>) => ({
+    displayName: values.displayName.trim(),
+    biography: values.biography.trim(),
+    countryId: values.countryId,
+    cityId: values.location?.cityId ?? null,
+    birthYear: profile.hasDateOfBirth ? null : values.birthYear,
+  })
+  const [baseline] = useState(() => normalize(form.getValues()))
+  const parsed = schema.safeParse(form.watch())
+  const dirty = parsed.success && JSON.stringify(normalize(parsed.data)) !== JSON.stringify(baseline)
   return (
     <form
       noValidate
       className="space-y-6"
       onSubmit={form.handleSubmit((values) => {
+        if (!dirty || update.isPending) return
         if (unconfirmedCity) {
           form.setError('location', { message: 'Choose a city suggestion or clear the city field.' })
           return
@@ -198,11 +210,9 @@ export function ProfileForm({ profile, renderLocation }: ProfileFormProps) {
           <p className="text-xs text-muted-foreground">
             City is optional. Leave it blank or choose a suggestion; changing country clears the city.
           </p>
-          <div className="space-y-2 border-t pt-6">
+          <div className="flex flex-wrap items-baseline gap-x-4 gap-y-2 border-t pt-6">
             <p className="text-sm font-medium">Account created</p>
-            <p className="text-sm text-muted-foreground">
-              {formatAccountDate(profile.createdAt)} · Read-only
-            </p>
+            <p className="text-sm text-muted-foreground">{formatAccountDate(profile.createdAt)}</p>
           </div>
         </section>
         <section className="space-y-4 rounded-xl border bg-card p-6 md:p-8">
@@ -258,7 +268,7 @@ export function ProfileForm({ profile, renderLocation }: ProfileFormProps) {
         </p>
       )}
       <div className="flex flex-wrap gap-4">
-        <Button type="submit" disabled={update.isPending}>
+        <Button type="submit" disabled={!dirty || unconfirmedCity || update.isPending}>
           <Save aria-hidden="true" />
           {update.isPending ? 'Saving changes...' : 'Save changes'}
         </Button>

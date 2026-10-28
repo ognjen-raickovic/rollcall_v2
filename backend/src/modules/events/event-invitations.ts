@@ -23,7 +23,9 @@ export function normalizeInvitation(value: string): string {
 export function invitationCrypto(secret: string) {
   const root = Buffer.from(secret, 'base64url')
   const encryption = Buffer.from(hkdfSync('sha256', root, '', 'rollcall-invitations-encryption-v1', 32))
-  const verification = Buffer.from(hkdfSync('sha256', root, '', 'rollcall-invitations-verification-v1', 32))
+  const verification = Buffer.from(
+    hkdfSync('sha256', root, '', 'rollcall-invitations-verification-v1', 32),
+  )
   return {
     generate: () => Array.from(randomBytes(16), (byte) => alphabet[byte & 31]).join(''),
     hash: (code: string) => createHmac('sha256', verification).update(code).digest('hex'),
@@ -54,6 +56,7 @@ const outcome = z.discriminatedUnion('status', [
   z.object({ status: z.literal('joined'), eventId: z.uuid() }),
   z.object({ status: z.literal('invalid') }),
   z.object({ status: z.literal('limited') }),
+  z.object({ status: z.enum(['age-ineligible', 'age-unavailable']) }),
 ])
 const unavailable = () =>
   new ApiError(503, 'DEPENDENCY_UNAVAILABLE', 'Private invitations are temporarily unavailable.')
@@ -66,8 +69,12 @@ export function invitationRepository(env: Environment, token: string) {
   const client = createClient<Database>(env.SUPABASE_URL, env.SUPABASE_PUBLISHABLE_KEY, {
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
     global: {
-      headers: { Authorization: `Bearer ${token}`, 'x-rollcall-cover-key': env.EVENT_COVER_OPERATION_KEY },
-      fetch: (input, init) => fetch(input, { ...init, signal: AbortSignal.timeout(env.SUPABASE_TIMEOUT_MS) }),
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'x-rollcall-cover-key': env.EVENT_COVER_OPERATION_KEY,
+      },
+      fetch: (input, init) =>
+        fetch(input, { ...init, signal: AbortSignal.timeout(env.SUPABASE_TIMEOUT_MS) }),
     },
   })
   return {
@@ -86,7 +93,9 @@ export function invitationRepository(env: Environment, token: string) {
           p_event_id: id,
           p_hash: crypto.hash(code),
           p_sealed: crypto.seal(code, id),
-          p_expires: new Date(Math.min(Date.now() + 7 * 86400000, Date.parse(event.startsAt))).toISOString(),
+          p_expires: new Date(
+            Math.min(Date.now() + 7 * 86400000, Date.parse(event.startsAt)),
+          ).toISOString(),
           p_action: action,
         })
         throwIfSuspended(result.error)
@@ -123,6 +132,18 @@ export function invitationRepository(env: Environment, token: string) {
       if (!parsed.success) throw unavailable()
       if (parsed.data.status === 'limited')
         throw new ApiError(429, 'RATE_LIMITED', 'Too many attempts. Try again in 15 minutes.')
+      if (parsed.data.status === 'age-ineligible')
+        throw new ApiError(
+          403,
+          'AGE_REQUIREMENT_NOT_MET',
+          'This private event has a minimum age requirement that is not met.',
+        )
+      if (parsed.data.status === 'age-unavailable')
+        throw new ApiError(
+          403,
+          'AGE_INFORMATION_REQUIRED',
+          'A complete private date of birth is required for age-restricted events.',
+        )
       if (parsed.data.status !== 'joined') throw invalid()
       return { eventId: parsed.data.eventId }
     },

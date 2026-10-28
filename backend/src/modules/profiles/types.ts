@@ -18,6 +18,7 @@ export interface ProfileRepository {
   getPublic(userId: string): Promise<PublicProfile>
   getOwn(): Promise<OwnProfile>
   updateOwn(patch: ProfilePatch): Promise<OwnProfile>
+  correctUsername(username: string, expected: string): Promise<OwnProfile>
   getExperience(userId: string): Promise<GameExperience[]>
   setExperience(gameId: number, experience: GameExperience['experience']): Promise<GameExperience>
   removeExperience(gameId: number): Promise<void>

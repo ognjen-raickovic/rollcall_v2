@@ -1,11 +1,11 @@
 import { z } from 'zod'
 
-import { EVENT_TAGS, tagMatchesExperience } from '../event-tags'
+import { EVENT_TAGS, tagMatchesExperience, tagConflict } from '../event-tags'
 import { eventDetailsSchema } from './event-dtos'
 
 const referenceId = z.number().int().min(1).max(2147483647)
 const instant = z.iso.datetime({ offset: true })
-const experience = z.enum(['all-levels', 'beginner', 'experienced'])
+const experience = z.enum(['all-levels', 'beginner', 'experienced', 'intermediate-plus', 'veteran-plus'])
 const tags = z
   .array(z.enum(EVENT_TAGS))
   .max(6)
@@ -18,7 +18,10 @@ const venue = z
   .string()
   .trim()
   .max(120)
-  .refine((value) => value === '' || value.length >= 2, 'Use at least 2 characters or leave venue blank.')
+  .refine(
+    (value) => value === '' || value.length >= 2,
+    'Use at least 2 characters or leave venue blank.',
+  )
   .transform((value) => value || null)
   .nullable()
 const fields = {
@@ -48,6 +51,12 @@ function checkValues(
   },
   context: z.RefinementCtx,
 ) {
+  if (value.tags && tagConflict(value.tags))
+    context.addIssue({
+      code: 'custom',
+      path: ['tags'],
+      message: tagConflict(value.tags) ?? 'Choose compatible tags.',
+    })
   if (value.startsAt !== undefined && Date.parse(value.startsAt) <= Date.now())
     context.addIssue({ code: 'custom', path: ['startsAt'], message: 'Choose a future start time.' })
   if (
@@ -61,10 +70,15 @@ function checkValues(
     value.experienceLevel &&
     !value.tags.every((tag) => tagMatchesExperience(tag, value.experienceLevel ?? 'all-levels'))
   )
-    context.addIssue({ code: 'custom', path: ['tags'], message: 'Choose tags compatible with experience.' })
+    context.addIssue({
+      code: 'custom',
+      path: ['tags'],
+      message: 'Choose tags compatible with experience.',
+    })
 }
 
-export const createEventInputSchema = z
+// Complete editable content, including unchanged historical rules on edit.
+export const eventContentInputSchema = z
   .strictObject({
     ...fields,
     venue: venue.default(null),
@@ -76,12 +90,25 @@ export const createEventInputSchema = z
   })
   .superRefine(checkValues)
 
+export const createEventInputSchema = eventContentInputSchema
+  .refine((value) => !['beginner', 'experienced'].includes(value.experienceLevel), {
+    path: ['experienceLevel'],
+    message: 'Choose a current recommended experience level.',
+  })
+  .refine((value) => !value.tags.some((tag) => tag === 'Beginner friendly' || tag === 'Veterans only'), {
+    path: ['tags'],
+    message: 'Use the experience selector instead of legacy experience tags.',
+  })
+
 // No patch defaults: omitted values must retain their stored meaning. PostgreSQL
 // additionally validates final merged dates/tags and current attendance capacity.
 export const updateEventInputSchema = z
   .strictObject({ ...fields, status: z.enum(['scheduled', 'cancelled']) })
   .partial()
-  .refine((value) => Object.values(value).some((entry) => entry !== undefined), 'Supply at least one change.')
+  .refine(
+    (value) => Object.values(value).some((entry) => entry !== undefined),
+    'Supply at least one change.',
+  )
   .superRefine(checkValues)
 
 export const hostEventDetailsSchema = eventDetailsSchema.transform((event, context) => {
@@ -92,7 +119,11 @@ export const hostEventDetailsSchema = eventDetailsSchema.transform((event, conte
   return {
     ...event,
     address: event.address,
-    viewer: { userId: z.uuid().parse(event.viewer.userId), isHost: true as const, hasJoined: false as const },
+    viewer: {
+      userId: z.uuid().parse(event.viewer.userId),
+      isHost: true as const,
+      hasJoined: false as const,
+    },
   }
 })
 

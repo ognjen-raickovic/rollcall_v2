@@ -10,6 +10,7 @@ import {
   profileIdSchema,
   profilePatchSchema,
   replaceExperienceSchema,
+  usernameCaseSchema,
 } from './profile-schema.js'
 import type { ProfileRepository } from './types.js'
 
@@ -41,6 +42,11 @@ export function registerProfileRoutes(
     parseInput(noQuerySchema, request.query)
     if (!request.account) throw unauthenticated()
     return own(request).getExperience(request.account.id)
+  })
+  app.patch('/api/me/username-casing', { preHandler: guard }, async (request) => {
+    parseInput(noQuerySchema, request.query)
+    const { username, expected } = parseInput(usernameCaseSchema, request.body)
+    return own(request).correctUsername(username, expected)
   })
   app.put('/api/me/game-experience/:gameId', { preHandler: guard }, async (request) => {
     parseInput(noQuerySchema, request.query)

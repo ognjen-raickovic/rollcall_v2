@@ -17,7 +17,7 @@ export function SessionMenu() {
   const session = useSession()
   const location = useLocation()
   const auth = useAuth()
-  const label = useNavigationAccount()
+  const label = useNavigationAccount('displayName')
 
   if (session.isPending || auth.isPending)
     return (
@@ -35,11 +35,14 @@ export function SessionMenu() {
     return (
       <div className="flex items-center gap-2">
         <AdminNavigation />
-        {label && (
-          <span className="max-w-40 truncate text-sm text-muted-foreground" title={`Welcome, ${label}`}>
-            Welcome, {label}
+        {
+          <span
+            className="inline-block w-40 truncate text-sm text-muted-foreground"
+            title={label ? `Welcome, ${label}` : undefined}
+          >
+            {label ? `Welcome, ${label}` : ' '}
           </span>
-        )}
+        }
         <AccountMenu key={auth.data.id} />
       </div>
     )

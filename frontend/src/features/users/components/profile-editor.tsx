@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useOwnProfile } from '../api/use-profiles'
 import { ProfileForm, type ProfileLocationSlotProps } from './profile-form'
+import { UsernameCasingForm } from './username-casing-form'
 import { ProfileGamesEditor, type ProfileGamesEditorProps } from './profile-games-editor'
 
 type ProfileEditorProps = ProfileGamesEditorProps & {
@@ -82,6 +83,7 @@ export function ProfileEditor({ renderLocation, ...games }: ProfileEditorProps) 
           className="profile-editor-panel outline-none focus-visible:ring-2 focus-visible:ring-ring data-[state=inactive]:hidden"
         >
           <ProfileForm profile={profile.data} renderLocation={renderLocation} />
+          {profile.data.username && <UsernameCasingForm username={profile.data.username} />}
         </Tabs.Content>
         <Tabs.Content
           value="games"

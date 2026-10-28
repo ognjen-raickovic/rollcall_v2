@@ -10,6 +10,12 @@ It uses card/background tokens, full dynamic viewport height, a 384px maximum wi
 reduced motion. Put site links, separated account actions and the shared Theme control
 in the drawer. Only the active viewport mode is mounted.
 
+Desktop Welcome uses the editable public display name in a fixed, truncated greeting slot.
+Keep its current verified value during background refetches; account/access changes clear
+it. The mobile account link retains the separate handle-first label. On mobile, center
+hero copy/compact CTAs, section headings and footer; retain left-aligned form/card content
+and the desktop composition. Use responsive classes, not duplicated components.
+
 Guests link to login; real accounts
 open a Radix menu with My Profile, Settings, My Events and confirmed logout. Admin links
 stay separate. Auth return navigation sits at the content container's top-left while
@@ -74,6 +80,11 @@ without a sidebar, with equal-width Profile/My games tabs. Keep both drafts moun
 switching; use a restrained 180ms slide/fade only when reduced motion is not requested.
 Games use labeled inset-chevron native selectors and draft-only add/change/remove actions;
 both tabs end with Save changes and Cancel, with pending, success and error feedback.
+Selecting a game and level stages an effective draft immediately; Add another game only
+keeps that choice while opening another. Disable unchanged/invalid Save. The account-created
+label/date share a wrapping row without a Read-only suffix. A separate capitalization
+form changes only username letter case. Confirmed success uses the shared inline
+ActionFeedback live region; consume route feedback once so refresh cannot replay it.
 Return links use an arrow inside the shared default primary Button, matching the homepage
 Find events action in both themes. Keep its standard hover and focus states.
 Reuse country/city
@@ -100,7 +111,11 @@ The optional cover control shows a 16:9 object-cover preview, labeled native fil
 processing/error feedback, and a reset-to-default action. Cropping preserves source proportions.
 Tags use a Radix popover with labeled native checkboxes, a Done action, and removable chips.
 Tab/Space operate checkboxes; Escape closes the popover and returns focus to its trigger.
-Keep the popup within the viewport and disable choices beyond six or incompatible with experience.
+Keep the popup within the viewport; disable incompatible pairs with visible explanations.
+Casual/Competitive and One-shot/Campaign are exclusive; equipment tags may coexist. Legacy
+experience tags remain visible/removable on old events and are never silently removed.
+New recommendations are All levels, Intermediate+ and Veteran+, distinct from player skills.
+Cards/details show compact recommended-experience and actual age badges (omit all-ages).
 
 Event discovery uses a labeled search/filter panel followed by a soonest-first card grid.
 Controls cover event title, country, dependent city, game, and open seats, with a persistent reset link. Cards
@@ -112,7 +127,7 @@ Event details use a full-width image, a readable information column, and an atte
 sidebar that appears before the long information column on phones, keeping the join action
 close to the event heading. Keep the cover compact rather than letting it dominate the page.
 Show the exact address only to the host/current participants, alongside schedule,
-age guidance, visibility, tags, and host/game names. Other viewers see an explanation that
+minimum-age requirements, visibility, tags, and host/game names. Other viewers see an explanation that
 the precise address is shared with confirmed participants. Use live status feedback after joining or
 leaving and actionable error panels. Avoid exposing raw entity IDs in the interface.
 

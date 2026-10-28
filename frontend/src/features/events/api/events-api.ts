@@ -1,6 +1,13 @@
 import { z } from 'zod'
 
-import { ApiError, mockRequest, NotFoundError, requireMockUser, validate, validateId } from '@/lib/mock-db'
+import {
+  ApiError,
+  mockRequest,
+  NotFoundError,
+  requireMockUser,
+  validate,
+  validateId,
+} from '@/lib/mock-db'
 import type { MockActor } from '@/lib/mock-db'
 
 import type { Event, EventFilters, NewEvent, UpdateEvent } from '../types'
@@ -124,6 +131,15 @@ export const eventsApi = {
     mockRequest(() => {
       const organizerId = requireMockUser(actor)
       const values = validate(newEventSchema, input)
+      if (
+        ['beginner', 'experienced'].includes(values.experienceLevel) ||
+        values.tags.some((tag) => tag === 'Beginner friendly' || tag === 'Veterans only')
+      )
+        throw new ApiError(
+          'VALIDATION_ERROR',
+          400,
+          'Choose a current experience recommendation and non-legacy tags.',
+        )
       const now = new Date().toISOString()
       const event: Event = {
         ...values,
@@ -148,6 +164,21 @@ export const eventsApi = {
         Object.entries(values).filter(([, value]) => value !== undefined),
       )
       const updated: Event = { ...event, ...definedValues }
+      if (
+        updated.experienceLevel !== event.experienceLevel &&
+        ['beginner', 'experienced'].includes(updated.experienceLevel)
+      )
+        throw new ApiError('VALIDATION_ERROR', 400, 'Choose a current experience recommendation.')
+      if (
+        (updated.experienceLevel !== event.experienceLevel ||
+          JSON.stringify(updated.tags) !== JSON.stringify(event.tags)) &&
+        updated.tags.some((tag) => tag === 'Beginner friendly' || tag === 'Veterans only')
+      )
+        throw new ApiError(
+          'VALIDATION_ERROR',
+          400,
+          'Remove legacy experience tags before changing tags or recommendations.',
+        )
       validate(newEventSchema, editableEventValues(updated))
       if (updated.capacity < event.attendeeIds.length)
         throw new ApiError('CONFLICT', 409, 'Capacity cannot be below current attendance.', {

@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useRef } from 'react'
 import { z } from 'zod'
-import { profilesApi } from './profiles-api'
+import { profilesApi, publicProfileSchema } from './profiles-api'
 import { useAuth } from './use-auth'
 import type { GameExperienceLevel, ProfileUpdate } from '../types'
 
@@ -12,6 +12,24 @@ export function useOwnProfile() {
     queryFn: ({ signal }) => profilesApi.getOwn(auth.data?.id ?? '', signal),
     enabled: Boolean(auth.data),
     retry: false,
+  })
+}
+
+export function useCorrectUsername() {
+  const client = useQueryClient(),
+    auth = useAuth(),
+    owner = auth.data?.id ?? ''
+  return useMutation({
+    gcTime: 0,
+    mutationFn: ({ username, expected }: { username: string; expected: string }) =>
+      profilesApi.correctUsername(username, expected, owner),
+    onSuccess: async (profile) => {
+      if (client.getQueryData<{ id: string }>(['auth-account'])?.id !== owner) return
+      await client.cancelQueries({ queryKey: ['own-profile', owner] })
+      if (client.getQueryData<{ id: string }>(['auth-account'])?.id !== owner) return
+      client.setQueryData(['own-profile', owner], profile)
+      await client.invalidateQueries({ queryKey: ['public-profile', owner] })
+    },
   })
 }
 
@@ -48,6 +66,9 @@ export function useUpdateProfile() {
       await client.cancelQueries({ queryKey: ['own-profile', ownerId] })
       if (client.getQueryData<{ id: string }>(['auth-account'])?.id !== ownerId) return
       client.setQueryData(['own-profile', ownerId], profile)
+      await client.cancelQueries({ queryKey: ['public-profile', ownerId] })
+      if (client.getQueryData<{ id: string }>(['auth-account'])?.id !== ownerId) return
+      client.setQueryData(['public-profile', ownerId], publicProfileSchema.parse(profile))
       void client.invalidateQueries({ queryKey: ['public-profile', ownerId] })
     },
   })

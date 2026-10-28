@@ -349,7 +349,7 @@ export function EventFormView<TOutput extends FieldValues>({
                   label="Minimum age"
                   required
                   error={errors.minimumAge?.message}
-                  help="0 means all ages. Age guidance is shown to players."
+                  help="0 means all ages. New joins to age-restricted events require a complete private date of birth and eligibility on the event start date."
                 >
                   {(attributes) => (
                     <Input
@@ -368,8 +368,9 @@ export function EventFormView<TOutput extends FieldValues>({
               <div className="grid min-w-0 gap-4 sm:grid-cols-2">
                 <EventFormField
                   name="experienceLevel"
-                  label="Experience level"
+                  label="Recommended player experience"
                   required
+                  help="All levels welcomes first-timers. Intermediate+ assumes basic rules knowledge; Veteran+ suits highly experienced players. Skills are self-declared and do not automatically restrict joining."
                   error={errors.experienceLevel?.message}
                 >
                   {(attributes) => (
@@ -384,20 +385,20 @@ export function EventFormView<TOutput extends FieldValues>({
                           shouldDirty: true,
                           shouldValidate: true,
                         })
-                        const kept = tagsField.value.filter((tag) => tagMatchesExperience(tag, next))
-                        const removed = tagsField.value.filter((tag) => !tagMatchesExperience(tag, next))
-                        if (removed.length)
-                          form.setValue('tags', kept, { shouldDirty: true, shouldValidate: true })
                         setTagNotice(
-                          removed.length
-                            ? `Removed ${removed.join(', ')} to match the experience level.`
+                          tagsField.value.some((tag) => !tagMatchesExperience(tag, next))
+                            ? 'Legacy experience tags are still selected. Remove them explicitly before changing experience.'
                             : '',
                         )
                       }}
                     >
-                      <option value="all-levels">All experience levels</option>
-                      <option value="beginner">Beginner friendly</option>
-                      <option value="experienced">Experienced players</option>
+                      <option value="all-levels">All levels</option>
+                      <option value="intermediate-plus">Intermediate+</option>
+                      <option value="veteran-plus">Veteran+</option>
+                      {experience === 'beginner' && <option value="beginner">Beginner (legacy)</option>}
+                      {experience === 'experienced' && (
+                        <option value="experienced">Experienced (legacy)</option>
+                      )}
                     </select>
                   )}
                 </EventFormField>
@@ -474,7 +475,7 @@ export function EventFormView<TOutput extends FieldValues>({
                 name="tags"
                 label="Tags"
                 error={errors.tags?.message}
-                help="Optional. Choose up to six tags from the list. Availability follows the experience level."
+                help="Choose up to six tags. Experience is described by the separate recommendation above."
               >
                 {(attributes) => (
                   <EventTagSelect

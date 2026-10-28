@@ -75,8 +75,10 @@ Keep foundation routes simple until finished pages are requested.
   or current membership in 4B. Derive all actors from verified tokens; never submitted IDs.
   Attendance locks the event and validates current visibility/state/time before changing
   the existing membership table. Preserve closed client tables, executor/trigger-role RLS,
-  explicit ACLs and empty search paths. Private outsiders cannot join; no experience/age
-  eligibility or admin override. Storage is implemented in 4D; private codes/role authorization (5)
+  explicit ACLs and empty search paths. Private outsiders cannot join by UUID. Migration 23
+  enforces minimum age for new seats using private DOB at event-local start date, including
+  code redemption; existing seats are grandfathered. No skill gate or admin override. Read
+  `docs/profile-event-ux.md`. Storage is implemented in 4D; private codes/role authorization (5)
   remain separate work. Read integration is documented in `docs/event-frontend-verification.md`;
   real mutation integration and browser acceptance are in `docs/event-actions-verification.md`.
 - Real event reads use dedicated UUID DTOs and TanStack Query keys, never numeric adapters.
@@ -118,6 +120,17 @@ Keep foundation routes simple until finished pages are requested.
 
 Claude's commands, format hook, and UI reviewer remain in `.claude/`. Codex performs equivalent
 checks using available tools; Claude hooks do not automatically run for Codex edits.
+
+## Profile/event UX follow-up (migrations 22–23)
+
+Read `docs/profile-event-ux.md` for current contracts. Desktop greeting uses the verified
+public display name, independently of the handle; keep same-account verified data during
+background refetches and clear it on account/access changes. Username correction is owner-only,
+case-only and compare-and-swap; never rewrite existing handles automatically. New event
+recommendations are All levels / Intermediate+ / Veteran+; retain explicitly labeled legacy
+values without mapping them. Preserve draft-only game saves, tag validation, age-helper
+privacy, event locks and durable invitation-attempt commits. Historical milestone descriptions
+do not override these current rules. No hosted application/migration is authorized by this work.
 
 ## Milestone 5A
 

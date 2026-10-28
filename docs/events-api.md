@@ -10,6 +10,20 @@ Milestone 4D now adds persistent cover endpoints described in
 4D extends cover metadata to a custom version marker with a local fallback illustration.
 Signed URLs are returned only by the separate authorized access endpoint.
 
+## Current event requirements (migration 23)
+
+New events use `all-levels`, `intermediate-plus`, `veteran-plus` recommendations, which do
+not gate attendance. Existing `beginner`/`experienced` values remain unchanged and labeled
+legacy; no automatic mapping. Discovery filters for the new values are exact. Legacy
+beginner/experienced filters retain their existing include-all-levels semantics.
+
+Six current tags exclude Beginner friendly/Veterans only. Casual/Competitive and
+One-shot/Campaign cannot coexist; equipment tags can. The database permits unchanged
+historical rules on unrelated edits, but actual tag/experience changes must resolve legacy
+tags/conflicts explicitly. The form may require resolving conflicts before a full save.
+New minimum-age enforcement, birthday/timezone semantics and grandfathering are defined in
+[profile/event UX policy](profile-event-ux.md). These rules supersede the original 4A/4B scope.
+
 ## HTTP contract
 
 | Method/path | Access/result |
@@ -65,6 +79,7 @@ venue: string | null
 startsAt, endsAt
 capacity, participantCount, availableSlots
 tags: EventTag[]
+minimumAge, experienceLevel
 visibility: public | unlisted | private
 status: scheduled | cancelled
 cover: { kind: 'default', imageUrl: <known local game illustration> }
@@ -78,7 +93,8 @@ Anonymous viewers have null/false/false. A verified nonparticipant gets its own 
 false/false. Hosts have true/false, and participants false/true; hosts never occupy a seat.
 The backend verifies that the viewer UUID matches its independently verified request identity.
 `HostEventDetails` and `ParticipantEventDetails` additionally contain `address`; public DTOs
-omit that key completely. Discovery summaries remain viewer-independent and unchanged.
+omit that key completely. Summaries remain viewer-independent; migration 23 adds only the
+safe stored age/recommendation.
 No DTO exposes participant identities, emails, private age, roles or invitation data.
 Public/unlisted details can include past/cancelled events. Private details require the host
 or an existing membership. An unlisted URL, account role or sharing flag never grants address
@@ -89,17 +105,16 @@ address access, and subsequent private detail requests return the same 404 as mi
 
 Create is a strict object with required `title` (3–100 trimmed), `description` (10–5000
 trimmed), `gameId`, `cityId`, `address` (3–200 trimmed), `startsAt`, `endsAt`, `capacity`
-(integer 1–100) and `experienceLevel` (`all-levels`, `beginner`, `experienced`). Optional
+(integer 1–100) and `experienceLevel` (`all-levels`, `intermediate-plus`, `veteran-plus`). Optional
 `venue` accepts null/blank (stored null), otherwise 2–120 trimmed characters. Defaults are
 `minimumAge: 0` (integer 0–99), `price: 0` (EUR, 0–10000, at most two decimals), `tags: []`
 (at most six unique predefined values), `visibility: 'public'`, `coverStoragePath: null`.
 
 The game and city must exist; the city's country must be enabled and supported. Country,
 host, participant count, IDs and timestamps cannot be supplied. Starts must be future and
-end after start. Tags mirror the existing curated vocabulary: Beginner friendly, Veterans
-only, Casual, Competitive, One-shot, Campaign, Bring your own deck, Equipment provided.
-Beginner friendly requires all-levels/beginner; Veterans only requires experienced; the pair
-is mutually exclusive. PostgreSQL validates the final merged values as well as the API.
+end after start. New tags: Casual, Competitive, One-shot, Campaign, Bring your own deck,
+Equipment provided. Atmosphere and session-format pairs are exclusive. PostgreSQL validates
+the final merged values as well as the API, preserving unchanged historical rules above.
 
 PATCH is a strict nonempty partial create payload plus optional `status` (`scheduled` or
 `cancelled`). It preserves host/identity/attendance and validates the merged schedule,
@@ -140,9 +155,10 @@ host and full-event conflicts return 409 `CONFLICT`. Invalid IDs/payloads/query 
 participant cannot repeat a join/leave on a past/cancelled event. The start boundary is checked
 against actual time after acquiring the event lock.
 
-Any verified account may join public/unlisted events when those checks pass. Event experience,
-tags and minimum age remain guidance; optional private birth year or claimed game experience
-does not gate participation. A repeat join by a current participant is a no-op even if full.
+Any active verified account may join public/unlisted events when those checks pass and
+private DOB satisfies any minimum age. Failure returns 403 AGE_REQUIREMENT_NOT_MET; missing
+complete DOB returns 403 AGE_INFORMATION_REQUIRED. Skill/tags remain advisory. A repeat join
+by a current participant is a no-op even if full and does not reassess age.
 An accessible public/unlisted nonmember leave is a no-op. No-ops preserve membership timestamps,
 event count and updatedAt. The host is never a participant and gets a conflict on either action.
 
