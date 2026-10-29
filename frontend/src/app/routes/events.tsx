@@ -27,10 +27,11 @@ export function Events() {
         </div>
       </div>
       <p className="mt-4 max-w-2xl leading-relaxed text-muted-foreground">
-        Explore upcoming public tables and find a seat that feels like yours. Choose a country and city, or
-        browse every game night in the community.
+        Explore upcoming public tables and find a seat that feels like yours. Choose a country and city,
+        or browse every game night in the community.
       </p>
       <EventsList
+        session={session}
         games={games.data}
         gamesPending={games.isPending}
         gamesError={Boolean(games.error)}

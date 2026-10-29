@@ -1,14 +1,19 @@
-import { Link } from 'react-router'
+import { Link, useSearchParams } from 'react-router'
+import { safeReturnTo, loginPath } from '@/lib/auth-navigation'
 import { CircleCheck, CircleAlert, LoaderCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '../api/use-auth'
 import { AuthShell } from './auth-shell'
 
 export function AuthCallback() {
+  const [params] = useSearchParams()
+  const returnTo = params.has('returnTo') ? safeReturnTo(params.get('returnTo')) : undefined
   const auth = useAuth()
   return (
     <AuthShell
-      title={auth.isPending ? 'Confirming your email' : auth.data ? 'Email confirmed' : 'Unable to confirm'}
+      title={
+        auth.isPending ? 'Confirming your email' : auth.data ? 'Email confirmed' : 'Unable to confirm'
+      }
     >
       {auth.isPending ? (
         <div role="status" className="space-y-4 text-center">
@@ -22,18 +27,20 @@ export function AuthCallback() {
             Your email is confirmed and you are logged in.
           </p>
           <Button asChild className="w-full">
-            <Link to="/account">Continue to your account</Link>
+            <Link to={returnTo ?? '/account'}>
+              {returnTo ? 'Continue to your event' : 'Continue to your account'}
+            </Link>
           </Button>
         </div>
       ) : (
         <div className="space-y-6 text-center">
           <CircleAlert className="mx-auto size-10 text-muted-foreground" aria-hidden="true" />
           <p role="alert" className="text-sm text-muted-foreground">
-            This link may have expired, already been used or opened in another browser. Go to login to request
-            a fresh confirmation.
+            This link may have expired, already been used or opened in another browser. Go to login to
+            request a fresh confirmation.
           </p>
           <Button asChild className="w-full">
-            <Link to="/login">Go to login</Link>
+            <Link to={returnTo ? loginPath(returnTo) : '/login'}>Go to login</Link>
           </Button>
         </div>
       )}

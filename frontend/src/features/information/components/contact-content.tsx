@@ -7,6 +7,7 @@ import { publicSupportEmail } from '../contact-config'
 export function ContactContent() {
   return (
     <div className="mx-auto max-w-4xl space-y-8 py-4 md:space-y-12 md:py-8">
+      <BackLink to="/">Back to discovery</BackLink>
       <header className="max-w-2xl space-y-4">
         <p className="text-xs font-semibold tracking-widest text-primary uppercase">Keep in touch</p>
         <h1 className="text-3xl font-bold tracking-tight">Contact Us</h1>
@@ -69,7 +70,6 @@ export function ContactContent() {
           <Link to="/events">Explore events</Link>
         </Button>
       </section>
-      <BackLink to="/">Back to discovery</BackLink>
     </div>
   )
 }

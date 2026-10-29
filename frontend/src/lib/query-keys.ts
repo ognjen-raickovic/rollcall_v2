@@ -1,5 +1,6 @@
 // Shared by account lifecycle cleanup and viewer-specific event queries.
 export const EVENT_DETAILS_QUERY_KEY = ['persistent-event-details'] as const
+export const EVENT_VIEWER_QUERY_KEY = ['event-viewer-status'] as const
 export const EVENT_COVER_QUERY_KEY = ['persistent-event-covers'] as const
 export const ADMIN_QUERY_KEY = ['administration'] as const
 export const ACCOUNT_STATUS_QUERY_KEY = ['account-status'] as const

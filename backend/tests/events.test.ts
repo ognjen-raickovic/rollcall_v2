@@ -84,6 +84,13 @@ function routeApp() {
       const note = (operation: string, input?: unknown, actor?: string) =>
         calls.push({ operation, input, actor, token })
       const repository: EventRepository = {
+        viewerStatus: async (eventIds, actor) => {
+          note('viewerStatus', eventIds, actor)
+          return {
+            userId: actor,
+            items: eventIds.map((eventId) => ({ eventId, isHost: actor === hostId, hasJoined: false })),
+          }
+        },
         list: async (filters) => {
           note('list', filters)
           return { items: [summary], pageInfo: { limit: filters.limit, nextCursor: null } }
@@ -117,6 +124,38 @@ function routeApp() {
   })
   return { app, calls }
 }
+
+test('viewer batch validates bounds and derives ownership only from verified tokens', async (t) => {
+  const { app, calls } = routeApp()
+  t.after(() => app.close())
+  const url = '/api/events/viewer-status',
+    payload = { eventIds: [eventId] },
+    headers = { authorization: 'Bearer e30.e30.verified' }
+  assert.equal((await app.inject({ method: 'POST', url, payload })).statusCode, 401)
+  const value = await app.inject({ method: 'POST', url, headers, payload })
+  assert.equal(value.statusCode, 200)
+  assert.equal(value.headers['cache-control'], 'no-store')
+  assert.equal(value.headers.vary, 'Authorization')
+  assert.deepEqual(value.json(), {
+    userId: hostId,
+    items: [{ eventId, isHost: true, hasJoined: false }],
+  })
+  assert.equal(calls.at(-1)?.actor, hostId)
+  const count = calls.length
+  for (const body of [
+    { eventIds: [] },
+    { eventIds: [eventId, eventId] },
+    { eventIds: Array.from({ length: 51 }, () => randomUUID()) },
+    { eventIds: ['1'] },
+    { ...payload, userId: otherId },
+  ])
+    assert.equal((await app.inject({ method: 'POST', url, headers, payload: body })).statusCode, 400)
+  assert.equal(calls.length, count)
+  assert.equal(
+    (await app.inject({ method: 'POST', url: url + '?userId=' + otherId, headers, payload })).statusCode,
+    400,
+  )
+})
 
 test('event discovery validates bounded filters and preserves cursor precision and literal search', async (t) => {
   const { app, calls } = routeApp()
@@ -182,7 +221,9 @@ test('event discovery validates bounded filters and preserves cursor precision a
       cursor: Buffer.from(JSON.stringify({ startsAt, id: '1' })).toString('base64url'),
     }).toString(),
     new URLSearchParams({
-      cursor: Buffer.from(JSON.stringify({ startsAt, id: eventId, actor: hostId })).toString('base64url'),
+      cursor: Buffer.from(JSON.stringify({ startsAt, id: eventId, actor: hostId })).toString(
+        'base64url',
+      ),
     }).toString(),
     new URLSearchParams({ startsAfter: endsAt, startsBefore: startsAt }).toString(),
   ])
@@ -276,7 +317,8 @@ test('event routes require verified UUID actors, allowlist create/patch fields a
     { coverStoragePath: '/covers/fake.png' },
   ]) {
     assert.equal(
-      (await app.inject({ method: 'PATCH', url: `/api/events/${eventId}`, headers, payload })).statusCode,
+      (await app.inject({ method: 'PATCH', url: `/api/events/${eventId}`, headers, payload }))
+        .statusCode,
       400,
     )
   }
@@ -365,7 +407,9 @@ test('event adapter isolates caller headers and projects public versus host deta
   assert.deepEqual(page.items, [summary])
   assert.equal(page.pageInfo.limit, 1)
   assert.equal(page.pageInfo.nextCursor, encodeEventCursor(summary))
-  assert.deepEqual(calls.find((call) => call.path.endsWith('/discover_events'))?.body, { p_filters: filters })
+  assert.deepEqual(calls.find((call) => call.path.endsWith('/discover_events'))?.body, {
+    p_filters: filters,
+  })
   const defaults = {
     ...createInput,
     experienceLevel: 'all-levels' as const,
@@ -379,7 +423,9 @@ test('event adapter isolates caller headers and projects public versus host deta
   await first.create(defaults, hostId)
   await first.update(eventId, { title: 'Changed title' }, hostId)
   await first.remove(eventId)
-  assert.deepEqual(calls.find((call) => call.path.endsWith('/create_event'))?.body, { p_input: defaults })
+  assert.deepEqual(calls.find((call) => call.path.endsWith('/create_event'))?.body, {
+    p_input: defaults,
+  })
   assert.deepEqual(calls.find((call) => call.path.endsWith('/update_event'))?.body, {
     p_event_id: eventId,
     p_patch: { title: 'Changed title' },
@@ -389,7 +435,9 @@ test('event adapter isolates caller headers and projects public versus host deta
     await assert.rejects(
       second.get(eventId, actor),
       (error: unknown) =>
-        error instanceof ApiError && error.status === 404 && error.message === 'This event does not exist.',
+        error instanceof ApiError &&
+        error.status === 404 &&
+        error.message === 'This event does not exist.',
     )
   }
   assert.equal((await first.get(eventId, hostId)).visibility, 'private')

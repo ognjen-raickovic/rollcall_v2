@@ -1,12 +1,13 @@
 ﻿import { Search, SlidersHorizontal, X } from 'lucide-react'
 import { Form, Link, useSearchParams } from 'react-router'
-import type { ReactNode } from 'react'
+import { useState, useId, type ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { FormSelect } from '@/components/form-select'
 import { SELECTABLE_EVENT_TAGS } from '../event-tags'
 import { SORT_LABELS } from '../event-discovery-filters'
+import { GAME_CATEGORY_LABELS } from '@/lib/game-categories'
 
 type EventFiltersProps = {
   params: URLSearchParams
@@ -25,6 +26,8 @@ export function EventFilters({ params, locationFilters, games, pending }: EventF
   const active = [...params.keys()].filter(
     (key) => !['city', 'region', 'limit', 'timeZone', 'sort'].includes(key) && Boolean(value(key)),
   ).length
+  const [expanded, setExpanded] = useState(advanced)
+  const panelId = useId()
   return (
     <Form
       key={params.toString()}
@@ -107,112 +110,130 @@ export function EventFilters({ params, locationFilters, games, pending }: EventF
           </FormSelect>
         </div>
       </div>
-      <details open={advanced || undefined} className="rounded-lg border p-4">
-        <summary className="cursor-pointer text-sm font-medium focus-visible:outline-2 focus-visible:outline-ring">
+      <div className="rounded-lg border p-4">
+        <button
+          type="button"
+          aria-expanded={expanded}
+          aria-controls={panelId}
+          onClick={() => setExpanded((value) => !value)}
+          className="flex min-h-8 cursor-pointer items-center gap-2 text-sm font-medium focus-visible:outline-2 focus-visible:outline-ring"
+        >
+          <SlidersHorizontal className="size-4" aria-hidden="true" />
           More filters
-        </summary>
-        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <div className="space-y-2">
-            <Label htmlFor="event-from">Start date from</Label>
-            <Input
-              id="event-from"
-              name="from"
-              type="date"
-              defaultValue={value('from')}
-              className="h-11"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="event-to">Start date to</Label>
-            <Input id="event-to" name="to" type="date" defaultValue={value('to')} className="h-11" />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="event-period">Event timing</Label>
-            <FormSelect id="event-period" name="period" defaultValue={value('period') || 'upcoming'}>
-              <option value="upcoming">Upcoming</option>
-              <option value="past">Finished</option>
-              <option value="all">Any scheduled event</option>
-            </FormSelect>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="event-time-from">Start time from</Label>
-            <Input
-              id="event-time-from"
-              name="timeFrom"
-              type="time"
-              defaultValue={value('timeFrom')}
-              className="h-11"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="event-time-to">Start time to</Label>
-            <Input
-              id="event-time-to"
-              name="timeTo"
-              type="time"
-              defaultValue={value('timeTo')}
-              className="h-11"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="event-experience">Recommended experience</Label>
-            <FormSelect id="event-experience" name="experience" defaultValue={value('experience')}>
-              <option value="">Any experience</option>
-              <option value="all-levels">All-levels events only</option>
-              <option value="intermediate-plus">Intermediate+ events only</option>
-              <option value="veteran-plus">Veteran+ events only</option>
-              <option value="beginner">Beginner or all levels (legacy)</option>
-              <option value="experienced">Experienced or all levels (legacy)</option>
-            </FormSelect>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="event-age">Advertised minimum age at most</Label>
-            <Input
-              id="event-age"
-              name="maxMinimumAge"
-              type="number"
-              min={0}
-              max={99}
-              defaultValue={value('maxMinimumAge')}
-              placeholder="Any age requirement"
-              className="h-11"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="event-category">Game category</Label>
-            <FormSelect id="event-category" name="category" defaultValue={value('category')}>
-              <option value="">All categories</option>
-              <option value="role-playing">Role-playing</option>
-              <option value="trading-card">Trading cards</option>
-              <option value="board-game">Board games</option>
-              <option value="social-deduction">Social deduction</option>
-            </FormSelect>
+        </button>
+        <div
+          id={panelId}
+          className={`grid transition-[grid-template-rows] duration-250 ease-in-out motion-reduce:transition-none ${expanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}
+          inert={!expanded}
+          aria-hidden={!expanded}
+        >
+          <div className="min-h-0 overflow-hidden">
+            <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="space-y-2">
+                <Label htmlFor="event-from">Start date from</Label>
+                <Input
+                  id="event-from"
+                  name="from"
+                  type="date"
+                  defaultValue={value('from')}
+                  className="h-11"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="event-to">Start date to</Label>
+                <Input id="event-to" name="to" type="date" defaultValue={value('to')} className="h-11" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="event-period">Event timing</Label>
+                <FormSelect id="event-period" name="period" defaultValue={value('period') || 'upcoming'}>
+                  <option value="upcoming">Upcoming</option>
+                  <option value="past">Finished</option>
+                  <option value="all">Any scheduled event</option>
+                </FormSelect>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="event-time-from">Start time from</Label>
+                <Input
+                  id="event-time-from"
+                  name="timeFrom"
+                  type="time"
+                  defaultValue={value('timeFrom')}
+                  className="h-11"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="event-time-to">Start time to</Label>
+                <Input
+                  id="event-time-to"
+                  name="timeTo"
+                  type="time"
+                  defaultValue={value('timeTo')}
+                  className="h-11"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="event-experience">Recommended experience</Label>
+                <FormSelect id="event-experience" name="experience" defaultValue={value('experience')}>
+                  <option value="">Any experience</option>
+                  <option value="all-levels">All-levels events only</option>
+                  <option value="intermediate-plus">Intermediate+ events only</option>
+                  <option value="veteran-plus">Veteran+ events only</option>
+                  <option value="beginner">Beginner or all levels (legacy)</option>
+                  <option value="experienced">Experienced or all levels (legacy)</option>
+                </FormSelect>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="event-age">Advertised minimum age at most</Label>
+                <Input
+                  id="event-age"
+                  name="maxMinimumAge"
+                  type="number"
+                  min={0}
+                  max={99}
+                  defaultValue={value('maxMinimumAge')}
+                  placeholder="Any age requirement"
+                  className="h-11"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="event-category">Game category</Label>
+                <FormSelect id="event-category" name="category" defaultValue={value('category')}>
+                  <option value="">All categories</option>
+                  {Object.entries(GAME_CATEGORY_LABELS).map(([id, label]) => (
+                    <option key={id} value={id}>
+                      {label}
+                    </option>
+                  ))}
+                </FormSelect>
+              </div>
+            </div>
+            <input type="hidden" name="timeZone" value={zone} />
+            <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
+              Dates include both selected days in your browser timezone. Time filters match event start
+              times, including the selected minute, in {zone}; overnight ranges are not supported.
+              Experience includes all-levels tables where stated. Age is an event requirement, not your
+              private age.
+            </p>
+            <fieldset className="mt-4 space-y-3">
+              <legend className="text-sm font-medium">Tags · match all selected (up to six)</legend>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                {SELECTABLE_EVENT_TAGS.map((tag) => (
+                  <label key={tag} className="flex cursor-pointer items-start gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      name="tags"
+                      value={tag}
+                      defaultChecked={value('tags').split(',').includes(tag)}
+                      className="mt-1 accent-primary"
+                    />
+                    {tag}
+                  </label>
+                ))}
+              </div>
+            </fieldset>
           </div>
         </div>
-        <input type="hidden" name="timeZone" value={zone} />
-        <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
-          Dates include both selected days in your browser timezone. Time filters match event start
-          times, including the selected minute, in {zone}; overnight ranges are not supported. Experience
-          includes all-levels tables where stated. Age is an event requirement, not your private age.
-        </p>
-        <fieldset className="mt-4 space-y-3">
-          <legend className="text-sm font-medium">Tags · match all selected (up to six)</legend>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {SELECTABLE_EVENT_TAGS.map((tag) => (
-              <label key={tag} className="flex cursor-pointer items-start gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  name="tags"
-                  value={tag}
-                  defaultChecked={value('tags').split(',').includes(tag)}
-                  className="mt-1 accent-primary"
-                />
-                {tag}
-              </label>
-            ))}
-          </div>
-        </fieldset>
-      </details>
+      </div>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="w-full space-y-2 sm:w-52">
           <Label htmlFor="event-sort">Sort by</Label>

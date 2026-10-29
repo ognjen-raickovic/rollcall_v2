@@ -7,11 +7,13 @@ import { Skeleton } from '@/components/ui/skeleton'
 
 import { discoveryFromUrl, SORT_LABELS } from '../event-discovery-filters'
 import { usePersistentEvents } from '../api/use-persistent-events'
-import { EventCard } from './event-card'
+import { EventCards } from './event-cards'
+import type { EventBrowseSession } from '../api/event-viewer-api'
 import { EventFilters } from './event-filters'
 import { EventNotice } from './event-notice'
 
 type EventsListProps = {
+  session: EventBrowseSession
   games?: { id: number; name: string; category: string }[]
   gamesPending: boolean
   gamesError: boolean
@@ -25,6 +27,7 @@ export function EventsList({
   gamesError,
   retryGames,
   locationFilters,
+  session,
 }: EventsListProps) {
   const [params, setParams] = useSearchParams()
   const city = params.get('city') ?? ''
@@ -33,7 +36,9 @@ export function EventsList({
   const invalid = Boolean(parsed.error)
   const result = usePersistentEvents(parsed.filters, !invalid)
   const loaded = result.data?.pages.flatMap((page) => page.items) ?? []
-  const unique = loaded.filter((event, index) => loaded.findIndex((item) => item.id === event.id) === index)
+  const unique = loaded.filter(
+    (event, index) => loaded.findIndex((item) => item.id === event.id) === index,
+  )
   const events = unique
   const pending = result.isPending || gamesPending
   const loadError = result.isFetchNextPageError
@@ -45,7 +50,13 @@ export function EventsList({
   return (
     <div className="mt-8 space-y-6">
       <EventNotice />
-      <EventFilters params={params} locationFilters={locationFilters} games={games} pending={gamesPending} />
+      <EventFilters
+        key={params.toString()}
+        params={params}
+        locationFilters={locationFilters}
+        games={games}
+        pending={gamesPending}
+      />
       {invalid ? (
         <div role="alert" className="space-y-4 rounded-xl border bg-card p-8">
           <p className="font-semibold">One of these filters isn’t valid.</p>
@@ -55,7 +66,11 @@ export function EventsList({
           </Button>
         </div>
       ) : pending ? (
-        <div role="status" aria-label="Loading events" className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div
+          role="status"
+          aria-label="Loading events"
+          className="grid gap-6 md:grid-cols-2 lg:grid-cols-3"
+        >
           {Array.from({ length: 6 }, (_, index) => (
             <Skeleton key={index} className="h-96" />
           ))}
@@ -63,7 +78,9 @@ export function EventsList({
       ) : error ? (
         <div role="alert" className="space-y-4 rounded-xl border bg-card p-8">
           <p className="font-semibold">We couldn’t load the event collection.</p>
-          <p className="text-sm text-muted-foreground">Please try again. Your filters will stay in place.</p>
+          <p className="text-sm text-muted-foreground">
+            Please try again. Your filters will stay in place.
+          </p>
           <Button variant="outline" onClick={retry}>
             Try again
           </Button>
@@ -85,24 +102,20 @@ export function EventsList({
                   {SORT_LABELS[parsed.filters.sort ?? 'soonest']} · Times shown in your local timezone
                 </p>
               </div>
-              <ul className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {events.map((event) => (
-                  <li key={event.id}>
-                    <EventCard event={event} />
-                  </li>
-                ))}
-              </ul>
             </>
           ) : (
             <div role="status" className="space-y-4 rounded-xl border bg-card p-8 text-center">
               <CalendarDays className="mx-auto size-8 text-primary" aria-hidden="true" />
               <p className="font-semibold">No events match your filters.</p>
-              <p className="text-sm text-muted-foreground">Try another country, city, game or date range.</p>
+              <p className="text-sm text-muted-foreground">
+                Try another country, city, game or date range.
+              </p>
               <Button variant="outline" onClick={() => setParams({})}>
                 Show all upcoming events
               </Button>
             </div>
           )}
+          <EventCards events={events} session={session} preview />
           {loadError && (
             <div role="alert" className="space-y-3 rounded-xl border bg-card p-4">
               <p className="text-sm text-muted-foreground">
@@ -120,7 +133,9 @@ export function EventsList({
                 disabled={result.isFetchingNextPage}
                 onClick={() => void result.fetchNextPage()}
               >
-                {result.isFetchingNextPage && <LoaderCircle className="animate-spin" aria-hidden="true" />}
+                {result.isFetchingNextPage && (
+                  <LoaderCircle className="animate-spin" aria-hidden="true" />
+                )}
                 {result.isFetchingNextPage ? 'Loading more events...' : 'Load more events'}
               </Button>
             </div>

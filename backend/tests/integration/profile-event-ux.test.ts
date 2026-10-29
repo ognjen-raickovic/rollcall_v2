@@ -123,6 +123,19 @@ test(
       response = await create(input)
       assert.equal(response.statusCode, 201)
       const id = response.json().id
+      const batch = async (actor: { token: string }, eventIds: string[]) =>
+        app.inject({
+          method: 'POST',
+          url: '/api/events/viewer-status',
+          headers: headers(actor),
+          payload: { eventIds },
+        })
+      let state = await batch(host, [id])
+      assert.equal(state.statusCode, 200)
+      assert.deepEqual(state.json(), {
+        userId: host.id,
+        items: [{ eventId: id, isHost: true, hasJoined: false }],
+      })
       const join = (actor: { token: string }) =>
         app.inject({
           method: 'POST',
@@ -204,6 +217,9 @@ test(
       await locker.query('commit')
       assert.equal((await editing).statusCode, 200)
       assert.equal((await join(player)).statusCode, 200, 'Existing seat remains idempotent after edits')
+      assert.deepEqual((await batch(player, [id])).json().items, [
+        { eventId: id, isHost: false, hasJoined: true },
+      ])
       assert.equal(
         (
           await app.inject({
@@ -215,6 +231,9 @@ test(
         200,
       )
       assert.equal((await join(player)).statusCode, 403, 'A fresh rejoin checks edited requirements')
+      assert.deepEqual((await batch(player, [id])).json().items, [
+        { eventId: id, isHost: false, hasJoined: false },
+      ])
       response = await create({ ...input, title: 'Last eligible seat' })
       assert.equal(response.statusCode, 201)
       const last = response.json().id
@@ -247,6 +266,10 @@ test(
           url: '/api/events/' + privateId + '/invitation',
           headers: headers(host),
         })
+      state = await batch(player, [privateId])
+      assert.equal(state.statusCode, 200)
+      assert.deepEqual(state.json().items, [])
+      assert.equal((await batch(host, [privateId])).json().items[0].isHost, true)
       assert.equal(invitation.statusCode, 200)
       const code = invitation.json().code
       response = await app.inject({

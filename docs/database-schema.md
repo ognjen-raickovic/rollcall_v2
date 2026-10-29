@@ -9,6 +9,14 @@ triggers remain intact. See [current profile contracts](profiles.md).
 
 ## Forward migrations 22–23: profile/event requirements
 
+Forward migration 24, `20261028000300_event_viewer_status.sql`, adds only bounded
+`event_viewer_status(uuid[])` and its checked private implementation. It reuses the
+NOLOGIN/NOBYPASS event executor, live active-account guard and existing event/self-membership
+RLS. No table grants, policies, Auth triggers, Storage restrictions or attendance bodies
+change. Public/anon EXECUTE is revoked; authenticated callers receive self-only flags for
+explicit accessible IDs. Temporary ownership-transfer privileges are revoked. See
+[contracts and tests](event-discovery-ux.md).
+
 `20261028000100_username_case_correction.sql` adds owner-only compare-and-swap username
 capitalization correction; profile lower-case uniqueness remains unchanged. Its NOLOGIN/
 NOBYPASS executor has only id/username SELECT and username UPDATE under active-owner RLS.

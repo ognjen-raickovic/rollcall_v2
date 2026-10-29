@@ -5,6 +5,7 @@ import {
   ADMIN_QUERY_KEY,
   EVENT_COVER_QUERY_KEY,
   EVENT_DETAILS_QUERY_KEY,
+  EVENT_VIEWER_QUERY_KEY,
 } from '@/lib/query-keys'
 
 import { authApi } from './auth-api'
@@ -29,9 +30,12 @@ export function useApiSession() {
   )
   return {
     viewerId,
+    signedIn: Boolean(account.data),
     getAccessToken,
     ready:
-      !account.isPending && !account.error && (!actor || suspended || (!status.isPending && !status.error)),
+      !account.isPending &&
+      !account.error &&
+      (!actor || suspended || (!status.isPending && !status.error)),
     error: account.error ?? status.error,
   }
 }
@@ -53,6 +57,7 @@ export function useAuthLogin() {
   return useMutation({
     mutationFn: authApi.login,
     onSuccess: (account) => {
+      client.removeQueries({ queryKey: EVENT_VIEWER_QUERY_KEY })
       client.removeQueries({ queryKey: ['my-events'] })
       client.removeQueries({ queryKey: ACCOUNT_STATUS_QUERY_KEY })
       client.removeQueries({ queryKey: ADMIN_QUERY_KEY })
@@ -69,6 +74,7 @@ export function useRegister() {
   return useMutation({
     mutationFn: authApi.register,
     onSuccess: ({ account }) => {
+      client.removeQueries({ queryKey: EVENT_VIEWER_QUERY_KEY })
       client.removeQueries({ queryKey: EVENT_DETAILS_QUERY_KEY })
       client.removeQueries({ queryKey: EVENT_COVER_QUERY_KEY })
       if (account) client.setQueryData(authKey, account)
@@ -88,6 +94,7 @@ export function useAuthLogout() {
         cache.remove(mutation)
     },
     onSuccess: () => {
+      client.removeQueries({ queryKey: EVENT_VIEWER_QUERY_KEY })
       client.removeQueries({ queryKey: ['my-events'] })
       client.removeQueries({ queryKey: ACCOUNT_STATUS_QUERY_KEY })
       client.removeQueries({ queryKey: ADMIN_QUERY_KEY })
@@ -116,6 +123,7 @@ export function useUpdatePassword() {
   return useMutation({
     mutationFn: authApi.updatePassword,
     onSuccess: () => {
+      client.removeQueries({ queryKey: EVENT_VIEWER_QUERY_KEY })
       client.removeQueries({ queryKey: EVENT_DETAILS_QUERY_KEY })
       client.removeQueries({ queryKey: EVENT_COVER_QUERY_KEY })
       client.setQueryData(authKey, null)
@@ -125,5 +133,10 @@ export function useUpdatePassword() {
 }
 
 export function useRecoverySession() {
-  return useQuery({ queryKey: recoveryKey, queryFn: () => false, initialData: false, staleTime: Infinity })
+  return useQuery({
+    queryKey: recoveryKey,
+    queryFn: () => false,
+    initialData: false,
+    staleTime: Infinity,
+  })
 }

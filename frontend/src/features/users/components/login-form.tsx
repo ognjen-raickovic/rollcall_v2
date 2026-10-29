@@ -11,7 +11,10 @@ import { AuthField } from './auth-fields'
 import { AuthShell } from './auth-shell'
 import { AuthenticationError } from '../api/auth-errors'
 
-const schema = z.object({ email: emailSchema, password: z.string().min(1, 'Enter your password.').max(256) })
+const schema = z.object({
+  email: emailSchema,
+  password: z.string().min(1, 'Enter your password.').max(256),
+})
 
 export function LoginForm() {
   const [params] = useSearchParams()
@@ -27,7 +30,11 @@ export function LoginForm() {
   if (auth.data) return <Navigate to={returnTo} replace />
   return (
     <AuthShell title="Welcome back" description="Log in to your RollCall account.">
-      <form className="space-y-4" noValidate onSubmit={form.handleSubmit((values) => login.mutate(values))}>
+      <form
+        className="space-y-4"
+        noValidate
+        onSubmit={form.handleSubmit((values) => login.mutate(values))}
+      >
         {params.get('passwordUpdated') === 'true' && (
           <p role="status" className="text-sm text-primary">
             Password updated. Log in with your new password.
@@ -73,7 +80,12 @@ export function LoginForm() {
         </Link>
         <p className="text-muted-foreground">
           New to RollCall?{' '}
-          <Link className="text-primary hover:underline" to="/register">
+          <Link
+            className="text-primary hover:underline"
+            to={
+              params.has('returnTo') ? `/register?returnTo=${encodeURIComponent(returnTo)}` : '/register'
+            }
+          >
             Create an account
           </Link>
         </p>

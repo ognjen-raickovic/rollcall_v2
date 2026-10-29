@@ -1,6 +1,7 @@
 import { GameSymbol } from '@/components/game-symbol'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
+import { gameCategoryLabel } from '@/lib/game-categories'
 
 import { useGame } from '../api/use-games'
 
@@ -31,6 +32,7 @@ export function GameSummary({ gameId }: GameSummaryProps) {
       <div>
         <p className="text-xs text-muted-foreground">The game</p>
         <p className="font-semibold">{game.data.name}</p>
+        <p className="text-sm text-muted-foreground">{gameCategoryLabel(game.data.category)}</p>
       </div>
     </div>
   )

@@ -229,6 +229,23 @@ export const eventDiscoverySchema = z
 
 export const eventIdSchema = z.strictObject({ eventId: z.uuid() })
 export const noQuerySchema = z.strictObject({})
+export const viewerStatusInputSchema = z.strictObject({
+  eventIds: z
+    .array(z.uuid())
+    .min(1)
+    .max(50)
+    .refine((ids) => new Set(ids).size === ids.length, 'Choose each event once.'),
+})
+export const viewerStatusSchema = z.object({
+  userId: z.uuid(),
+  items: z
+    .array(
+      z
+        .object({ eventId: z.uuid(), isHost: z.boolean(), hasJoined: z.boolean() })
+        .refine((item) => !(item.isHost && item.hasJoined)),
+    )
+    .max(50),
+})
 export const attendanceBodySchema = z.strictObject({}).optional()
 
 const summaryFields = {

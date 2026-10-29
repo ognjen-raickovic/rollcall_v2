@@ -39,6 +39,9 @@ for both assistants. Read `../SPEC.md`, `../docs/entities.md`,
   and valid game/experience values in SQL as well as API validation. Public responses contain no
   email, private age/declaration or role information. Keep the registration initializer unchanged.
 - Read `../docs/events-api.md` for event contracts. Use bounded checked RPCs, not broad table
+  grants. The migration-24 viewer-status batch projects only current-actor flags for up to
+  50 explicit accessible IDs; never mix it into anonymous discovery or expose other members.
+  See `../docs/event-discovery-ux.md`. Preserve existing private-detail protections and table
   grants. Private details/addresses require the verified host or current participant in 4B;
   roles/sharing flags grant no access. Attendance derives its actor from Auth, locks the
   event and rechecks visibility/state/actual time before mutations/no-ops. Reuse membership

@@ -1,7 +1,12 @@
-import { useMutation, useQueryClient, type QueryClient, type UseMutationOptions } from '@tanstack/react-query'
+import {
+  useMutation,
+  useQueryClient,
+  type QueryClient,
+  type UseMutationOptions,
+} from '@tanstack/react-query'
 
 import { HttpError } from '@/lib/http-client'
-import { EVENT_DETAILS_QUERY_KEY } from '@/lib/query-keys'
+import { EVENT_DETAILS_QUERY_KEY, EVENT_VIEWER_QUERY_KEY } from '@/lib/query-keys'
 import { eventDetailsSchema, isEventId } from './event-dtos'
 import type { EventDetails } from './event-dtos'
 import type {
@@ -23,7 +28,9 @@ function changedAccount() {
 }
 
 function current(client: QueryClient, viewerId: string | null): viewerId is string {
-  return isEventId(viewerId) && client.getQueryData<{ id: string } | null>(['auth-account'])?.id === viewerId
+  return (
+    isEventId(viewerId) && client.getQueryData<{ id: string } | null>(['auth-account'])?.id === viewerId
+  )
 }
 
 function detailKey(id: string, viewerId: string) {
@@ -31,6 +38,7 @@ function detailKey(id: string, viewerId: string) {
 }
 
 function invalidatePublic(client: QueryClient) {
+  void client.invalidateQueries({ queryKey: EVENT_VIEWER_QUERY_KEY })
   void client.invalidateQueries({ queryKey: ['my-events'] })
   void client.invalidateQueries({ queryKey: ['persistent-events'] })
 }
@@ -52,11 +60,46 @@ async function cacheHost(client: QueryClient, event: HostEventDetails, session: 
   invalidatePublic(client)
 }
 
-async function cacheAttendance(client: QueryClient, result: AttendanceResult, session: EventActionSession) {
+async function cacheAttendance(
+  client: QueryClient,
+  result: AttendanceResult,
+  session: EventActionSession,
+) {
   await invalidateEventCovers(client, result.eventId, () => current(client, session.viewerId))
   await client.cancelQueries({ queryKey: [...EVENT_DETAILS_QUERY_KEY, result.eventId] })
+  await Promise.all([
+    client.cancelQueries({ queryKey: [...EVENT_VIEWER_QUERY_KEY, session.viewerId] }),
+    client.cancelQueries({ queryKey: ['persistent-events'] }),
+    client.cancelQueries({ queryKey: ['my-events', session.viewerId] }),
+  ])
   if (!current(client, session.viewerId)) return
   const key = detailKey(result.eventId, session.viewerId)
+  // Apply only acknowledged counts/self-state, never optimistic membership or addresses.
+  client.setQueriesData<import('./event-viewer-api').EventViewerStatus[]>(
+    { queryKey: [...EVENT_VIEWER_QUERY_KEY, session.viewerId] },
+    (items) =>
+      items?.map((item) =>
+        item.eventId === result.eventId ? { ...item, hasJoined: result.hasJoined } : item,
+      ),
+  )
+  const updatePage = (page: import('./event-dtos').EventPage) => ({
+    ...page,
+    items: page.items.map((item) =>
+      item.id === result.eventId
+        ? {
+            ...item,
+            capacity: result.capacity,
+            participantCount: result.participantCount,
+            availableSlots: result.availableSlots,
+          }
+        : item,
+    ),
+  })
+  for (const queryKey of [['persistent-events'], ['my-events', session.viewerId]])
+    client.setQueriesData<{ pages: import('./event-dtos').EventPage[]; pageParams: unknown[] }>(
+      { queryKey },
+      (data) => (data ? { ...data, pages: data.pages.map(updatePage) } : data),
+    )
   removeOtherViewers(client, result.eventId, session.viewerId)
   const existing = client.getQueryData<EventDetails>(key)
   invalidatePublic(client)
@@ -132,7 +175,8 @@ function actionOptions<TValue, TResult>(
       await succeeded(result, value, session)
     },
     onError: async (error, { value, session }) => {
-      if (!current(client, session.viewerId) || (error instanceof HttpError && error.status === 400)) return
+      if (!current(client, session.viewerId) || (error instanceof HttpError && error.status === 400))
+        return
       const id = eventId(value)
       if (id) await client.cancelQueries({ queryKey: [...EVENT_DETAILS_QUERY_KEY, id] })
       if (!current(client, session.viewerId)) return

@@ -1,6 +1,7 @@
 import { CalendarDays, Gamepad2, Users } from 'lucide-react'
 import { Link } from 'react-router'
 import { Button } from '@/components/ui/button'
+import { BackLink } from '@/components/back-link'
 
 const activities = [
   {
@@ -25,6 +26,7 @@ const activities = [
 export function AboutContent() {
   return (
     <div className="mx-auto max-w-4xl space-y-8 py-4 md:space-y-12 md:py-8">
+      <BackLink to="/">Back to discovery</BackLink>
       <header className="max-w-2xl space-y-4">
         <p className="text-xs font-semibold tracking-widest text-primary uppercase">
           Offline games. Real connections.

@@ -39,6 +39,11 @@ You may talk to me in any language.
 
 ## Working in the monorepo
 
+For discovery UX (migration 24), follow @docs/event-discovery-ux.md: bounded self-only
+viewer batches, separate public queries, UUID cache destruction, acknowledged card actions
+and one shared EventDetails implementation for previews/full pages. Preserve all age,
+capacity, suspension, host-exclusion and private-code rules. No hosted rollout is implied.
+
 - One change that touches frontend and backend goes in one commit or pull request
 - When an entity changes, update `docs/entities.md` in the same change
 - Run commands from the root; scripts are forwarded with `pnpm --filter <package>`

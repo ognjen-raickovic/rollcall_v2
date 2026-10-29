@@ -123,6 +123,12 @@ checks using available tools; Claude hooks do not automatically run for Codex ed
 
 ## Profile/event UX follow-up (migrations 22–23)
 
+Read `docs/event-discovery-ux.md` for migration 24 and card/preview behavior. Keep public
+discovery separate from bounded authenticated self-status batches; never infer membership
+from missing rows or fetch full details per card. Destroy UUID-scoped viewer-status caches
+on Auth/access changes. Cards use acknowledged attendance results only. Preserve direct
+pages, background filters/focus/scroll, safe Auth return paths and all existing admission gates.
+
 Read `docs/profile-event-ux.md` for current contracts. Desktop greeting uses the verified
 public display name, independently of the handle; keep same-account verified data during
 background refetches and clear it on account/access changes. Username correction is owner-only,

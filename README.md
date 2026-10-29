@@ -13,6 +13,12 @@ on smaller screens. Account greetings use verified public profile names, never e
 Run `pnpm.cmd test:responsive-navigation` for focused responsive/focus/session checks;
 see [navigation behavior and verification](docs/navigation-discovery.md).
 
+Discovery now offers route-backed event previews, confirmed card Join/Leave/Manage actions
+and visibility badges. Forward migration 24 adds a bounded self-only viewer-status read;
+it does not alter admission or expose private details. Apply reviewed migrations before
+backend/frontend rollout. Run `pnpm.cmd test:discovery-ux` for focused client/browser checks.
+See [discovery UX contracts and verification](docs/event-discovery-ux.md).
+
 Public information pages are available at `/about` and `/contact`, linked in the footer.
 Contact links to the owner-approved public support address, `rollcallsupport@gmail.com`,
 through `mailto:`; visitors send messages using their own email app. There is no contact

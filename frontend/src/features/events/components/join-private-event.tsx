@@ -75,7 +75,9 @@ export function JoinPrivateEvent({ session }: { session: EventActionSession }) {
           onSubmit={(event) => {
             event.preventDefault()
             setLocalError('')
-            if (!/^[23456789ABCDEFGHJKLMNPQRSTUVWXYZ]{16}$/.test(code.toUpperCase().replace(/[ -]/g, ''))) {
+            if (
+              !/^[23456789ABCDEFGHJKLMNPQRSTUVWXYZ]{16}$/.test(code.toUpperCase().replace(/[ -]/g, ''))
+            ) {
               setLocalError('Enter a valid 16-character room code.')
               return
             }
@@ -115,11 +117,11 @@ export function JoinPrivateEvent({ session }: { session: EventActionSession }) {
           >
             {localError || control.error}
           </p>
-          <div className="flex flex-wrap justify-end gap-3">
+          <div className="grid grid-cols-2 gap-3">
+            <Button disabled={control.pending}>{control.pending ? 'Joining...' : 'Join event'}</Button>
             <Button type="button" variant="outline" disabled={control.pending} onClick={close}>
               Cancel
             </Button>
-            <Button disabled={control.pending}>{control.pending ? 'Joining...' : 'Join event'}</Button>
           </div>
         </form>
       </dialog>

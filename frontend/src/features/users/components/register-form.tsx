@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
-import { Link, Navigate } from 'react-router'
+import { Link, Navigate, useSearchParams } from 'react-router'
 import { z } from 'zod'
 import { Button } from '@/components/ui/button'
 import { emailSchema, passwordSchema } from '../api/auth-api'
@@ -9,6 +9,7 @@ import { useAuth, useRegister } from '../api/use-auth'
 import { AuthField } from './auth-fields'
 import { AuthShell } from './auth-shell'
 import { HttpError } from '@/lib/http-client'
+import { safeReturnTo, loginPath } from '@/lib/auth-navigation'
 
 const schema = z
   .object({
@@ -41,6 +42,8 @@ const schema = z
   })
 
 export function RegisterForm() {
+  const [params] = useSearchParams()
+  const returnTo = params.has('returnTo') ? safeReturnTo(params.get('returnTo')) : undefined
   const auth = useAuth()
   const register = useRegister()
   const configuration = authConfigurationError()
@@ -48,7 +51,7 @@ export function RegisterForm() {
     resolver: zodResolver(schema),
     defaultValues: { username: '', email: '', dateOfBirth: '', password: '', confirmation: '' },
   })
-  if (auth.data) return <Navigate to="/account" replace />
+  if (auth.data) return <Navigate to={returnTo ?? '/account'} replace />
   return (
     <AuthShell
       title={register.data?.confirmationRequired ? 'Check your email' : 'Create your account'}
@@ -61,11 +64,11 @@ export function RegisterForm() {
       {register.data?.confirmationRequired ? (
         <div className="space-y-4 text-center">
           <p role="status" className="text-sm text-muted-foreground">
-            If registration is available for this address, a confirmation link is on its way. Open it in this
-            browser to finish. Existing accounts can log in or reset their password.
+            If registration is available for this address, a confirmation link is on its way. Open it in
+            this browser to finish. Existing accounts can log in or reset their password.
           </p>
           <Button asChild className="w-full">
-            <Link to="/login">Go to login</Link>
+            <Link to={returnTo ? loginPath(returnTo) : '/login'}>Go to login</Link>
           </Button>
         </div>
       ) : (
@@ -73,12 +76,15 @@ export function RegisterForm() {
           noValidate
           className="space-y-4"
           onSubmit={form.handleSubmit(({ confirmation: _confirmation, ...values }) =>
-            register.mutate(values, {
-              onError: (error) => {
-                if (error instanceof HttpError && error.fields.username?.[0])
-                  form.setError('username', { message: error.fields.username[0] })
+            register.mutate(
+              { ...values, returnTo },
+              {
+                onError: (error) => {
+                  if (error instanceof HttpError && error.fields.username?.[0])
+                    form.setError('username', { message: error.fields.username[0] })
+                },
               },
-            }),
+            ),
           )}
         >
           {configuration && (
@@ -143,7 +149,10 @@ export function RegisterForm() {
           </Button>
           <p className="text-center text-sm text-muted-foreground">
             Already have an account?{' '}
-            <Link to="/login" className="text-primary hover:underline">
+            <Link
+              to={returnTo ? loginPath(returnTo) : '/login'}
+              className="text-primary hover:underline"
+            >
               Log in
             </Link>
           </p>
