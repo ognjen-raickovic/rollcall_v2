@@ -7,6 +7,12 @@ unprivileged; no deletion worker or deletion endpoint is enabled. See [profiles]
 
 ## Profile/event UX security follow-up
 
+The discovery UX extension adds a single authenticated POST batch self-status endpoint,
+with Zod/SQL bounds and response identity/allowlist validation. Missing/private-inaccessible
+rows are omitted; public discovery remains separate and never viewer-scoped. No full-detail
+N+1 reads or raw table grants are introduced. Existing attendance APIs supply acknowledged
+counts/state for UI cache updates; failed/ambiguous writes revalidate server truth.
+
 Forward migrations 22–23 add a narrow owner-only case-correction executor and a separate
 age executor. Only the latter can read owner DOB through RLS; event/invitation executors
 receive EXECUTE on the closed age helper, never DOB-column access. Existing checked admission

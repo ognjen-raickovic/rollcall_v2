@@ -5,6 +5,7 @@ import {
   ADMIN_QUERY_KEY,
   EVENT_DETAILS_QUERY_KEY,
   EVENT_COVER_QUERY_KEY,
+  EVENT_VIEWER_QUERY_KEY,
 } from '@/lib/query-keys'
 import { useAuth } from '../api/use-auth'
 import { useAccountStatus } from '../api/use-account-status'
@@ -18,7 +19,11 @@ export function AccountStatusSync() {
   useEffect(() => {
     const onSuspended = (event: Event) => {
       const id = (event as CustomEvent<{ viewerId?: string }>).detail?.viewerId
-      if (id && id === current.current && client.getQueryData<{ id: string }>(['auth-account'])?.id === id)
+      if (
+        id &&
+        id === current.current &&
+        client.getQueryData<{ id: string }>(['auth-account'])?.id === id
+      )
         client.setQueryData([...ACCOUNT_STATUS_QUERY_KEY, id], { status: 'suspended' })
     }
     window.addEventListener('rollcall:account-suspended', onSuspended)
@@ -30,6 +35,7 @@ export function AccountStatusSync() {
       ADMIN_QUERY_KEY,
       EVENT_DETAILS_QUERY_KEY,
       EVENT_COVER_QUERY_KEY,
+      EVENT_VIEWER_QUERY_KEY,
       ['own-profile'],
       ['profile-experience'],
       ['account-identity'],

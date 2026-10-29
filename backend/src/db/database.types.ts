@@ -49,6 +49,7 @@ export type Database = {
     }
     Views: Record<string, never>
     Functions: {
+      event_viewer_status: { Args: { p_event_ids: string[] }; Returns: Json }
       correct_my_username_case: { Args: { p_username: string; p_expected: string }; Returns: Json }
       replace_my_game_experience: { Args: { p_games: Json; p_expected: Json }; Returns: Json }
       prepare_registration: {

@@ -8,6 +8,7 @@ import type {
   participantEventDetailsSchema,
   publicEventDetailsSchema,
   updateEventSchema,
+  viewerStatusSchema,
 } from './event-schema.js'
 
 export type EventSummary = z.infer<typeof eventSummarySchema>
@@ -22,6 +23,7 @@ export type EventDiscoveryFilters = z.infer<typeof eventDiscoverySchema>
 export type EventPage = { items: EventSummary[]; pageInfo: { limit: number; nextCursor: string | null } }
 
 export interface EventRepository {
+  viewerStatus(eventIds: string[], expectedUserId: string): Promise<z.infer<typeof viewerStatusSchema>>
   list(filters: EventDiscoveryFilters): Promise<EventPage>
   get(eventId: string, expectedUserId?: string): Promise<EventDetails>
   create(input: NewEvent, expectedHostId: string): Promise<HostEventDetails>

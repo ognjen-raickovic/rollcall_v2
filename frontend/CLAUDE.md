@@ -43,6 +43,12 @@ Dependency direction: shared code -> features -> app, never the other way around
 
 ## RollCall scope
 
+Read `../docs/event-discovery-ux.md` for current card actions, viewer-status batches and
+route-backed previews. Public queries remain anonymous; self-status has separate UUID keys
+and lifecycle cleanup. Routes compose the session into events; never import users into
+events. Reuse EventDetails in previews, retain direct/refresh pages and separate card actions
+from preview links. Auth prompts navigate to full Auth pages with safe returns; no automatic joins.
+
 - Milestone 3A adds real Auth in the users feature. Its Supabase browser client uses only
   the configured public URL/publishable key, PKCE and supported session persistence/refresh.
   Do not query application tables directly from the browser. Read `../docs/authentication.md`.

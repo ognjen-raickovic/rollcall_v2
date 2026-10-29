@@ -4,15 +4,16 @@ import { Link } from 'react-router'
 import { GameSymbol } from '@/components/game-symbol'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
+import { gameCategoryLabel } from '@/lib/game-categories'
 
 import { useCatalogGames } from '../api/use-catalog'
 import type { GameCategory } from '../types'
 
-const categories: { id: GameCategory; title: string; description: string }[] = [
-  { id: 'role-playing', title: 'Role-playing', description: 'A new world. Your story.' },
-  { id: 'trading-card', title: 'Trading card games', description: 'Bring a deck. Find a rival.' },
-  { id: 'board-game', title: 'Board games', description: 'One table. Endless possibilities.' },
-  { id: 'social-deduction', title: 'Social deduction', description: 'Trust your friends. Or don’t.' },
+const categories: { id: GameCategory; description: string }[] = [
+  { id: 'role-playing', description: 'A new world. Your story.' },
+  { id: 'trading-card', description: 'Bring a deck. Find a rival.' },
+  { id: 'board-game', description: 'One table. Endless possibilities.' },
+  { id: 'social-deduction', description: 'Trust your friends. Or don’t.' },
 ]
 
 export function GameCategories() {
@@ -71,7 +72,7 @@ export function GameCategories() {
                     />
                   </div>
                   <div>
-                    <p className="font-semibold">{category.title}</p>
+                    <p className="font-semibold">{gameCategoryLabel(category.id)}</p>
                     <p className="mt-2 text-sm text-muted-foreground">{category.description}</p>
                   </div>
                 </Link>

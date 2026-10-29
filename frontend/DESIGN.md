@@ -46,6 +46,19 @@ players on phones and desktops. Tone: welcoming, clear, understated. Brand: **Ro
 
 ## Visual direction
 
+Discovery cards retain artwork/date/radius and add a subtle actual-visibility badge at the
+image's top-right. The footer pairs guest-seat count with Join event / Leave event / Manage
+event, or a clear unavailable state. Success is one shared inline live-region message above
+the grid, retained if a card disappears; errors stay beside the action. Image/title links
+open a scrollable Radix preview over discovery, with a full-page link and focus return.
+Use the same EventDetails content/permissions; direct URLs and refresh remain dedicated pages.
+Guest Join opens a small explanation dialog, top-left close, with full-page Log in/Create
+account actions. Private leave explains the access consequence before confirmation.
+More filters uses a 250ms grid-row reveal, mounted controls, inert/hidden collapsed content
+and no transitions under reduced motion. Create/edit forms use one centered max-w-4xl
+column without hosting-tip sidebars. About/Contact BackLink precedes the heading. Category
+labels come from `src/lib/game-categories.ts`, while API values retain their identifiers.
+
 My Profile has a prominent text-3xl page h1; its player-name summary uses h2. Public player
 pages retain the player's name as h1. The logo is the sole navbar link to the homepage;
 keep Explore events, Host an event and account/theme controls. Footer navigation provides

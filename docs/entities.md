@@ -6,6 +6,14 @@ sections retain their historical delivery boundaries.
 
 ## Current profile/event requirements (migrations 22–23)
 
+The discovery UX follow-up adds `POST /api/events/viewer-status` (migration 24): active
+verified account, strict `{eventIds: UUID[]}` with 1–50 unique IDs, no actor input.
+Returns `{userId: <verified UUID>, items: [{eventId,isHost,hasJoined}]}` with no-store/Vary
+Authorization. Missing/inaccessible IDs are omitted identically; private events require
+host/current membership. Explicit unlisted UUIDs retain the existing direct-read boundary.
+The response contains only self membership, no other identities, addresses, DOB or codes.
+Public discovery remains anonymous/public/scheduled. See [discovery UX](event-discovery-ux.md).
+
 `PATCH /api/me/username-casing` takes strict `{username, expected}`; only the active
 verified owner may request a same-casefold spelling. Returns OwnProfile; stale spelling
 is 409, arbitrary rename/caller identity fields are rejected. UUID, lower-based uniqueness,

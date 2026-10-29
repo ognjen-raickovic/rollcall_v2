@@ -19,6 +19,14 @@ reviewed security and retention requirements. See [profiles](docs/profiles.md).
 
 ## Current profile/event UX follow-up
 
+The next discovery UX follow-up adds authoritative Join/Leave/Manage card actions with
+bounded UUID-scoped self-status reads (migration 24), safe visibility badges and route-backed
+previews over filtered results. Direct/refresh event URLs remain full pages. Guests get a
+small authentication prompt with safe login/registration returns, never embedded Auth forms
+or automatic joining. Existing age/capacity/suspension/private-code gates remain authoritative.
+Advanced filters animate without losing draft controls; create/edit forms are centered and
+category display labels share one map. See [behavior and verification](docs/event-discovery-ux.md).
+
 Migrations 22–23 add owner-requested case-only handle correction and database-enforced
 minimum age for new event seats. Desktop Welcome uses displayName, independently of
 username. Profile Save compares normalized editable values; selecting a game/level stages

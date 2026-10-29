@@ -26,6 +26,14 @@ New minimum-age enforcement, birthday/timezone semantics and grandfathering are 
 
 ## HTTP contract
 
+`POST /api/events/viewer-status` accepts strict `{eventIds: UUID[]}` (1–50 unique) for
+the active bearer account, and returns `{userId,items:[{eventId,isHost,hasJoined}]}`.
+Inaccessible/missing events are omitted. Known unlisted UUIDs retain direct-read permissions;
+private events require host/current membership. It never returns protected details or
+other memberships. Responses, including authentication failures, are no-store and vary
+on Authorization. Empty/duplicate/oversized inputs and actor fields are rejected. The
+frontend batches loaded cards and isolates/clears this cache by UUID. See [discovery UX](event-discovery-ux.md).
+
 | Method/path | Access/result |
 | --- | --- |
 | `GET /api/events` | Public discovery; `{ items: EventSummary[], pageInfo: { limit, nextCursor } }` |

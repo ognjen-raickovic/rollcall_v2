@@ -4,6 +4,7 @@
   "packageManager": "pnpm@12.14.0",
   "engines": { "node": "22.x" },
   "scripts": {
+    "test:discovery-ux": "pnpm --filter frontend test:discovery-ux",
     "test:profile-event-ux": "pnpm --filter frontend test:profile-event-ux",
     "test:responsive-navigation": "pnpm --filter frontend test:responsive-navigation",
     "test:info-ui": "pnpm --filter frontend test:info-ui",

@@ -3,13 +3,14 @@ import { useState } from 'react'
 import type { FormEventHandler, ReactNode } from 'react'
 import type { FieldValues, UseFormReturn } from 'react-hook-form'
 import { useController } from 'react-hook-form'
-import { CalendarDays, Dices, LoaderCircle, LockKeyhole, MapPin, Tag, Users } from 'lucide-react'
+import { Dices, LoaderCircle, MapPin, Tag, Users } from 'lucide-react'
 import { useNavigate } from 'react-router'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import type { LocationReference } from '@/lib/location'
+import { gameCategoryLabel } from '@/lib/game-categories'
 
 import type { EventFormValues } from '../api/event-form-values'
 import { eventCover } from '../api/event-covers'
@@ -62,7 +63,6 @@ export function EventFormView<TOutput extends FieldValues>({
   editing,
   status,
   participantCount = 0,
-  hostName,
   games,
   renderLocation,
   cancelTo,
@@ -95,7 +95,7 @@ export function EventFormView<TOutput extends FieldValues>({
     'h-11 w-full min-w-0 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring aria-invalid:border-destructive'
 
   return (
-    <div className="space-y-8 py-4">
+    <div className="mx-auto max-w-4xl space-y-6 py-4">
       <BackLink to={cancelTo}>{editing ? 'Back to event' : 'Back to discovery'}</BackLink>
       <header className="max-w-2xl space-y-4">
         <p className="text-xs font-semibold tracking-widest text-primary uppercase">
@@ -110,13 +110,13 @@ export function EventFormView<TOutput extends FieldValues>({
             : 'A great game night starts with a good invitation. Tell players what’s happening, where to meet, and who should join.'}
         </p>
       </header>
-      <div className="grid items-start gap-8 lg:grid-cols-3">
+      <div>
         <form
           noValidate
           onSubmit={submit}
           aria-label={editing ? 'Edit event' : 'Create event'}
           aria-busy={pending}
-          className="min-w-0 space-y-6 lg:col-span-2"
+          className="min-w-0 space-y-6"
         >
           {Object.keys(errors).length > 0 && (
             <div role="alert" className="space-y-2 rounded-lg border border-destructive/40 bg-card p-4">
@@ -194,7 +194,7 @@ export function EventFormView<TOutput extends FieldValues>({
                     <option value="0">Choose a game</option>
                     {games.map((game) => (
                       <option key={game.id} value={game.id}>
-                        {game.name}
+                        {game.name} — {gameCategoryLabel(game.category)}
                       </option>
                     ))}
                   </select>
@@ -503,7 +503,7 @@ export function EventFormView<TOutput extends FieldValues>({
                 error={errors.visibility?.message}
                 help={
                   visibility === 'private'
-                    ? 'Only you and current participants can view this event. New players cannot join. No invitations are sent.'
+                    ? 'Only you and current participants can view this event. New players need a valid room code to join.'
                     : visibility === 'unlisted'
                       ? 'Hidden from discovery. Anyone with the link can view and join available seats.'
                       : 'Listed in public discovery when it is scheduled and upcoming.'
@@ -545,31 +545,6 @@ export function EventFormView<TOutput extends FieldValues>({
             </div>
           </div>
         </form>
-        <aside aria-label="Hosting tips" className="space-y-6 lg:sticky lg:top-8">
-          <div className="space-y-4 rounded-xl border border-primary/30 bg-card p-6">
-            <CalendarDays className="size-6 text-primary" aria-hidden="true" />
-            <p className="font-semibold">A good invitation goes a long way.</p>
-            <p className="text-sm leading-relaxed text-muted-foreground">
-              Be clear about the game, who it’s for, and what players need to bring. Leave a little room
-              for first-timers.
-            </p>
-            <p className="border-t pt-4 text-sm text-muted-foreground">
-              Hosting as{' '}
-              <span className="font-medium text-foreground">
-                {hostName ?? (customCovers ? 'your demo profile' : 'your account')}
-              </span>
-              .
-            </p>
-          </div>
-          <div className="space-y-3 rounded-xl border bg-card p-6">
-            <LockKeyhole className="size-5 text-primary" aria-hidden="true" />
-            <p className="text-sm font-semibold">You’re in control of your table.</p>
-            <p className="text-sm leading-relaxed text-muted-foreground">
-              Only you can edit your event. Player seats exclude the host, and capacity cannot go below
-              current attendance.
-            </p>
-          </div>
-        </aside>
       </div>
     </div>
   )

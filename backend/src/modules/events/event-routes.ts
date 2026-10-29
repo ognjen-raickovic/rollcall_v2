@@ -10,6 +10,7 @@ import {
   newEventSchema,
   noQuerySchema,
   updateEventSchema,
+  viewerStatusInputSchema,
 } from './event-schema.js'
 import type { EventRepository } from './types.js'
 
@@ -38,6 +39,22 @@ export function registerEventRoutes(
     // Discovery remains public even when a caller happens to send an account token.
     return options.repository().list(parseInput(eventDiscoverySchema, request.query))
   })
+  app.post(
+    '/api/events/viewer-status',
+    {
+      onRequest: async (_request, reply) => {
+        reply.header('Cache-Control', 'no-store').header('Vary', 'Authorization')
+      },
+      preHandler: guard,
+    },
+    async (request, reply) => {
+      reply.header('Cache-Control', 'no-store').header('Vary', 'Authorization')
+      parseInput(noQuerySchema, request.query)
+      const { eventIds } = parseInput(viewerStatusInputSchema, request.body)
+      const { repository, accountId } = authenticated(request)
+      return repository.viewerStatus(eventIds, accountId)
+    },
+  )
   app.get(
     '/api/events/:eventId',
     {

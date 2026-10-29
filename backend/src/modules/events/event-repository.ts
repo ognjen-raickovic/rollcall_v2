@@ -9,6 +9,7 @@ import {
   hostEventDetailsSchema,
   participantEventDetailsSchema,
   publicEventDetailsSchema,
+  viewerStatusSchema,
 } from './event-schema.js'
 import { encodeEventCursor } from './event-pagination.js'
 import type { AttendanceResult, EventRepository, HostEventDetails } from './types.js'
@@ -103,6 +104,19 @@ function requireAttendance(
 
 export function createEventRepository(client: DatabaseClient): EventRepository {
   return {
+    async viewerStatus(eventIds, expectedUserId) {
+      const value = await result(
+        client.rpc('event_viewer_status', { p_event_ids: eventIds }),
+        viewerStatusSchema,
+      )
+      if (
+        value.userId !== expectedUserId ||
+        new Set(value.items.map((item) => item.eventId)).size !== value.items.length ||
+        value.items.some((item) => !eventIds.includes(item.eventId))
+      )
+        throw unavailable()
+      return value
+    },
     async list(filters) {
       const page = await result(
         client.rpc('discover_events', { p_filters: filters }),

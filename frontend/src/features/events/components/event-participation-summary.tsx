@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { HttpError } from '@/lib/http-client'
 import { ActionFeedback } from '@/components/action-feedback'
 import type { EventDetails } from '../api/event-dtos'
+import { EventAuthPrompt } from './event-auth-prompt'
 
 type EventParticipationSummaryProps = {
   event: EventDetails
@@ -29,6 +30,8 @@ export function EventParticipationSummary({
   onDelete,
 }: EventParticipationSummaryProps) {
   const [, refreshStartBoundary] = useState(0)
+  const [prompt, setPrompt] = useState(false),
+    [confirmLeave, setConfirmLeave] = useState(false)
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | undefined
     function scheduleBoundary() {
@@ -61,7 +64,7 @@ export function EventParticipationSummary({
         <p className="flex items-center gap-2 font-semibold">
           <Users className="size-5 text-primary" aria-hidden="true" />
           {event.viewer.isHost
-            ? 'You’re hosting this table'
+            ? "You're hosting this event"
             : event.viewer.hasJoined
               ? 'You’re on the guest list'
               : closed
@@ -95,12 +98,17 @@ export function EventParticipationSummary({
           </Button>
         </div>
       ) : event.viewer.hasJoined ? (
-        <Button className="w-full" variant="outline" disabled={pending || closed} onClick={onLeave}>
+        <Button
+          className="w-full"
+          variant="outline"
+          disabled={pending || closed}
+          onClick={() => (event.visibility === 'private' ? setConfirmLeave(true) : onLeave())}
+        >
           {pending ? 'Updating attendance...' : 'Leave Event'}
         </Button>
       ) : !event.viewer.userId && !closed && !full ? (
-        <Button asChild className="w-full">
-          <Link to={loginTo}>Log in to join</Link>
+        <Button className="w-full" onClick={() => setPrompt(true)}>
+          Join event
         </Button>
       ) : (
         <Button
@@ -119,6 +127,20 @@ export function EventParticipationSummary({
                   : 'Join Event'}
         </Button>
       )}
+      {confirmLeave && !closed && event.viewer.hasJoined && (
+        <div className="space-y-3 text-sm">
+          <p>Leaving removes access to this private event. You will need a valid room code to rejoin.</p>
+          <div className="grid grid-cols-2 gap-3">
+            <Button disabled={pending} onClick={onLeave}>
+              Confirm leave
+            </Button>
+            <Button variant="outline" disabled={pending} onClick={() => setConfirmLeave(false)}>
+              Cancel
+            </Button>
+          </div>
+        </div>
+      )}
+      <EventAuthPrompt open={prompt} onOpenChange={setPrompt} eventId={event.id} />
       {feedback && <ActionFeedback message={feedback} />}
       {error && (
         <p role="alert" className="text-sm text-destructive">

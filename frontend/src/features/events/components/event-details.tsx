@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { HttpError } from '@/lib/http-client'
 import { loginPath } from '@/lib/auth-navigation'
+import { gameCategoryLabel } from '@/lib/game-categories'
 
 import { isEventId } from '../api/event-dtos'
 import { usePersistentEvent } from '../api/use-persistent-events'
@@ -29,6 +30,7 @@ type EventDetailsProps = {
   getAccessToken: () => Promise<string | null>
   sessionReady: boolean
   sessionError: Error | null
+  preview?: boolean
 }
 
 export function EventDetails({
@@ -37,6 +39,7 @@ export function EventDetails({
   getAccessToken,
   sessionReady,
   sessionError,
+  preview = false,
 }: EventDetailsProps) {
   const validId = isEventId(eventId)
   const location = useLocation()
@@ -94,7 +97,15 @@ export function EventDetails({
       onConfirm={() => void deleteEvent()}
     />
   )
-  const backLink = <BackLink to="/events">Back to events</BackLink>
+  const backLink = preview ? (
+    <Button asChild variant="outline">
+      <Link to={`/events/${eventId}`} replace state={null}>
+        Open full event page
+      </Link>
+    </Button>
+  ) : (
+    <BackLink to="/events">Back to events</BackLink>
+  )
   if (!validId)
     return (
       <section className="space-y-4 py-8">
@@ -231,7 +242,7 @@ export function EventDetails({
             <div>
               <p className="font-semibold">{event.game.name}</p>
               <p className="mt-1 text-sm text-muted-foreground">
-                {event.game.category.replaceAll('-', ' ')}
+                {gameCategoryLabel(event.game.category)}
               </p>
             </div>
           </div>

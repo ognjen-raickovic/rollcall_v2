@@ -5,9 +5,10 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 
 import { usePersistentEvents } from '../api/use-persistent-events'
-import { EventCard } from './event-card'
+import { EventCards } from './event-cards'
+import type { EventBrowseSession } from '../api/event-viewer-api'
 
-export function FeaturedEvents() {
+export function FeaturedEvents({ session }: { session?: EventBrowseSession }) {
   const events = usePersistentEvents({ upcomingOnly: true, status: 'scheduled', limit: 3 })
   const featured = events.data?.pages[0]?.items ?? []
   return (
@@ -56,13 +57,7 @@ export function FeaturedEvents() {
           </Button>
         </div>
       ) : (
-        <ul className="grid gap-6 md:grid-cols-3">
-          {featured.map((event) => (
-            <li key={event.id}>
-              <EventCard event={event} />
-            </li>
-          ))}
-        </ul>
+        <EventCards events={featured} session={session} className="grid gap-6 md:grid-cols-3" />
       )}
     </section>
   )

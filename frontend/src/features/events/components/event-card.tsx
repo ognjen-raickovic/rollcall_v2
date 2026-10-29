@@ -1,14 +1,45 @@
-import { ArrowUpRight, MapPin, Users } from 'lucide-react'
-import { Link } from 'react-router'
+import { MapPin, Users } from 'lucide-react'
+import { Link, useLocation, useNavigate } from 'react-router'
+import type { ReactNode, MouseEvent } from 'react'
 
 import type { EventSummary, MyEventSummary } from '../api/event-dtos'
 import { PersistentEventImage } from './persistent-event-image'
 import type { EventActionSession } from '../api/event-write-dtos'
 import { EventRequirementBadges } from './event-requirement-badges'
 
-type EventCardProps = { event: EventSummary | MyEventSummary; session?: EventActionSession }
+type EventCardProps = {
+  event: EventSummary | MyEventSummary
+  session?: EventActionSession
+  preview?: boolean
+  action?: ReactNode
+}
 
-export function EventCard({ event, session }: EventCardProps) {
+export function EventCard({ event, session, preview = false, action }: EventCardProps) {
+  const location = useLocation()
+  const navigate = useNavigate()
+  const to = `/events/${event.id}${preview ? location.search : ''}`
+  function openPreview(event: MouseEvent<HTMLAnchorElement>) {
+    if (
+      !preview ||
+      event.button !== 0 ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey
+    )
+      return
+    event.preventDefault()
+    void navigate(to, {
+      preventScrollReset: true,
+      state: {
+        eventPreview: {
+          from: `/events${location.search}`,
+          focusId: event.currentTarget.id,
+          scrollY: window.scrollY,
+        },
+      },
+    })
+  }
   const date = new Date(event.startsAt)
   const seats = event.availableSlots
   const availability =
@@ -24,7 +55,10 @@ export function EventCard({ event, session }: EventCardProps) {
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-xl border bg-card transition-colors hover:border-primary/60">
       <Link
-        to={`/events/${event.id}`}
+        id={`event-image-${event.id}`}
+        to={to}
+        onClick={openPreview}
+        preventScrollReset={preview}
         aria-label={`View ${event.title}`}
         className="relative flex h-40 items-center justify-center overflow-hidden bg-secondary focus-visible:outline-2 focus-visible:outline-ring focus-visible:-outline-offset-2"
       >
@@ -42,6 +76,12 @@ export function EventCard({ event, session }: EventCardProps) {
           </span>
           <span className="block text-xl leading-tight font-bold">{date.getDate()}</span>
         </span>
+        <span
+          className="absolute top-4 right-4 max-w-[45%] rounded-md border bg-card px-2 py-1 text-xs font-semibold capitalize text-foreground"
+          aria-label={`Visibility: ${event.visibility}`}
+        >
+          {event.visibility}
+        </span>
       </Link>
       <div className="flex flex-1 flex-col gap-3 p-6">
         <p className="text-xs font-semibold tracking-wide text-primary uppercase">
@@ -52,8 +92,11 @@ export function EventCard({ event, session }: EventCardProps) {
           </time>
         </p>
         <Link
-          to={`/events/${event.id}`}
-          className="text-lg leading-snug font-semibold tracking-tight hover:text-primary focus-visible:outline-2 focus-visible:outline-ring"
+          id={`event-title-${event.id}`}
+          to={to}
+          onClick={openPreview}
+          preventScrollReset={preview}
+          className="line-clamp-2 min-h-12 text-lg leading-snug font-semibold tracking-tight hover:text-primary focus-visible:outline-2 focus-visible:outline-ring"
         >
           {event.title}
         </Link>
@@ -67,15 +110,13 @@ export function EventCard({ event, session }: EventCardProps) {
           <MapPin className="mt-1 size-4 shrink-0" aria-hidden="true" />
           {[event.venue, event.city.name, event.country.name].filter(Boolean).join(', ')}
         </p>
-        <div className="mt-auto flex items-center justify-between gap-2 border-t pt-4 text-xs text-muted-foreground">
-          <span className="flex items-center gap-2">
+        <div className="mt-auto grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3 border-t pt-4 text-xs text-muted-foreground">
+          <span className="flex items-center gap-2 whitespace-nowrap">
             <Users className="size-4" aria-hidden="true" />
             {event.participantCount}/{event.capacity} players
           </span>
-          <span className="flex items-center gap-2 text-primary">
-            {availability}
-            <ArrowUpRight className="size-4" aria-hidden="true" />
-          </span>
+          {!action && <span>{availability}</span>}
+          {action}
         </div>
       </div>
     </article>

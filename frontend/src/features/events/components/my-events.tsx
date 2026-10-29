@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button'
 import { FormSelect } from '@/components/form-select'
 import { Label } from '@/components/ui/label'
 import { useMyEvents } from '../api/use-my-events'
-import { EventCard } from './event-card'
+import { EventCards } from './event-cards'
 
 type MyEventsProps = {
   session: {
@@ -26,13 +26,16 @@ export function MyEvents({ session }: MyEventsProps) {
     session.ready && !session.error,
   )
   const entries = result.data?.pages.flatMap((page) => page.items) ?? [],
-    events = entries.filter((event, index) => entries.findIndex((item) => item.id === event.id) === index)
+    events = entries.filter(
+      (event, index) => entries.findIndex((item) => item.id === event.id) === index,
+    )
   return (
     <section className="space-y-6 py-4">
       <header className="space-y-3">
         <h1 className="text-3xl font-bold">My Events</h1>
         <p className="text-muted-foreground">
-          Your hosted tables and current memberships. Private events are only shown while you have access.
+          Your hosted tables and current memberships. Private events are only shown while you have
+          access.
         </p>
       </header>
       <nav aria-label="My event groups" className="flex flex-wrap gap-3">
@@ -72,15 +75,7 @@ export function MyEvents({ session }: MyEventsProps) {
         <p role="status">Loading your events…</p>
       ) : (
         <>
-          {events.length ? (
-            <ul className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {events.map((event) => (
-                <li key={event.id}>
-                  <EventCard event={event} session={session} />
-                </li>
-              ))}
-            </ul>
-          ) : (
+          {!events.length && (
             <div role="status" className="space-y-4 rounded-xl border bg-card p-6">
               <p>No {relation === 'hosting' ? 'hosted' : 'joined'} events match this period.</p>
               <Button variant="outline" asChild>
@@ -90,6 +85,7 @@ export function MyEvents({ session }: MyEventsProps) {
               </Button>
             </div>
           )}
+          <EventCards events={events} session={session} />
           {result.hasNextPage && (
             <Button
               variant="outline"

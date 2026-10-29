@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import type { Session } from '@supabase/supabase-js'
 import { HttpError, httpRequest } from '@/lib/http-client'
+import { safeReturnTo } from '@/lib/auth-navigation'
 import { authError } from './auth-errors'
 
 import type { Account } from '../types'
@@ -53,11 +54,13 @@ export const authApi = {
     password,
     username,
     dateOfBirth,
+    returnTo,
   }: {
     email: string
     password: string
     username: string
     dateOfBirth: string
+    returnTo?: string
   }) => {
     await sessionApi.logout()
     const intent = await httpRequest('/api/auth/registration-intent', z.object({ token: z.uuid() }), {
@@ -69,7 +72,9 @@ export const authApi = {
       email: emailSchema.parse(email.trim()),
       password: passwordSchema.parse(password),
       options: {
-        emailRedirectTo: callback('/auth/callback'),
+        emailRedirectTo: callback(
+          '/auth/callback' + (returnTo ? `?returnTo=${encodeURIComponent(safeReturnTo(returnTo))}` : ''),
+        ),
         data: { rollcall_registration_token: intent.token },
       },
     })
