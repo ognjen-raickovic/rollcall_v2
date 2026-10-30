@@ -89,10 +89,8 @@ test(
               return json({ ...profile, birthYear: null, ageDeclaredAt: null, hasDateOfBirth: false })
             if (path === '/api/me/game-experience') return json([])
             if (path.startsWith('/api/users/')) return json(profile)
-            if (path === '/api/games' || path === '/api/countries' || path === '/api/cities')
-              return json([])
-            if (path === '/api/events')
-              return json({ items: [], pageInfo: { limit: 12, nextCursor: null } })
+            if (path === '/api/games' || path === '/api/countries' || path === '/api/cities') return json([])
+            if (path === '/api/events') return json({ items: [], pageInfo: { limit: 12, nextCursor: null } })
             if (path.startsWith('/api/') || url.hostname.endsWith('.supabase.co')) return route.abort()
             return route.continue()
           })
@@ -109,8 +107,7 @@ test(
             }))
           const stable = async () =>
             page.addStyleTag({
-              content:
-                '*,*::before,*::after { transition: none !important; animation: none !important; }',
+              content: '*,*::before,*::after { transition: none !important; animation: none !important; }',
             })
           await page.goto(origin + '/')
           await expect(page.getByRole('button', { name: 'Find events', exact: true })).toBeVisible()
@@ -131,17 +128,32 @@ test(
             return navigation
           }
           const siteLinks = await siteNavigation()
-          await expect(
-            siteLinks.getByRole('link', { name: 'Explore events', exact: true }),
-          ).toHaveAttribute('href', '/events')
-          await expect(
-            siteLinks.getByRole('link', { name: 'Host an event', exact: true }),
-          ).toHaveAttribute('href', '/events/new')
+          await expect(siteLinks.getByRole('link', { name: 'Explore events', exact: true })).toHaveAttribute(
+            'href',
+            '/events',
+          )
+          await expect(siteLinks.getByRole('link', { name: 'Host an event', exact: true })).toHaveAttribute(
+            'href',
+            '/events/new',
+          )
           await expect(siteLinks.getByRole('link', { name: 'Log in', exact: true })).toBeVisible()
           await siteLinks.getByRole('link', { name: 'Host an event', exact: true }).click()
           await expect(page).toHaveURL(/\/login\?returnTo=%2Fevents%2Fnew$/)
           await stable()
           const authBack = page.getByRole('link', { name: 'Back to discovery', exact: true })
+          const authBackPosition = await authBack.boundingBox()
+          const checkBackPosition = async () => {
+            const back = page.getByRole('link', { name: 'Back to discovery', exact: true })
+            await expect(back).toHaveCount(1)
+            const position = await back.boundingBox()
+            assert.ok(position && authBackPosition, 'BackLink has visible geometry')
+            assert.equal(position.x, authBackPosition.x, 'BackLink matches login horizontal position')
+            assert.equal(position.y, authBackPosition.y, 'BackLink matches login vertical position')
+            const content = page.locator('main h1').locator('..').locator('..')
+            const bounds = await content.boundingBox()
+            assert.ok(bounds && bounds.width <= 896, 'information content retains max-w-4xl')
+            assert.equal(bounds.x + bounds.width / 2, width / 2, 'information content stays centered')
+          }
           assert.deepEqual(await colors(authBack), primary)
           await authBack.focus()
           await expect(authBack).toBeFocused()
@@ -151,6 +163,7 @@ test(
           const footer = page.getByRole('navigation', { name: 'Footer navigation', exact: true })
           await footer.getByRole('link', { name: 'About Us', exact: true }).click()
           await expect(page.getByRole('heading', { name: 'About RollCall', level: 1 })).toBeVisible()
+          await checkBackPosition()
           await expect(page.locator('main h1')).toHaveCount(1)
           await expect(footer.getByRole('link', { name: 'About Us', exact: true })).toHaveAttribute(
             'aria-current',
@@ -166,6 +179,7 @@ test(
           })
           await footer.getByRole('link', { name: 'Contact', exact: true }).click()
           await expect(page.getByRole('heading', { name: 'Contact Us', level: 1 })).toBeVisible()
+          await checkBackPosition()
           await expect(
             page.getByRole('link', { name: 'rollcallsupport@gmail.com', exact: true }),
           ).toHaveAttribute('href', 'mailto:rollcallsupport@gmail.com')
@@ -203,11 +217,7 @@ test(
           await expect(page.getByRole('heading', { name: 'About RollCall', level: 1 })).toBeVisible()
           await navigation.getByRole('link', { name: 'RollCall', exact: true }).click()
           await expect(page).toHaveURL(origin + '/')
-          await (
-            await siteNavigation()
-          )
-            .getByRole('link', { name: 'Explore events', exact: true })
-            .click()
+          await (await siteNavigation()).getByRole('link', { name: 'Explore events', exact: true }).click()
           await expect(
             page.getByRole('heading', { name: 'Find your next game night', level: 1 }),
           ).toBeVisible()
