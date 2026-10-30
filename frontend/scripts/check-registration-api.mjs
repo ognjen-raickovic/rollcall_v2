@@ -10,9 +10,7 @@ test('Auth errors and registration transport preserve privacy and identify the i
     appType: 'custom',
     define: {
       'import.meta.env.VITE_SUPABASE_URL': JSON.stringify('https://synthetic-registration.supabase.co'),
-      'import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY': JSON.stringify(
-        'sb_publishable_synthetic_fixture',
-      ),
+      'import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY': JSON.stringify('sb_publishable_synthetic_fixture'),
       'import.meta.env.VITE_API_ORIGIN': JSON.stringify('http://127.0.0.1:3001'),
     },
   })
@@ -71,13 +69,26 @@ test('Auth errors and registration transport preserve privacy and identify the i
     const redirect = new URL(signup.options.emailRedirectTo)
     assert.equal(redirect.pathname, '/auth/callback')
     assert.equal(redirect.searchParams.get('returnTo'), '/events/10000000-0000-4000-8000-000000000001')
-    assert.equal(
-      'returnTo' in prepared,
-      false,
-      'Return path never becomes a registration identity field',
-    )
+    assert.equal('returnTo' in prepared, false, 'Return path never becomes a registration identity field')
     await authApi.register({ ...values, returnTo: 'https://outside.example/steal' })
     assert.equal(new URL(signup.options.emailRedirectTo).searchParams.get('returnTo'), '/events')
+    authClient().auth.signUp = async () => ({
+      data: { user: null, session: null },
+      error: {
+        code: 'email_address_not_authorized',
+        status: 403,
+        message: 'PRIVATE upstream recipient and SMTP details',
+      },
+    })
+    await assert.rejects(
+      authApi.register({ ...values, email: 'new-player@another.example' }),
+      (error) =>
+        error.code === 'email_address_not_authorized' &&
+        error.message.includes('team') &&
+        !error.message.includes('PRIVATE') &&
+        !error.message.includes('new-player'),
+    )
+    assert.equal(prepared.email, 'new-player@another.example', 'new email has no application allowlist')
     globalThis.fetch = async () =>
       new Response(JSON.stringify({ message: 'Not displayed' }), {
         status: 401,
@@ -85,8 +96,7 @@ test('Auth errors and registration transport preserve privacy and identify the i
       })
     await assert.rejects(
       authApi.login({ email: 'fixture@example.test', password: 'Synthetic-password-123!' }),
-      (error) =>
-        error.code === 'UNAUTHORIZED_INVALID_API_KEY' && !error.message.includes('Not displayed'),
+      (error) => error.code === 'UNAUTHORIZED_INVALID_API_KEY' && !error.message.includes('Not displayed'),
     )
   } finally {
     globalThis.fetch = originalFetch

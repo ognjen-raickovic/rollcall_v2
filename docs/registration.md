@@ -36,6 +36,67 @@ does not invent a specific cause. Confirmation, rate-limit and provider errors h
 separate messages. See [Supabase error codes](https://supabase.com/docs/guides/auth/debugging/error-codes)
 and [API keys](https://supabase.com/docs/guides/api/api-keys).
 
+## Hosted new-email delivery checklist
+
+Registration accepts previously unregistered valid email addresses; neither the form,
+registration-intent endpoint nor ticket claim restricts recipients to a team or email
+domain. The latest reported failure has no supplied HTTP/error code yet, so its cause
+is unconfirmed. The earlier invalid-key incident above is a separate diagnosis.
+
+Supabase's default SMTP only delivers to organization-team addresses and currently
+limits sending to two messages/hour. If custom SMTP is not configured, this is the
+leading explanation for a new non-team recipient failing. Custom SMTP is required
+for general email registration with confirmation; do not add users to the project
+team merely to let them register. See the [official SMTP guide](https://supabase.com/docs/guides/auth/auth-smtp).
+
+Manual setup in the **rollcall-dev** Dashboard (not performed by application code):
+
+1. Choose an SMTP provider and verify a sender/domain you control. Complete its
+   required DNS verification (including SPF/DKIM and an appropriate DMARC record),
+   and clear any provider sandbox/recipient restrictions. The public support Gmail
+   address is not automatically an authorized sender for a third-party SMTP service.
+2. Under **Authentication > Email > SMTP Settings** (or Authentication's **Custom
+   SMTP** settings), enable custom SMTP. Enter the verified sender address, sender
+   name **RollCall**, and the provider's SMTP host, TLS port, username and SMTP
+   password. Save credentials only in Supabase's private settings, never Vite, Git
+   or a report. Use the provider's documented TLS settings.
+3. Under **Authentication > Sign In / Providers > Email**, keep Email enabled,
+   new-user signup enabled, and **Confirm email** enabled. Check **Authentication >
+   Rate Limits** against the provider's limits without removing abuse protections.
+4. Under **Authentication > URL Configuration**, set Site URL to
+   `https://rollcall-v2.vercel.app`. Allow
+   `https://rollcall-v2.vercel.app/auth/callback` and
+   `https://rollcall-v2.vercel.app/reset-password`. Signup can append a safe
+   `?returnTo=...` to the callback; if needed, allow the narrowly scoped pattern
+   `https://rollcall-v2.vercel.app/auth/callback?**` as well. Keep localhost callbacks
+   only for intentional development, and do not allow arbitrary Vercel domains.
+   See [Supabase redirect configuration](https://supabase.com/docs/guides/auth/redirect-urls).
+5. Check **Authentication > Email > Templates**: confirmation/recovery links should
+   retain Supabase's `{{ .ConfirmationURL }}` verification link, not a hardcoded
+   localhost link or a direct link skipping verification. Disable provider link
+   tracking if it rewrites or pre-consumes authentication links.
+6. Manually register one owned non-team address with an unused username, then open
+   the email in the requesting browser, confirm, log in, and check profile creation.
+   Also test recovery. Do not share emailed links or tokens in diagnostics.
+
+If it still fails, inspect only statuses and sanitized `code`/`error_code` values:
+
+| Failing stage | Evidence | Next check |
+| --- | --- | --- |
+| Registration intent | 503 `DEPENDENCY_UNAVAILABLE` | Backend operation capability, matching provisioned fingerprint, migrations and RPC grants |
+| Registration intent | 409 `CONFLICT` / 429 `RATE_LIMITED` | Choose a new username / wait for the attempt window; preserve durable limits |
+| Supabase signup | `email_address_not_authorized` | Default SMTP team restriction or provider recipient restrictions |
+| Supabase signup | `over_email_send_rate_limit` | Supabase email limits and provider quota |
+| Supabase signup | 401 / `UNAUTHORIZED_INVALID_API_KEY` | Matching project/key and deployed build configuration |
+| Supabase signup | `signup_disabled` / `email_provider_disabled` | Email provider and signup switches |
+| Supabase signup | `unexpected_failure` | Auth logs and ticket/profile triggers; never expose raw database details |
+| Confirmation delivered, wrong destination | Redirect mismatch | Site URL, callback allowlist and email template |
+
+Existing allowlisted UI errors already distinguish team-only delivery, confirmation,
+rate limits and provider failures. No error-handling or security bypass is needed for
+the SMTP restriction. Hosted SMTP, redirect settings and the latest failure remain
+unverified until the operator supplies evidence; local tests cannot verify them.
+
 ## New registration contract
 
 The operator reports migration 17 (`20261027000100_registration_identity.sql`) is
