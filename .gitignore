@@ -68,3 +68,5 @@ frontend/.tmp/
 
 # Local Vercel project links, downloaded environment files and build output
 .vercel/
+.vercel
+.env*

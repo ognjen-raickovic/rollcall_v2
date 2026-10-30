@@ -12,6 +12,112 @@ acceptance and custom SMTP are pending. See [database rollout](hosted-supabase-s
 
 ## Architecture and access gates
 
+### Existing Render/Vercel integration check: 2026-10-29
+
+`vercel.json` now targets the operator-supplied `https://rollcall-v2.onrender.com`:
+`/api/health` -> `/health`, `/api` -> `/api`, `/api/:path*` -> `/api/:path*` on that origin.
+The SPA fallback, API no-store headers, CLI upload exclusions and disabled Git deployments
+are unchanged. The focused test now checks the configured origin and a separate synthetic
+placeholder rejection. No deployment, hosted setting change or database write occurred.
+
+Actual unauthenticated, read-only Render probes returned:
+
+| Route | Result |
+| --- | --- |
+| `GET /health` | 200 JSON, status ok: process liveness only |
+| `GET /api/countries`, `/api/games`, `/api/events?limit=1` | 503 application JSON, `DEPENDENCY_UNAVAILABLE` |
+| `GET /api/me`, `/api/me/profile` | 401 JSON, `UNAUTHENTICATED` |
+| `POST /api/events/viewer-status`, no token | 401 JSON, `UNAUTHENTICATED`; guard rejects before DB access |
+| Unknown API route | 404 JSON |
+
+The service is publicly reachable: Render maintenance mode is not taking effect, despite
+the preparation Blueprint default. It would intercept public requests with maintenance
+responses ([Render documentation](https://render.com/docs/maintenance-mode)). No setting
+was changed. Do not interpret the application's JSON dependency errors as a maintenance page.
+Review the intended access gate before sharing staging with testers.
+
+**Blocker:** the API's Supabase-dependent reads fail. This does not identify a specific cause;
+the adapter sanitizes upstream failures. Privately check the Render `SUPABASE_URL` against
+the intended hosted project, and its matching unprivileged `SUPABASE_PUBLISHABLE_KEY`, then
+review dependency connectivity, project health, schema/grants and sanitized platform logs.
+Do not fix this with a service-role key, broader grants, disabled RLS or a database reset.
+
+The local linked-project reference is `badrzcnbgieucspjcigu`; the repository has 24 migrations
+through `20261028000300_event_viewer_status.sql`. Hosted history/schema were **not verified**:
+no Supabase MCP tools were available. No CLI connection was initialized, because remote
+login-role creation must not be assumed read-only. Use the intended project's SQL Editor
+for these read-only metadata checks, never a write/import/reset command:
+
+```sql
+select to_regclass('supabase_migrations.schema_migrations') as history_table;
+-- If present, compare every version/name with supabase/migrations (24 expected).
+select version, name from supabase_migrations.schema_migrations order by version;
+select
+  to_regprocedure('public.event_viewer_status(uuid[])') is not null as migration_24_rpc,
+  to_regprocedure('public.correct_my_username_case(text,text)') is not null as migration_22_rpc,
+  to_regprocedure('private.assert_event_age(uuid,integer,timestamptz,text)') is not null as migration_23_helper;
+```
+
+Metadata matches are necessary, not proof of hosted RLS/Auth/Storage acceptance. Missing
+migrations need their own reviewed rollout; none were applied here. Countries/games failing
+also means checking migration 24 alone cannot establish a working backend.
+
+The operator subsequently supplied `https://rollcall-v2.vercel.app`. Unauthenticated GET
+checks returned 200 HTML at `/`, but `/api/health`, `/api/countries`, `/api/me` and an unknown
+API route all returned 404 JSON with an `error` key and `public, max-age=0, must-revalidate`.
+There was no protection challenge on that origin. Live Vercel-to-Render proxy connectivity
+is therefore not working/verified: it does not reproduce Render's 200 health or 401 account
+responses. Review the deployed source/config and repository-root build settings; the local
+rewrite update has not been deployed. Dashboard protection scopes and deployed environment
+values remain unverified. `git.deploymentEnabled=false` disables automatic Git deployment,
+not visitor access. Check Settings -> Deployment Protection for every URL/environment;
+Standard Protection excludes production domains
+([Vercel documentation](https://vercel.com/docs/deployment-protection)).
+
+Renaming this staging frontend to `rollcall-dev.vercel.app` is optional, subject to availability;
+matching service names is not needed for routing. Resolve integration first. If the operator
+later approves a domain change, update/review Supabase Auth Site URL, confirmation/recovery
+redirect allowlists and saved links for the new origin, and recheck protection there. No
+rename, domain addition, redirect-setting change or deployment was performed.
+
+Expected Vercel settings remain repository root, Vite, Node 22.x, install
+`corepack pnpm install --frozen-lockfile`, build `pnpm build:hosting`, output `frontend/dist`.
+Set `ENABLE_EXPERIMENTAL_COREPACK=1`, public `VITE_SUPABASE_URL` and matching publishable/
+anon `VITE_SUPABASE_PUBLISHABLE_KEY`; `VITE_API_ORIGIN` must be empty/omitted and
+`VITE_ENABLE_DEMO_MODE` exactly false. The production guard rejects localhost/cross-origin
+API settings and privileged browser keys. Auth alone connects directly to Supabase.
+Vite's localhost API proxy is only for local dev/preview, not hosted static output.
+The current Vercel environment was not read or changed.
+
+After the dependency issue and outstanding security/credential gates are resolved and a
+protected Preview is explicitly approved, run these **manual deployment actions** from
+the repository root; they were not executed during this check:
+
+```powershell
+pnpm.cmd dlx vercel login  # only if not already authenticated
+pnpm.cmd dlx vercel link   # select the EXISTING team/project; do not create another
+pnpm.cmd dlx vercel deploy --target=preview
+```
+
+Keep Git deployments disabled and do not add `--prod`. CLI source upload includes the
+reviewed local rewrite change without committing/pushing; simply redeploying an older
+deployment does not upload local edits. Review the selected project and protections before
+the deploy command ([link](https://vercel.com/docs/cli/link),
+[deploy](https://vercel.com/docs/cli/deploy)). No environment pull or operator files are needed.
+Then visit the protected Preview as an approved Vercel user and verify `/api/health` JSON
+200, public data reads, API JSON 401 while signed out of RollCall, and API JSON 404.
+An unauthenticated Vercel protection page is not a backend API response; never disable
+protection or share a bypass token to make smoke checks pass. Review the exact approved
+frontend Auth Site URL/callback/recovery redirects and all existing 6A-2 gates before release.
+
+Local checks passed: `hosting:check`, both-package typecheck/lint/build, `git diff --check`
+and all four `test:hosting` cases. The first sandboxed compiled-child startup timed out;
+the complete hosting suite passed outside the sandbox without application changes.
+`build:hosting` also passed with process-only synthetic public settings (empty API origin,
+demo disabled, synthetic Supabase origin/publishable key). This verifies the production
+guard/build contract, not the live Vercel environment or actual Supabase key membership.
+No local environment file was changed and no secret values were printed.
+
 The operator now reports username/DOB migration 17 applied. Case-preserving registration
 requires separately approved forward migration 18, then backend/frontend updates; the
 existing operation capability remains required. See [auth rollout](auth-experience.md)

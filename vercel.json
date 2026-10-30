@@ -6,9 +6,9 @@
   "outputDirectory": "frontend/dist",
   "git": { "deploymentEnabled": false },
   "rewrites": [
-    { "source": "/api/health", "destination": "https://rollcall-api.invalid/health" },
-    { "source": "/api", "destination": "https://rollcall-api.invalid/api" },
-    { "source": "/api/:path*", "destination": "https://rollcall-api.invalid/api/:path*" },
+    { "source": "/api/health", "destination": "https://rollcall-v2.onrender.com/health" },
+    { "source": "/api", "destination": "https://rollcall-v2.onrender.com/api" },
+    { "source": "/api/:path*", "destination": "https://rollcall-v2.onrender.com/api/:path*" },
     { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [
