@@ -1,19 +1,25 @@
 import { useRef } from 'react'
 import { DropdownMenu } from 'radix-ui'
-import { CalendarDays, LogOut, Settings, UserRound } from 'lucide-react'
+import { CalendarDays, LayoutDashboard, LogOut, Settings, UserRound } from 'lucide-react'
 import { Link } from 'react-router'
 import { Button } from '@/components/ui/button'
 import { LogoutButton } from './logout-button'
+import { useDashboardAccess } from '../api/use-dashboard-access'
 
 const itemStyle =
   'flex cursor-default items-center gap-3 rounded-md px-3 py-2 text-sm outline-none data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground data-[disabled]:opacity-50'
 export function AccountMenu() {
   const avatar = useRef<HTMLButtonElement>(null)
+  const dashboard = useDashboardAccess()
   return (
     <LogoutButton
       returnFocusRef={avatar}
       trigger={(openLogout, busy) => (
-        <DropdownMenu.Root>
+        <DropdownMenu.Root
+          onOpenChange={(open) => {
+            if (open) void dashboard.refresh()
+          }}
+        >
           <DropdownMenu.Trigger asChild>
             <Button ref={avatar} variant="ghost" size="icon" aria-label="Account menu">
               <UserRound aria-hidden="true" />
@@ -44,6 +50,14 @@ export function AccountMenu() {
                   My Events
                 </Link>
               </DropdownMenu.Item>
+              {dashboard.allowed && (
+                <DropdownMenu.Item className={itemStyle} asChild>
+                  <Link to="/admin">
+                    <LayoutDashboard className="size-4" aria-hidden="true" />
+                    Dashboard
+                  </Link>
+                </DropdownMenu.Item>
+              )}
               <DropdownMenu.Separator className="my-2 h-px bg-border" />
               <DropdownMenu.Item
                 className={itemStyle}

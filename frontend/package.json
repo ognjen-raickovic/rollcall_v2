@@ -4,6 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "test:dashboard-navigation": "node --test scripts/check-dashboard-navigation.mjs",
     "test:event-polish": "node --test scripts/check-event-polish.mjs",
     "test:discussions": "node --test scripts/check-discussion-api.mjs",
     "test:discussions-ui": "node --test scripts/check-discussion-ui.mjs",
