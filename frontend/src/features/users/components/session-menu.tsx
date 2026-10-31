@@ -9,7 +9,6 @@ import { useSession } from '../api/use-session'
 import { UserAvatar } from './user-avatar'
 import { useAuth } from '../api/use-auth'
 import { LogoutButton } from './logout-button'
-import { AdminNavigation } from './administration'
 import { AccountMenu } from './account-menu'
 import { useNavigationAccount } from '../api/use-navigation-account'
 
@@ -34,7 +33,6 @@ export function SessionMenu() {
   if (auth.data)
     return (
       <div className="flex items-center gap-2">
-        <AdminNavigation />
         {
           <span
             className="inline-block w-40 truncate text-sm text-muted-foreground"

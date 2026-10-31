@@ -68,10 +68,7 @@ test(
           errors = []
         page.on('pageerror', (error) => errors.push(error.message))
         page.on('console', (msg) => {
-          if (
-            msg.type() === 'error' &&
-            !/Failed to load resource:.*status of (401|503)/.test(msg.text())
-          )
+          if (msg.type() === 'error' && !/Failed to load resource:.*status of (401|503)/.test(msg.text()))
             errors.push(msg.text())
         })
         let viewer = id,
@@ -159,14 +156,8 @@ test(
           await overflow()
           if (width < 1280) {
             await expect(opener).toBeVisible()
-            assert.equal(
-              await header.getByRole('link', { name: 'Explore events', exact: true }).count(),
-              0,
-            )
-            assert.equal(
-              await header.getByRole('button', { name: 'Account menu', exact: true }).count(),
-              0,
-            )
+            assert.equal(await header.getByRole('link', { name: 'Explore events', exact: true }).count(), 0)
+            assert.equal(await header.getByRole('button', { name: 'Account menu', exact: true }).count(), 0)
             const headerHeight = (await header.boundingBox()).height
             await openMenu()
             await expect(drawer.getByRole('link', { name: 'My Profile', exact: true })).toHaveText(
@@ -183,13 +174,11 @@ test(
               'aria-current',
               'page',
             )
-            await expect(drawer.getByRole('link', { name: 'Admin', exact: true })).toBeVisible()
+            await expect(drawer.getByRole('link', { name: 'Dashboard', exact: true })).toBeVisible()
             assert.equal((await page.locator('header nav').first().boundingBox()).height, headerHeight)
             assert.ok(await page.evaluate(() => document.body.hasAttribute('data-scroll-locked')))
             assert.equal(await page.getByRole('button', { name: /Switch to .* theme/ }).count(), 1)
-            await expect
-              .poll(() => drawer.evaluate((el) => el.contains(document.activeElement)))
-              .toBe(true)
+            await expect.poll(() => drawer.evaluate((el) => el.contains(document.activeElement))).toBe(true)
             for (let i = 0; i < 16; i++) {
               await page.keyboard.press('Tab')
               assert.ok(await drawer.evaluate((el) => el.contains(document.activeElement)))
@@ -223,9 +212,7 @@ test(
             const greeting = await header
                 .getByText('Welcome, Ognjen the Player', { exact: true })
                 .boundingBox(),
-              avatar = await header
-                .getByRole('button', { name: 'Account menu', exact: true })
-                .boundingBox(),
+              avatar = await header.getByRole('button', { name: 'Account menu', exact: true }).boundingBox(),
               toggle = await header.getByRole('button', { name: /Switch to .* theme/ }).boundingBox()
             assert.ok(greeting.x < avatar.x && avatar.x < toggle.x)
             assert.equal(
@@ -244,6 +231,7 @@ test(
               animations: 'disabled',
             })
             await header.getByRole('button', { name: 'Account menu', exact: true }).click()
+            await expect(page.getByRole('menuitem', { name: 'Dashboard', exact: true })).toBeVisible()
             assert.deepEqual(await page.getByRole('menuitem').allTextContents(), [
               'My Profile',
               'Settings',
@@ -263,17 +251,11 @@ test(
         await openMenu()
         const before = await page.evaluate(() => document.documentElement.dataset.theme)
         await drawer.getByRole('button', { name: /Switch to .* theme/ }).click()
-        await expect
-          .poll(() => page.evaluate(() => document.documentElement.dataset.theme))
-          .not.toBe(before)
-        await expect(drawer.getByRole('link', { name: 'My Profile', exact: true })).toHaveText(
-          'Ognjen3211',
-        )
+        await expect.poll(() => page.evaluate(() => document.documentElement.dataset.theme)).not.toBe(before)
+        await expect(drawer.getByRole('link', { name: 'My Profile', exact: true })).toHaveText('Ognjen3211')
         await closeMenu()
         await page.reload()
-        await expect
-          .poll(() => page.evaluate(() => document.documentElement.dataset.theme))
-          .not.toBe(before)
+        await expect.poll(() => page.evaluate(() => document.documentElement.dataset.theme)).not.toBe(before)
         await openMenu()
         await drawer.getByRole('link', { name: 'My Profile', exact: true }).click()
         await expect(page).toHaveURL(origin + '/profile')
@@ -302,9 +284,7 @@ test(
         await drawer.getByRole('button', { name: 'Log out', exact: true }).click()
         mode = 'logout-error'
         await confirmation.getByRole('button', { name: 'Yes, log out', exact: true }).click()
-        await expect(
-          page.getByRole('alert').filter({ hasText: 'This browser is logged out' }),
-        ).toBeVisible()
+        await expect(page.getByRole('alert').filter({ hasText: 'This browser is logged out' })).toBeVisible()
         // The existing SDK clears local Auth even when provider revocation fails.
         await page.evaluate(
           (session) => localStorage.setItem('rollcall.auth', JSON.stringify(session)),
@@ -315,9 +295,7 @@ test(
         displayName = 'A very long public player name that needs truncation in the navigation'
         await page.goto(origin + '/about')
         await openMenu()
-        await expect(drawer.getByRole('link', { name: 'My Profile', exact: true })).toHaveText(
-          displayName,
-        )
+        await expect(drawer.getByRole('link', { name: 'My Profile', exact: true })).toHaveText(displayName)
         await overflow()
         // Verify theme and account controls remain reachable in landscape/large-text layouts.
         await page.setViewportSize({ width: 768, height: 320 })
@@ -353,33 +331,26 @@ test(
         await expect(page.getByText(/^Welcome,/)).toHaveCount(0)
         assert.equal(await page.getByText('Welcome, ' + displayName, { exact: true }).count(), 0)
         releaseIdentity()
-        await expect(
-          page.getByText('Welcome, Second player display name', { exact: true }),
-        ).toBeVisible()
+        await expect(page.getByText('Welcome, Second player display name', { exact: true })).toBeVisible()
         await page.setViewportSize({ width: 375, height: 650 })
         status = 'suspended'
         await page.goto(origin + '/about')
         await openMenu()
-        await expect(drawer.getByRole('link', { name: 'Admin', exact: true })).toHaveCount(0)
-        await expect(drawer.getByRole('link', { name: 'My Profile', exact: true })).toHaveText(
-          'My Profile',
-        )
+        await expect(drawer.getByRole('link', { name: 'Dashboard', exact: true })).toHaveCount(0)
+        await expect(drawer.getByRole('link', { name: 'My Profile', exact: true })).toHaveText('My Profile')
         await drawer.getByRole('link', { name: 'Host an event', exact: true }).click()
         await expect(page.getByRole('heading', { name: 'Account suspended', level: 1 })).toBeVisible()
         status = 'active'
         admin = false
         await page.goto(origin + '/about')
         await openMenu()
-        await expect(drawer.getByRole('link', { name: 'Admin', exact: true })).toHaveCount(0)
+        await expect(drawer.getByRole('link', { name: 'Dashboard', exact: true })).toHaveCount(0)
         await drawer.getByRole('button', { name: 'Log out', exact: true }).click()
         await confirmation.getByRole('button', { name: 'Yes, log out', exact: true }).click()
         await expect(confirmation).toBeHidden()
         await openMenu()
         await expect(drawer.getByRole('link', { name: 'Log in', exact: true })).toBeVisible()
-        assert.equal(
-          await drawer.getByRole('link', { name: /My Profile|My Events|Settings/ }).count(),
-          0,
-        )
+        assert.equal(await drawer.getByRole('link', { name: /My Profile|My Events|Settings/ }).count(), 0)
         await expect(drawer.getByRole('link', { name: 'Log in', exact: true })).toHaveAttribute(
           'href',
           /returnTo=%2Fabout/,

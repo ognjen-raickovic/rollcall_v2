@@ -6,7 +6,7 @@ import { loginPath } from '@/lib/auth-navigation'
 import { useAuth } from '../api/use-auth'
 import { useSession } from '../api/use-session'
 import { useNavigationAccount } from '../api/use-navigation-account'
-import { AdminNavigation } from './administration'
+import { DashboardAccountLink } from './dashboard-account-link'
 import { LogoutButton } from './logout-button'
 
 type MobileSessionMenuProps = {
@@ -68,7 +68,7 @@ export function MobileSessionMenu({ renderNavigation }: MobileSessionMenuProps) 
                     <Settings className="size-4 shrink-0" aria-hidden="true" />
                     Settings
                   </Link>
-                  <AdminNavigation onNavigate={() => close()} className={row} />
+                  <DashboardAccountLink onNavigate={() => close()} className={row} />
                   <button
                     type="button"
                     disabled={busy}

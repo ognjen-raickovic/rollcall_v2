@@ -4,6 +4,7 @@
   "packageManager": "pnpm@12.14.0",
   "engines": { "node": "22.x" },
   "scripts": {
+    "test:dashboard-navigation": "pnpm --filter frontend test:dashboard-navigation",
     "test:event-polish": "pnpm --filter frontend test:event-polish",
     "test:discussions": "pnpm --filter frontend test:discussions",
     "test:discussions:integration": "node backend/scripts/check-discussions-integration.mjs",

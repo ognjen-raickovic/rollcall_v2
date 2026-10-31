@@ -31,8 +31,11 @@ hero copy/compact CTAs, section headings and footer; retain left-aligned form/ca
 and the desktop composition. Use responsive classes, not duplicated components.
 
 Guests link to login; real accounts
-open a Radix menu with My Profile, Settings, My Events and confirmed logout. Admin links
-stay separate. Auth return navigation sits at the content container's top-left while
+open a Radix menu with My Profile, Settings, My Events and confirmed logout. Verified
+active administrators also get Dashboard in that account menu, never a standalone
+navbar Admin link. On mobile, Dashboard belongs to the drawer's account actions, outside
+the site-navigation list. Revalidate access on opening; hide it while checks are pending
+or failed. Auth return navigation sits at the content container's top-left while
 the shared card remains centered. Native selectors use inset chevrons, consistent 44px
 height and clear labels. Discovery keeps common fields visible, Sort accessible and
 advanced filters under More filters; matching semantics/timezones are explicit.

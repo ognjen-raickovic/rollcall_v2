@@ -1,9 +1,55 @@
 # Account navigation and event discovery
 
+## Dashboard account navigation (showcase Priority 1)
+
+There is no standalone Admin navbar entry. Verified active admins/superadmins see
+Dashboard in the desktop account dropdown (LayoutDashboard icon, existing item styles).
+On mobile it belongs to the drawer's account actions, outside the site-navigation list;
+only one viewport mode is mounted, so there is no duplicate Dashboard entry.
+
+The users feature reuses Auth identity, live account status and existing viewer-keyed
+permissions. Opening the account menu revalidates them. Pending/failed checks, mismatched
+UUIDs, ordinary/demo/guest accounts and suspension hide Dashboard. Existing Auth cache
+cleanup handles account switching; demotion is reflected on revalidation and existing
+permission polling/focus refresh. Menu visibility grants no authority: all five existing
+admin routes and backend/SQL permission checks remain unchanged.
+
+Verified locally: focused gate tests; 375/1440px in both themes; admin/superadmin links,
+keyboard navigation, all five admin pages, ordinary-user/guest denial, stale/loading
+permissions, demotion, account switching and suspension. Screenshots use synthetic local
+fixtures. The broader legacy navigation assertions were updated for the new label/order;
+that unrelated full browser suite was not rerun.
+
+This capacity-limited pass completes Priority 1 ONLY. Private discovery, event-bound room
+code admission, All/Upcoming/Completed discovery defaults/order and rating aggregation are
+not implemented. No migration/backend contract was changed. The existing untracked
+supabase/snippets/ directory was left untouched.
+
+Continuation order: (1) design narrow public-safe private summaries without loosening
+private detail/comment/cover RLS; (2) add expected-event matching inside atomic invitation
+redemption before any membership write, preserving durable limits/age/capacity locks;
+(3) connect the selected-event room-code dialog and safe Auth return; (4) add bounded
+finished-event ordering and database-side visible-review aggregates (private aggregates
+remain restricted unless explicitly approved); (5) verify SQL/API/privacy/concurrency in
+a disposable stack before coordinating migration, backend and frontend rollout.
+
+Local verification commands:
+
+```powershell
+$env:PLAYWRIGHT_CHANNEL='chrome'
+pnpm.cmd test:dashboard-navigation
+pnpm.cmd typecheck
+pnpm.cmd lint
+pnpm.cmd build
+```
+
+This navigation-only change needs frontend review/deployment approval, not a migration.
+No deployments, commits or hosted operations were performed.
+
 ## Current responsive navigation
 
 The desktop navbar starts at 1280px, leaving room for the four site links (Explore events,
-Host an event, About Us, Contact), optional Admin link and Welcome / account icon / theme
+Host an event, About Us, Contact), and Welcome / account icon / theme
 controls. The RollCall logo remains the homepage link. Both modes use one shared site-link
 list. Only one navigation mode is mounted, avoiding hidden menus/dialogs and duplicate
 visible theme controls. Smaller viewports have a compact logo/hamburger header.

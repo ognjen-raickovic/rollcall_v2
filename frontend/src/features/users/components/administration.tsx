@@ -8,24 +8,8 @@ import { useAdminUsers, useChangeAdminRole, usePermissions, useRoleAudit } from 
 import type { AdminAccount } from '../api/administration-api'
 import { useAuth } from '../api/use-auth'
 import { ModerationDashboard } from './moderation-dashboard'
-import { useAccountStatus } from '../api/use-account-status'
 import { AccountAccess } from './account-access'
 
-type AdminNavigationProps = { onNavigate?: () => void; className?: string }
-
-export function AdminNavigation({ onNavigate, className }: AdminNavigationProps = {}) {
-  const auth = useAuth(),
-    permissions = usePermissions()
-  const status = useAccountStatus(auth.data?.id ?? null)
-  return auth.data &&
-    status.data?.status === 'active' &&
-    !permissions.isError &&
-    permissions.data?.capabilities.accessAdmin ? (
-    <Link to="/admin" onClick={onNavigate} className={className ?? 'text-sm font-medium hover:text-primary'}>
-      Admin
-    </Link>
-  ) : null
-}
 function Feedback({
   pending,
   error,
