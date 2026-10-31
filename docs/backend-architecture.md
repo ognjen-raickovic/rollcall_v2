@@ -1,5 +1,7 @@
 # RollCall backend architecture
 
+Discussion routes/repository live in modules/events/event-discussion.ts and call checked RPCs with the unprivileged caller JWT. Migration 25 uses a restricted executor, existing active-account/current-permission helpers, shared parent event locks, committed attempt outcomes and atomic immutable moderation audits. No raw grants, private-event admin override or Storage changes are introduced. See [security/contracts](event-discussions.md).
+
 Profile game-set saves use `PUT /api/me/game-experience` with complete desired/expected
 sets and the caller-RLS `replace_my_game_experience` RPC. Migration 21 serializes batch,
 legacy and direct authenticated writes, rejecting stale sets with 409. Runtime stays

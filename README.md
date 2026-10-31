@@ -1,5 +1,7 @@
 ﻿# RollCall
 
+Event comments and post-event reviews are implemented locally in forward migration 25, with checked database permissions, one-level replies, audited moderation and shared details/preview tabs. Review eligibility uses recorded participation, not physical check-in. See [contracts and rollout](docs/event-discussions.md). Hosted deployment requires separate approval.
+
 The profile/event UX follow-up fixes draft game saving, normalized Profile dirty state and
 the stable display-name navbar greeting. New forward migrations 22–23 add case-only username
 correction, current event recommendations/tag rules, safe age/experience card badges and

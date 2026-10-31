@@ -6,6 +6,10 @@ All paths below are relative to `frontend/`.
 
 ## Feature-first
 
+Event comments/reviews follow @../docs/event-discussions.md. Keep discussions under the
+protected real-event/viewer query prefix, recheck mutation identity, and reuse the shared
+details/preview tabs. Render plain text only; never expose hidden/deleted content.
+
 Every feature (users, games, events, geography) lives in `src/features/<name>/` and has only the
 subfolders it needs: `api/`, `components/`, `hooks/`, `types.ts`. Features do not import each
 other; a route in `src/app/routes/` combines them on one page. Shared code goes to

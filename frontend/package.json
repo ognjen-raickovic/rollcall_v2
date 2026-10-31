@@ -4,6 +4,8 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "test:discussions": "node --test scripts/check-discussion-api.mjs",
+    "test:discussions-ui": "node --test scripts/check-discussion-ui.mjs",
     "test:discovery-ux": "node --test scripts/check-event-viewer-api.mjs scripts/check-discovery-ux-ui.mjs",
     "test:profile-event-ux": "node --test scripts/check-profile-event-ux-ui.mjs",
     "test:responsive-navigation": "node --test scripts/check-responsive-navigation-ui.mjs",

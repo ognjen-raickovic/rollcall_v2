@@ -1,5 +1,9 @@
 # RollCall product specification
 
+## Event discussions and reviews
+
+Real events now have Event details (default), Comments and Reviews tabs in pages/previews. Active accounts comment until database end time; recorded participants other than the host review afterward. Private access never expands with admin role. Authors edit/soft-delete; hosts hide own-event comments; current admins/superadmins hide accessible content with immutable reasoned audits. Migration 25 enforces lifecycle, rate limits and concurrency. No check-in, aggregates or demo changes are added. See [contracts](docs/event-discussions.md).
+
 Responsive navigation retains desktop site links at 1280px+, with a verified public-profile
 Welcome label, account icon and theme control. Smaller viewports use a modal right-side
 drawer containing site navigation, direct profile/account actions and the existing theme

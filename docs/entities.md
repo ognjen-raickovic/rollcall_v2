@@ -1,5 +1,9 @@
 ﻿# RollCall entities and API contract
 
+## Event comments and reviews (migration 25)
+
+Private event_comments stores UUID/event/nullable author/one-level parent, bounded plain text, stable page position, timestamps and deleted/hidden flags. Private event_reviews adds an integer 1?5 rating and unique event/author identity. discussion_attempts bounds durable writes; append-only discussion_audit preserves reasoned moderation through deletion. Author DTOs contain only UUID/display name; deleted/hidden bodies never appear. See [fields, HTTP endpoints, validation, permissions and retention](event-discussions.md).
+
 Shared contract for Workshop 3 mocks, backend milestones through 4B and frontend 4C-1/4C-2.
 Milestone 4D extends this contract with persistent event covers below; earlier milestone
 sections retain their historical delivery boundaries.

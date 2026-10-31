@@ -1,4 +1,5 @@
 import Fastify from 'fastify'
+import { createDiscussionRepository, registerDiscussionRoutes, type DiscussionRepository } from './modules/events/event-discussion.js'
 import { registerRegistrationRoutes } from './modules/auth/registration.js'
 import multipart from '@fastify/multipart'
 import { registerInvitationRoutes } from './modules/events/event-invitations.js'
@@ -38,6 +39,7 @@ export function buildApp(
     events?: (accessToken?: string) => EventRepository
     covers?: (accessToken?: string) => EventCoverRepository
     logger?: boolean
+    discussion?: (accessToken?: string) => DiscussionRepository
     assertActiveAccount?: (token:string)=>Promise<void>
   } = {},
 ) {
@@ -72,6 +74,7 @@ export function buildApp(
   const verify = options.verifyToken ?? createTokenVerifier(env)
   const covers = options.covers ?? ((token?: string) => createEventCoverRepository(env, token))
   registerAuthRoutes(app, verify)
+  registerDiscussionRoutes(app, { verify, repository: options.discussion ?? ((token) => createDiscussionRepository(createDatabaseClient(env, fetch, token))) })
   registerPersonalEventRoutes(app,env,verify)
   registerSuspensionRoutes(app,env,verify)
   registerAdminRoutes(app, { verify, repository: (token) => createAdminRepository(createDatabaseClient(env, fetch, token)) })

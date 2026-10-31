@@ -1,5 +1,7 @@
 import { BackLink } from '@/components/back-link'
 import { Gamepad2 } from 'lucide-react'
+import { Tabs } from 'radix-ui'
+import { EventDiscussion } from './event-discussion'
 import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router'
 
@@ -47,6 +49,7 @@ export function EventDetails({
   const mounted = useRef(true)
   const acting = useRef(false)
   const [feedback, setFeedback] = useState('')
+  const [tab, setTab] = useState('details')
   useEffect(() => {
     setFeedback('')
   }, [eventId, viewerId])
@@ -174,9 +177,7 @@ export function EventDetails({
     )
   }
   const authorized =
-    viewerId !== null &&
-    event.viewer.userId === viewerId &&
-    (event.viewer.isHost || event.viewer.hasJoined)
+    viewerId !== null && event.viewer.userId === viewerId && (event.viewer.isHost || event.viewer.hasJoined)
   const address =
     authorized && !leave.isPending && !leave.isSuccess && !leave.error && 'address' in event
       ? event.address
@@ -209,81 +210,103 @@ export function EventDetails({
     }
   }
   return (
-    <>
-      <EventDetailsView
-        cover={
-          <PersistentEventImage
-            key={`${event.id}-${viewerId ?? 'guest'}`}
-            eventId={event.id}
-            cover={event.cover}
-            session={session}
-            enabled={
-              !leave.isPending && !leave.error && !(leave.isSuccess && event.visibility === 'private')
-            }
-            title={event.title}
-            category={event.game.category}
-            priority
-            className="aspect-[16/7] max-h-64 w-full rounded-xl border"
-          />
-        }
-        event={{
-          ...event,
-          cityName: event.city.name,
-          countryName: event.country.name,
-          administrativeDivision: event.city.administrativeDivision,
-          address,
-          imageUrl: event.cover.imageUrl,
-        }}
-        backLink={backLink}
-        notice={<EventNotice />}
-        game={
-          <div className="flex items-center gap-3">
-            <Gamepad2 className="size-8 shrink-0 text-primary" aria-hidden="true" />
-            <div>
-              <p className="font-semibold">{event.game.name}</p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {gameCategoryLabel(event.game.category)}
-              </p>
-            </div>
-          </div>
-        }
-        host={
-          <>
-            <p className="text-xs font-semibold tracking-wide text-primary uppercase">Your host</p>
-            <Link
-              to={`/users/${event.host.id}`}
-              className="mt-2 inline-block font-semibold text-foreground hover:text-primary focus-visible:outline-2 focus-visible:outline-ring"
-            >
-              {event.host.displayName}
-            </Link>
-            <p className="mt-2 text-sm text-muted-foreground">Bringing this table together.</p>
-          </>
-        }
-        attendance={
-          <EventParticipationSummary
-            event={event}
-            pending={pending}
-            error={join.error ?? leave.error}
-            feedback={feedback}
-            loginTo={loginPath(`${location.pathname}${location.search}`)}
-            onJoin={() => void participate(false)}
-            onLeave={() => void participate(true)}
-            onDelete={() => {
-              remove.reset()
-              setDeleteOpen(true)
-            }}
-          />
-        }
-      />
-      {event.visibility === 'private' && event.viewer.isHost && (
-        <InvitationPanel id={event.id} session={session} />
+    <Tabs.Root value={tab} onValueChange={setTab} className="space-y-6">
+      {tab !== 'details' && (
+        <div className="space-y-4">
+          {backLink}
+          <h1 className="text-2xl font-bold">{event.title}</h1>
+        </div>
       )}
-      {deleteDialog}
-      <ReportEvent
-        key={`${event.id}:${session.viewerId ?? 'anonymous'}`}
-        id={event.id}
-        session={session}
-      />
-    </>
+      <Tabs.List
+        aria-label="Event sections"
+        className="grid grid-cols-3 gap-1 rounded-xl border bg-muted p-1"
+      >
+        {(['details', 'comments', 'reviews'] as const).map((value) => (
+          <Tabs.Trigger
+            key={value}
+            value={value}
+            className="min-h-11 rounded-lg px-2 py-2 text-sm font-medium text-muted-foreground focus-visible:outline-2 focus-visible:outline-ring data-[state=active]:bg-card data-[state=active]:text-foreground"
+          >
+            {value === 'details' ? 'Event details' : value === 'comments' ? 'Comments' : 'Reviews'}
+          </Tabs.Trigger>
+        ))}
+      </Tabs.List>
+      <Tabs.Content value="details" className="space-y-6 focus-visible:outline-2 focus-visible:outline-ring">
+        <EventDetailsView
+          cover={
+            <PersistentEventImage
+              key={`${event.id}-${viewerId ?? 'guest'}`}
+              eventId={event.id}
+              cover={event.cover}
+              session={session}
+              enabled={
+                !leave.isPending && !leave.error && !(leave.isSuccess && event.visibility === 'private')
+              }
+              title={event.title}
+              category={event.game.category}
+              priority
+              className="aspect-[16/7] max-h-64 w-full rounded-xl border"
+            />
+          }
+          event={{
+            ...event,
+            cityName: event.city.name,
+            countryName: event.country.name,
+            administrativeDivision: event.city.administrativeDivision,
+            address,
+            imageUrl: event.cover.imageUrl,
+          }}
+          backLink={backLink}
+          notice={<EventNotice />}
+          game={
+            <div className="flex items-center gap-3">
+              <Gamepad2 className="size-8 shrink-0 text-primary" aria-hidden="true" />
+              <div>
+                <p className="font-semibold">{event.game.name}</p>
+                <p className="mt-1 text-sm text-muted-foreground">{gameCategoryLabel(event.game.category)}</p>
+              </div>
+            </div>
+          }
+          host={
+            <>
+              <p className="text-xs font-semibold tracking-wide text-primary uppercase">Your host</p>
+              <Link
+                to={`/users/${event.host.id}`}
+                className="mt-2 inline-block font-semibold text-foreground hover:text-primary focus-visible:outline-2 focus-visible:outline-ring"
+              >
+                {event.host.displayName}
+              </Link>
+              <p className="mt-2 text-sm text-muted-foreground">Bringing this table together.</p>
+            </>
+          }
+          attendance={
+            <EventParticipationSummary
+              event={event}
+              pending={pending}
+              error={join.error ?? leave.error}
+              feedback={feedback}
+              loginTo={loginPath(`${location.pathname}${location.search}`)}
+              onJoin={() => void participate(false)}
+              onLeave={() => void participate(true)}
+              onDelete={() => {
+                remove.reset()
+                setDeleteOpen(true)
+              }}
+            />
+          }
+        />
+        {event.visibility === 'private' && event.viewer.isHost && (
+          <InvitationPanel id={event.id} session={session} />
+        )}
+        {deleteDialog}
+        <ReportEvent key={`${event.id}:${session.viewerId ?? 'anonymous'}`} id={event.id} session={session} />
+      </Tabs.Content>
+      <Tabs.Content value="comments" className="focus-visible:outline-2 focus-visible:outline-ring">
+        <EventDiscussion eventId={event.id} kind="comments" session={session} />
+      </Tabs.Content>
+      <Tabs.Content value="reviews" className="focus-visible:outline-2 focus-visible:outline-ring">
+        <EventDiscussion eventId={event.id} kind="reviews" session={session} />
+      </Tabs.Content>
+    </Tabs.Root>
   )
 }
