@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { notify, notifyFailure } from '@/lib/notifications'
 import { useCallback } from 'react'
 import {
   ACCOUNT_STATUS_QUERY_KEY,
@@ -33,9 +34,7 @@ export function useApiSession() {
     signedIn: Boolean(account.data),
     getAccessToken,
     ready:
-      !account.isPending &&
-      !account.error &&
-      (!actor || suspended || (!status.isPending && !status.error)),
+      !account.isPending && !account.error && (!actor || suspended || (!status.isPending && !status.error)),
     error: account.error ?? status.error,
   }
 }
@@ -121,6 +120,7 @@ export function useResendConfirmation() {
 export function useUpdatePassword() {
   const client = useQueryClient()
   return useMutation({
+    onError: (error: Error) => notifyFailure(error),
     mutationFn: authApi.updatePassword,
     onSuccess: () => {
       client.removeQueries({ queryKey: EVENT_VIEWER_QUERY_KEY })
@@ -128,6 +128,7 @@ export function useUpdatePassword() {
       client.removeQueries({ queryKey: EVENT_COVER_QUERY_KEY })
       client.setQueryData(authKey, null)
       client.setQueryData(recoveryKey, false)
+      notify('settings.updated')
     },
   })
 }

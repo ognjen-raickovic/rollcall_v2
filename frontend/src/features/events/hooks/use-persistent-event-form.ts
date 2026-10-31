@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate } from 'react-router'
 import { HttpError } from '@/lib/http-client'
+import { notify, notifyFailure } from '@/lib/notifications'
 import { persistentEventFormDefaults, persistentEventFormSchema } from '../api/persistent-event-form-values'
 import type { EventFormValues } from '../api/event-form-values'
 import type { CreateEventInput, HostEventDetails } from '../api/event-write-dtos'
@@ -72,11 +73,12 @@ export function usePersistentEventForm({ event, session, games }: UsePersistentE
     if (!mounted.current) return
     await navigate(`/events/${id}`, {
       replace: true,
-      state: { eventNotice: event ? 'Your event has been updated.' : 'Your event has been created.' },
     })
+    notify(event ? 'event.updated' : 'event.created')
   }
   function coverFailed(error: unknown, id: string) {
     if (!mounted.current) return
+    notify('cover.partial', 'warning')
     const message =
       error instanceof HttpError && error.fields.image?.length
         ? error.fields.image.join(' ')
@@ -130,6 +132,7 @@ export function usePersistentEventForm({ event, session, games }: UsePersistentE
       await finish(saved.id)
     } catch (error) {
       if (!mounted.current) return
+      notifyFailure(error)
       setRequiresLogin(error instanceof HttpError && error.status === 401)
       form.setError('root.server', {
         message:

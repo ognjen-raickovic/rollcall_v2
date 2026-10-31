@@ -1,3 +1,4 @@
+import { notify, notifyFailure } from '@/lib/notifications'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useRef } from 'react'
 import { z } from 'zod'
@@ -20,11 +21,15 @@ export function useCorrectUsername() {
     auth = useAuth(),
     owner = auth.data?.id ?? ''
   return useMutation({
+    onError: (error) => {
+      if (owner && client.getQueryData<{ id: string }>(['auth-account'])?.id === owner) notifyFailure(error)
+    },
     gcTime: 0,
     mutationFn: ({ username, expected }: { username: string; expected: string }) =>
       profilesApi.correctUsername(username, expected, owner),
     onSuccess: async (profile) => {
       if (client.getQueryData<{ id: string }>(['auth-account'])?.id !== owner) return
+      notify('settings.updated')
       await client.cancelQueries({ queryKey: ['own-profile', owner] })
       if (client.getQueryData<{ id: string }>(['auth-account'])?.id !== owner) return
       client.setQueryData(['own-profile', owner], profile)
@@ -57,6 +62,10 @@ export function useUpdateProfile() {
   const auth = useAuth()
   const ownerId = auth.data?.id
   return useMutation({
+    onError: (error) => {
+      if (ownerId && client.getQueryData<{ id: string }>(['auth-account'])?.id === ownerId)
+        notifyFailure(error)
+    },
     gcTime: 0,
     mutationFn: async (update: ProfileUpdate) => {
       await client.cancelQueries({ queryKey: ['own-profile', ownerId] })
@@ -65,6 +74,7 @@ export function useUpdateProfile() {
     onSuccess: async (profile) => {
       await client.cancelQueries({ queryKey: ['own-profile', ownerId] })
       if (client.getQueryData<{ id: string }>(['auth-account'])?.id !== ownerId) return
+      notify('profile.updated')
       client.setQueryData(['own-profile', ownerId], profile)
       await client.cancelQueries({ queryKey: ['public-profile', ownerId] })
       if (client.getQueryData<{ id: string }>(['auth-account'])?.id !== ownerId) return
@@ -79,10 +89,15 @@ export function useSetProfileExperience() {
   const auth = useAuth()
   const ownerId = auth.data?.id
   return useMutation({
+    onError: (error) => {
+      if (ownerId && client.getQueryData<{ id: string }>(['auth-account'])?.id === ownerId)
+        notifyFailure(error)
+    },
     mutationFn: (value: { gameId: number; experience: GameExperienceLevel }) =>
       profilesApi.setExperience(value, ownerId ?? ''),
     onSuccess: () => {
       if (client.getQueryData<{ id: string }>(['auth-account'])?.id !== ownerId) return
+      notify('games.updated')
       void client.invalidateQueries({ queryKey: ['own-profile', ownerId] })
       void client.invalidateQueries({ queryKey: ['profile-experience', ownerId] })
       void client.invalidateQueries({ queryKey: ['public-profile', ownerId] })
@@ -95,9 +110,14 @@ export function useRemoveProfileExperience() {
   const auth = useAuth()
   const ownerId = auth.data?.id
   return useMutation({
+    onError: (error) => {
+      if (ownerId && client.getQueryData<{ id: string }>(['auth-account'])?.id === ownerId)
+        notifyFailure(error)
+    },
     mutationFn: (gameId: number) => profilesApi.removeExperience(gameId, ownerId ?? ''),
     onSuccess: () => {
       if (client.getQueryData<{ id: string }>(['auth-account'])?.id !== ownerId) return
+      notify('games.updated')
       void client.invalidateQueries({ queryKey: ['own-profile', ownerId] })
       void client.invalidateQueries({ queryKey: ['profile-experience', ownerId] })
       void client.invalidateQueries({ queryKey: ['public-profile', ownerId] })
@@ -118,6 +138,10 @@ export function useReplaceProfileExperience() {
     }
   }, [ownerId])
   return useMutation({
+    onError: (error) => {
+      if (ownerId && client.getQueryData<{ id: string }>(['auth-account'])?.id === ownerId)
+        notifyFailure(error)
+    },
     gcTime: 0,
     mutationFn: async (value: Parameters<typeof profilesApi.replaceExperience>[0]) => {
       const controller = new AbortController()
@@ -130,6 +154,7 @@ export function useReplaceProfileExperience() {
     },
     onSuccess: async () => {
       if (client.getQueryData<{ id: string }>(['auth-account'])?.id !== ownerId) return
+      notify('games.updated')
       await client.cancelQueries({ queryKey: ['own-profile', ownerId] })
       await client.cancelQueries({ queryKey: ['profile-experience', ownerId] })
       if (client.getQueryData<{ id: string }>(['auth-account'])?.id !== ownerId) return

@@ -53,11 +53,6 @@ export function DiscussionEditor({
       >
         {label}
       </Button>
-      {mutation.isSuccess && !open && (
-        <span role="status" className="ml-2 inline-block text-sm text-muted-foreground">
-          Change saved.
-        </span>
-      )}
       <dialog
         ref={dialog}
         aria-labelledby={titleId}

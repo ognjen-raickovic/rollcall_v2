@@ -48,11 +48,7 @@ export function EventDetails({
   const navigate = useNavigate()
   const mounted = useRef(true)
   const acting = useRef(false)
-  const [feedback, setFeedback] = useState('')
   const [tab, setTab] = useState('details')
-  useEffect(() => {
-    setFeedback('')
-  }, [eventId, viewerId])
   const [deleteOpen, setDeleteOpen] = useState(false)
   useEffect(() => {
     mounted.current = true
@@ -80,7 +76,6 @@ export function EventDetails({
       setDeleteOpen(false)
       await navigate('/events', {
         replace: true,
-        state: { eventNotice: 'Your event has been deleted.' },
       })
     } catch {
       /* Keep the confirmation open and show the mutation error. */
@@ -160,7 +155,6 @@ export function EventDetails({
                 ? 'Your account cannot view this event.'
                 : 'Please check your connection and try again in a moment.'}
         </p>
-        {feedback && <p role="status">{feedback}</p>}
         {unauthorized && (
           <Button asChild>
             <Link to={loginPath(`${location.pathname}${location.search}`)}>Log in</Link>
@@ -187,7 +181,6 @@ export function EventDetails({
   async function participate(leaving: boolean) {
     if (acting.current) return
     acting.current = true
-    setFeedback('')
     if (!leaving) leave.reset()
     else join.reset()
     try {
@@ -198,11 +191,9 @@ export function EventDetails({
       if (leaving && currentEvent.visibility === 'private') {
         await navigate('/events', {
           replace: true,
-          state: { eventNotice: 'You have left the private event.' },
         })
         return
       }
-      setFeedback(leaving ? 'You have left this event.' : 'You have joined this event.')
     } catch {
       /* Mutation hooks expose sanitized errors without changing confirmed state. */
     } finally {
@@ -211,12 +202,6 @@ export function EventDetails({
   }
   return (
     <Tabs.Root value={tab} onValueChange={setTab} className="space-y-6">
-      {tab !== 'details' && (
-        <div className="space-y-4">
-          {backLink}
-          <h1 className="text-2xl font-bold">{event.title}</h1>
-        </div>
-      )}
       <Tabs.List
         aria-label="Event sections"
         className="grid grid-cols-3 gap-1 rounded-xl border bg-muted p-1"
@@ -231,6 +216,7 @@ export function EventDetails({
           </Tabs.Trigger>
         ))}
       </Tabs.List>
+      <div>{backLink}</div>
       <Tabs.Content value="details" className="space-y-6 focus-visible:outline-2 focus-visible:outline-ring">
         <EventDetailsView
           cover={
@@ -256,7 +242,7 @@ export function EventDetails({
             address,
             imageUrl: event.cover.imageUrl,
           }}
-          backLink={backLink}
+          backLink={null}
           notice={<EventNotice />}
           game={
             <div className="flex items-center gap-3">
@@ -284,7 +270,7 @@ export function EventDetails({
               event={event}
               pending={pending}
               error={join.error ?? leave.error}
-              feedback={feedback}
+              feedback=""
               loginTo={loginPath(`${location.pathname}${location.search}`)}
               onJoin={() => void participate(false)}
               onLeave={() => void participate(true)}

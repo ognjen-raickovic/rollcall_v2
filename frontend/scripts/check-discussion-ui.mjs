@@ -83,13 +83,26 @@ test(
             errors = []
           page.on('pageerror', (e) => errors.push(e.message))
           page.on('console', (m) => {
-            if (m.type() === 'error' && !/Failed to load resource.*503/.test(m.text())) errors.push(m.text())
+            if (m.type() === 'error' && !/Failed to load resource.*(400|503)/.test(m.text()))
+              errors.push(m.text())
           })
           let ended = false,
             failed = false,
             delayList = false,
             sequence = 1
           const items = { comments: [], reviews: [] }
+          let hostMode = false,
+            rejectComment = false,
+            holdWrite = false,
+            releaseWrite = () => {},
+            writeGate = Promise.resolve(),
+            rotationCalls = 0,
+            revocationCalls = 0
+          const toasts = page.locator('[data-notifications]')
+          const dismissToasts = async () => {
+            while (await toasts.getByRole('button', { name: 'Dismiss notification' }).count())
+              await toasts.getByRole('button', { name: 'Dismiss notification' }).first().click()
+          }
           const summary = {
             id: eventId,
             title: 'Discussion game night',
@@ -127,6 +140,32 @@ test(
           hostComment.canEdit = false
           hostComment.canDelete = false
           items.comments.push(hostComment)
+          const hostReply = item(
+            'Bring dice and a character sheet.\n' + 'A long conversation line '.repeat(12),
+            'comments',
+            hostComment.id,
+          )
+          hostReply.author = { id: host, displayName: 'HostWithALongPublicNameWithoutSpacesForWrapping' }
+          hostReply.isHost = true
+          hostReply.canEdit = false
+          hostReply.canDelete = false
+          items.comments.push(hostReply)
+          hostComment.replyCount = 1
+          const hiddenParent = item(null, 'comments')
+          hiddenParent.hidden = true
+          hiddenParent.canEdit = false
+          const deletedParent = item(null, 'comments')
+          deletedParent.deleted = true
+          deletedParent.canEdit = false
+          deletedParent.canDelete = false
+          items.comments.push(
+            hiddenParent,
+            deletedParent,
+            item('Replies remain readable beneath a hidden parent.', 'comments', hiddenParent.id),
+            item('Replies remain readable beneath a deleted parent.', 'comments', deletedParent.id),
+          )
+          hiddenParent.replyCount = 1
+          deletedParent.replyCount = 1
           await page.route('**/*', async (route) => {
             const url = new URL(route.request().url()),
               p = url.pathname,
@@ -151,22 +190,74 @@ test(
               })
             if (p === '/api/countries' || p === '/api/cities' || p === '/api/games') return json([])
             if (p === '/api/events/viewer-status')
-              return json({ userId: actor, items: [{ eventId, isHost: false, hasJoined: true }] })
+              return json({
+                userId: actor,
+                items: route
+                  .request()
+                  .postDataJSON()
+                  .eventIds.map((id) => ({ eventId: id, isHost: false, hasJoined: true })),
+              })
+            if (p === '/api/me/events')
+              return json({
+                items: [
+                  { ...summary, title: 'Upcoming public table' },
+                  {
+                    ...summary,
+                    id: 'e5000000-0000-4000-8000-000000000002',
+                    title: 'Private ongoing table',
+                    visibility: 'private',
+                    startsAt: new Date(Date.now() - 60000).toISOString(),
+                    endsAt: new Date(Date.now() + 3600000).toISOString(),
+                  },
+                  {
+                    ...summary,
+                    id: 'e5000000-0000-4000-8000-000000000003',
+                    title: 'Finished unlisted table',
+                    visibility: 'unlisted',
+                    startsAt: '2020-01-01T00:00:00Z',
+                    endsAt: '2020-01-01T02:00:00Z',
+                  },
+                  {
+                    ...summary,
+                    id: 'e5000000-0000-4000-8000-000000000004',
+                    title: 'Cancelled private table',
+                    visibility: 'private',
+                    status: 'cancelled',
+                  },
+                ],
+                pageInfo: { limit: 12, nextCursor: null },
+              })
             if (p === '/api/events')
               return json({ items: [summary], pageInfo: { limit: 12, nextCursor: null } })
+            if (p.startsWith(`/api/events/${eventId}/invitation`)) {
+              if (method === 'POST') {
+                if (p.endsWith('/rotate')) rotationCalls++
+                if (p.endsWith('/revoke')) revocationCalls++
+                if (holdWrite) {
+                  holdWrite = false
+                  await writeGate
+                }
+              }
+              return json({
+                code: p.endsWith('/revoke') ? null : '2345-6789-ABCD-EFGH',
+                expiresAt: '2035-01-01T00:00:00Z',
+                revokedAt: p.endsWith('/revoke') ? time : null,
+              })
+            }
             if (p === `/api/events/${eventId}`)
               return json({
                 ...summary,
+                visibility: hostMode ? 'private' : 'public',
                 ...(ended ? { startsAt: '2020-01-01T18:00:00Z', endsAt: '2020-01-01T22:00:00Z' } : {}),
                 description: 'A friendly tabletop session with questions, replies and post-event reviews.',
-                host: { id: host, displayName: 'Fixture Host' },
+                host: { id: hostMode ? actor : host, displayName: 'Fixture Host' },
                 minimumAge: 0,
                 experienceLevel: 'all-levels',
                 price: 0,
                 currency: 'EUR',
                 createdAt: time,
                 updatedAt: time,
-                viewer: { userId: actor, isHost: false, hasJoined: true },
+                viewer: { userId: actor, isHost: hostMode, hasJoined: !hostMode },
                 address: 'Private fixture address',
               })
             const match = p.match(
@@ -204,6 +295,21 @@ test(
                 })
               }
               const data = method === 'DELETE' ? {} : route.request().postDataJSON()
+              if (kind === 'comments' && method === 'POST' && rejectComment) {
+                rejectComment = false
+                return json(
+                  {
+                    code: 'VALIDATION_ERROR',
+                    message: 'PRIVATE_UPSTREAM_DETAIL',
+                    fields: { body: ['Use valid plain text.'] },
+                  },
+                  400,
+                )
+              }
+              if (holdWrite) {
+                holdWrite = false
+                await writeGate
+              }
               let row = items[kind].find((x) => x.id === id)
               if (action === 'hide') {
                 row.hidden = true
@@ -234,18 +340,50 @@ test(
             'aria-selected',
             'true',
           )
+          const tabs = page.getByRole('tablist', { name: 'Event sections' })
+          const back = page.getByRole('link', { name: 'Back to events', exact: true })
+          const originTabs = await tabs.boundingBox(),
+            originBack = await back.boundingBox()
+          const checkLayout = async () => {
+            const t = await tabs.boundingBox(),
+              b = await back.boundingBox()
+            assert.equal(t.x, originTabs.x)
+            assert.equal(t.y, originTabs.y)
+            assert.equal(b.x, originBack.x)
+            assert.equal(b.y, originBack.y)
+            assert.ok(b.y >= t.y + t.height, 'Back link stays below tabs')
+            await expect(back).toHaveCount(1)
+          }
           delayList = true
           await page.getByRole('tab', { name: 'Comments', exact: true }).click()
           await expect(page.getByRole('status').filter({ hasText: 'Loading comments' })).toBeVisible()
           await expect(page.getByText('What should I bring?', { exact: true })).toBeVisible()
           await expect(page.getByText('Host', { exact: true })).toBeVisible()
+          await checkLayout()
+          await expect(page.getByRole('heading', { name: 'Discussion game night', exact: true })).toHaveCount(
+            0,
+          )
+          holdWrite = true
+          writeGate = new Promise((resolve) => {
+            releaseWrite = resolve
+          })
           await page.getByRole('button', { name: 'Write a comment', exact: true }).click()
           const dialog = page.getByRole('dialog', { name: 'Write a comment', exact: true })
           await dialog.getByLabel('Comment', { exact: true }).fill('<script>window.INJECTED=true</script>')
           await dialog.getByRole('button', { name: 'Save', exact: true }).click()
+          await expect(dialog.getByRole('button', { name: 'Saving…', exact: true })).toBeDisabled()
+          await expect(toasts.getByText('Comment posted', { exact: true })).toHaveCount(0)
+          releaseWrite()
           await expect(
             page.locator('p').getByText('<script>window.INJECTED=true</script>', { exact: true }),
           ).toBeVisible()
+          await expect(toasts.getByText('Comment posted', { exact: true })).toHaveCount(1)
+          const toastBounds = await toasts.boundingBox()
+          assert.ok(
+            Math.abs(toastBounds.x + toastBounds.width - width + 16) <= 1,
+            'Toast aligns bottom-right',
+          )
+          assert.ok(toastBounds.y + toastBounds.height <= 985, 'Toast stays above viewport bottom')
           assert.equal(await page.evaluate(() => window.INJECTED), undefined)
           const own = page.getByRole('listitem').filter({ hasText: '<script>' })
           await own.getByRole('button', { name: 'Edit', exact: true }).click()
@@ -264,15 +402,37 @@ test(
             .getByRole('button', { name: 'Reply', exact: true })
             .click()
           await page
-            .getByRole('dialog', { name: 'Reply', exact: true })
-            .getByLabel('Comment', { exact: true })
+            .getByRole('form', { name: 'Write a reply', exact: true })
+            .getByLabel('Reply', { exact: true })
             .fill('A character sheet.')
           await page
-            .getByRole('dialog', { name: 'Reply', exact: true })
-            .getByRole('button', { name: 'Save', exact: true })
+            .getByRole('form', { name: 'Write a reply', exact: true })
+            .getByRole('button', { name: 'Post reply', exact: true })
             .click()
-          await page.getByRole('button', { name: 'Show replies (1)', exact: true }).click()
+          await expect(page.getByRole('button', { name: 'Hide replies', exact: true })).toBeVisible()
+          await expect(page.getByRole('form', { name: 'Write a reply', exact: true })).toHaveCount(0)
+          await expect(toasts.getByText('Reply posted', { exact: true })).toBeVisible()
           await expect(page.locator('p').getByText('A character sheet.', { exact: true })).toBeVisible()
+          for (const placeholder of [
+            'This contribution was hidden by moderation.',
+            'This contribution was deleted.',
+          ]) {
+            const thread = page
+              .getByRole('listitem')
+              .filter({ has: page.locator('p').getByText(placeholder, { exact: true }) })
+            await expect(thread.getByRole('button', { name: 'Reply', exact: true })).toHaveCount(0)
+            await thread.getByRole('button', { name: 'Show replies (1)', exact: true }).click()
+          }
+          await expect(
+            page.locator('p').getByText('Replies remain readable beneath a hidden parent.', { exact: true }),
+          ).toBeVisible()
+          await expect(
+            page.locator('p').getByText('Replies remain readable beneath a deleted parent.', { exact: true }),
+          ).toBeVisible()
+          assert.ok(
+            await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
+            'Thread content wraps without horizontal overflow',
+          )
           await page.screenshot({
             path: path.join(root, `.tmp/discussion-ui/comments-${width}-${theme}.png`),
             fullPage: true,
@@ -282,6 +442,23 @@ test(
             page.getByText('Reviews become available after this event ends.', { exact: true }),
           ).toBeVisible()
           await expect(page.getByText('No reviews yet.', { exact: true })).toBeVisible()
+          await checkLayout()
+          // A failed foreground mutation keeps inline feedback and a readable modal toast.
+          await page.getByRole('tab', { name: 'Comments', exact: true }).click()
+          await dismissToasts()
+          rejectComment = true
+          await page.getByRole('button', { name: 'Write a comment', exact: true }).click()
+          await dialog.getByLabel('Comment', { exact: true }).fill('Keep this draft after validation.')
+          await dialog.getByRole('button', { name: 'Save', exact: true }).click()
+          await expect(dialog.getByRole('alert')).toBeVisible()
+          await expect(toasts.getByText('Action could not be completed', { exact: true })).toBeVisible()
+          await expect(dialog.getByLabel('Comment', { exact: true })).toHaveValue(
+            'Keep this draft after validation.',
+          )
+          assert.equal((await toasts.textContent()).includes('PRIVATE_UPSTREAM_DETAIL'), false)
+          await toasts.getByRole('button', { name: 'Dismiss notification' }).click()
+          await expect(dialog.getByRole('alert')).toBeVisible()
+          await dialog.getByRole('button', { name: 'Cancel', exact: true }).click()
           ended = true
           await page.reload()
           await page.getByRole('tab', { name: 'Comments', exact: true }).click()
@@ -358,6 +535,93 @@ test(
           failed = false
           await page.getByRole('button', { name: 'Try again', exact: true }).click()
           await expect(page.getByText('What should I bring?', { exact: true })).toBeVisible()
+          // Only the detail response becomes private; the discovery snapshot remains public.
+          hostMode = true
+          await page.reload()
+          async function confirmation(action, preview = false) {
+            await page
+              .getByRole('button', {
+                name: action === 'rotate' ? 'Regenerate code' : 'Revoke code',
+                exact: true,
+              })
+              .click()
+            const modal = page.getByRole('dialog', { name: 'Confirm invitation change', exact: true })
+            await expect(modal).toBeVisible()
+            const cancel = modal.getByRole('button', { name: 'Cancel', exact: true }),
+              confirm = modal.getByRole('button', {
+                name: action === 'rotate' ? 'Confirm regeneration' : 'Confirm revocation',
+                exact: true,
+              })
+            await expect(cancel).toBeFocused()
+            const bounds = await modal.boundingBox(),
+              a = await confirm.boundingBox(),
+              b = await cancel.boundingBox()
+            assert.ok(
+              Math.abs(bounds.x + bounds.width / 2 - width / 2) <= 1,
+              'Invitation centered horizontally',
+            )
+            assert.ok(Math.abs(bounds.y + bounds.height / 2 - 500) <= 1, 'Invitation centered vertically')
+            assert.ok(a.x < b.x, 'Confirm left, Cancel right')
+            await cancel.click()
+            assert.equal(rotationCalls, action === 'rotate' ? 0 : 1)
+            assert.equal(revocationCalls, 0)
+            await page
+              .getByRole('button', {
+                name: action === 'rotate' ? 'Regenerate code' : 'Revoke code',
+                exact: true,
+              })
+              .click()
+            holdWrite = true
+            writeGate = new Promise((resolve) => {
+              releaseWrite = resolve
+            })
+            await confirm.click()
+            await expect(confirm).toBeDisabled()
+            await expect(
+              toasts.getByText(
+                action === 'rotate' ? 'Invitation code regenerated' : 'Invitation code revoked',
+                { exact: true },
+              ),
+            ).toHaveCount(0)
+            releaseWrite()
+            await expect(modal).not.toBeVisible()
+            await expect(
+              toasts.getByText(
+                action === 'rotate' ? 'Invitation code regenerated' : 'Invitation code revoked',
+                { exact: true },
+              ),
+            ).toHaveCount(1)
+            await page.screenshot({
+              path: path.join(root, `.tmp/discussion-ui/invitation-${action}-${width}-${theme}.png`),
+              fullPage: !preview,
+            })
+          }
+          await confirmation('rotate')
+          await page.goto(origin + '/events')
+          await expect(page.getByRole('img', { name: 'Visibility: public', exact: true })).toBeVisible()
+          await expect(page.getByLabel('Event status: Upcoming', { exact: true })).toBeVisible()
+          await page.getByRole('link', { name: 'Discussion game night', exact: true }).click()
+          await confirmation('revoke', true)
+          const previewToast = await toasts.boundingBox()
+          assert.ok(
+            Math.abs(previewToast.x + previewToast.width - width + 16) <= 1,
+            'Preview notification remains viewport-aligned',
+          )
+          await expect(toasts.getByRole('button', { name: 'Dismiss notification' })).toBeVisible()
+          await toasts.getByRole('button', { name: 'Dismiss notification' }).click()
+          await expect(page.getByRole('dialog', { name: 'Event preview', exact: true })).toBeVisible()
+          assert.equal(rotationCalls, 1)
+          assert.equal(revocationCalls, 1)
+          await page.goto(origin + '/my-events?period=all')
+          for (const status of ['Upcoming', 'In progress', 'Finished', 'Cancelled'])
+            await expect(page.getByLabel('Event status: ' + status, { exact: true })).toBeVisible()
+          await expect(page.getByRole('img', { name: 'Visibility: public', exact: true })).toHaveCount(1)
+          await expect(page.getByRole('img', { name: 'Visibility: private', exact: true })).toHaveCount(2)
+          await expect(page.getByRole('img', { name: 'Visibility: unlisted', exact: true })).toHaveCount(1)
+          await page.screenshot({
+            path: path.join(root, `.tmp/discussion-ui/card-badges-${width}-${theme}.png`),
+            fullPage: true,
+          })
           assert.deepEqual(errors, [])
           await context.close()
           console.log(

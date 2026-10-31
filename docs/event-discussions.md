@@ -99,9 +99,54 @@ mismatch and any hidden/deleted body. No service-role client is used.
 
 ## Frontend and administration
 
+### Frontend-only polish follow-up
+
+The shared outer layout now keeps tabs fixed above a single back-navigation row. Comments
+and Reviews do not repeat the event title. Compact reply forms attach to their parent;
+successful replies reset/close the form and expand the updated thread. Deleted/hidden
+parents retain readable reply threads without gaining a Reply action.
+
+Invitation confirmation dialogs are centered in full pages and previews, with Confirm
+on the left, Cancel on the right and initial Cancel focus. Pending guards prevent a
+second mutation; errors keep the dialog open. Copy/rotation/revocation use fixed toasts.
+
+Shared Radix notifications cover discussion writes, real event mutations, invitation
+actions, profile/game/settings saves, reporting and administrative decisions. Only
+explicit actions emit notices; background queries never do. Notices are bounded,
+deduplicated and cleared on account changes. No payload, raw server text, email, address
+or room code is accepted. Field errors remain inline. Cover-save recovery retains its
+saved event UUID and gets a warning rather than premature complete-save feedback.
+The [manual popover viewport](https://developer.mozilla.org/en-US/docs/Web/API/Popover_API/Using)
+keeps notifications viewport-aligned while remaining in an active dialog's accessible tree.
+
+Cards display public/open-lock, private/lock and unlisted/link icons with accessible labels,
+plus clock-based lifecycle badges. Existing discovery defaults, filters, ordering and
+backend eligibility stay unchanged; badges do not authorize joining. No aggregates are
+fabricated or fetched. Backend/database contracts and migration 25 are unchanged.
+
+Deferred: reversible moderation/authorized hidden-text inspection, authority-specific
+placeholder DTOs, review aggregation, and changes to finished-event discovery defaults
+or ordering. Those require a separate reviewed backend/database pass.
+
+Manual UI checks: switch all three tabs in a full page and preview; compare tab/back
+positions; post/edit/reply with long multiline text; expand hidden/deleted threads;
+cancel and confirm both invitation actions; copy a code; inspect success/error toasts
+and persistent validation; inspect all card badges in My Events. Repeat at 375/1440px
+in both themes. Run `pnpm.cmd test:event-polish` and the existing discussion browser suite.
+
+This frontend follow-up passed all four 375/1440px light/dark browser journeys, including
+exact tab/back geometry, inline/mixed/long replies, hidden/deleted parent threads,
+acknowledgement-only and sanitized error toasts, modal toast access/position, invitation
+centering/Cancel focus/Confirm order/single requests, and all card visibility/lifecycle
+labels. The six focused polish/discussion/event-action/profile/moderation/suspension
+client suites passed (29 tests). Root typecheck, lint/boundaries and both builds passed.
+Initial selector/type-inference failures were corrected. No backend, SQL, historical
+migration, hosted or private-configuration changes were made; no database suite was
+needed or rerun for this UI-only pass.
+
 Real EventDetails uses Radix keyboard-accessible tabs, defaulting to details on entry/
-reload. Full pages/previews share implementation; numeric demos are unchanged. Native
-modal dialogs provide compositing/edit/delete/reasoned moderation. The existing admin
+reload. Full pages/previews share implementation; numeric demos are unchanged. Root
+composers, edits/deletion and reasoned moderation use native dialogs; replies stay inline. The existing admin
 report page points to accessible event tabs; there is no duplicate dashboard or private
 event directory. Hosts cannot hide unfavorable reviews or erase moderation history.
 

@@ -10,8 +10,7 @@ export function UsernameCasingForm({ username }: UsernameCasingFormProps) {
   const [value, setValue] = useState(username)
   const [expected, setExpected] = useState(username)
   const save = useCorrectUsername()
-  const valid =
-    /^[A-Za-z][A-Za-z0-9_]{2,23}$/.test(value) && value.toLowerCase() === expected.toLowerCase()
+  const valid = /^[A-Za-z][A-Za-z0-9_]{2,23}$/.test(value) && value.toLowerCase() === expected.toLowerCase()
   return (
     <form
       className="mt-6 space-y-4 rounded-xl border bg-card p-6 md:p-8"
@@ -45,11 +44,6 @@ export function UsernameCasingForm({ username }: UsernameCasingFormProps) {
       {save.error && (
         <p role="alert" className="text-sm text-destructive">
           {save.error.message} Reload if the stored spelling changed.
-        </p>
-      )}
-      {save.isSuccess && (
-        <p role="status" className="text-sm text-primary">
-          Username capitalization updated.
         </p>
       )}
       <Button disabled={!valid || value === expected || save.isPending}>

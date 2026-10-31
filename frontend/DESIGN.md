@@ -2,6 +2,20 @@
 
 ## Product and users
 
+Real event pages/previews keep one tabs row and one back-navigation row beneath it.
+Only Event details shows the event title; Comments/Reviews use their own section headings.
+Replies share the parent conversation border, with compact inline composers and wrapping
+author/content text. Invitation confirmations are viewport-centered, primary Confirm left
+and Cancel right; initially focus Cancel. Event cards use compact labeled visibility
+icons and Upcoming / In progress / Finished / Cancelled badges from existing timestamps.
+
+Shared Radix toasts appear bottom-right with safe-area spacing, at most two at once.
+Use fixed messages and existing tokens/icons for success, error, info and warning. Keep
+field errors inline; never put private payloads, server text or codes in global notices.
+Success dismisses after five seconds, warnings after eight, errors after twelve; keyboard
+focus/hover pause dismissal. No entrance motion is required. Keep the viewport accessible
+inside active dialogs; a manual top-layer viewport avoids transformed-preview clipping.
+
 Desktop navigation (1280px and wider) shows site links, then a verified Welcome label,
 account icon and the existing theme toggle in that order. Below that width, a single
 compact row shows the logo and hamburger; a Radix modal drawer opens from the right.

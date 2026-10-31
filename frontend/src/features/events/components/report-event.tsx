@@ -88,14 +88,9 @@ export function ReportEvent({ id, session }: { id: string; session: EventActionS
             mutation.mutate(
               { reason, description },
               {
-                onSuccess: (result) => {
+                onSuccess: () => {
                   setOpen(false)
                   setDescription('')
-                  setNotice(
-                    result.created
-                      ? 'Your report was submitted for review.'
-                      : 'Your open report is already on file.',
-                  )
                   mutation.reset()
                   if (params.has('report'))
                     setParams(

@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { notificationStore } from '@/lib/notifications'
 import { useQueryClient } from '@tanstack/react-query'
 import { authClient, authConfigurationError } from '../api/auth-client'
 import { sessionAccount } from '../api/auth-api'
@@ -21,6 +22,7 @@ export function AuthSessionSync() {
     const { data } = authClient().auth.onAuthStateChange((event, session) => {
       const previous = client.getQueryData<{ id: string } | null>(authKey)
       if (previous?.id !== session?.user.id || event === 'SIGNED_OUT') {
+        notificationStore.clear()
         client.removeQueries({ queryKey: ['account-identity'] })
         client.removeQueries({ queryKey: ['my-events'] })
         client.removeQueries({ queryKey: EVENT_VIEWER_QUERY_KEY })

@@ -111,7 +111,7 @@ export function ProfileForm({ profile, renderLocation }: ProfileFormProps) {
           },
           {
             onSuccess: () => {
-              void navigate('/profile', { state: { profileSaved: true } })
+              void navigate('/profile')
             },
             onError: (error) => {
               if (error instanceof HttpError) {
@@ -239,13 +239,11 @@ export function ProfileForm({ profile, renderLocation }: ProfileFormProps) {
                 })}
               >
                 <option value="">Prefer not to say</option>
-                {Array.from({ length: currentYear - 1899 }, (_, index) => currentYear - index).map(
-                  (year) => (
-                    <option key={year} value={year}>
-                      {year}
-                    </option>
-                  ),
-                )}
+                {Array.from({ length: currentYear - 1899 }, (_, index) => currentYear - index).map((year) => (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                ))}
               </FormSelect>
             )}
             {form.formState.errors.birthYear && (

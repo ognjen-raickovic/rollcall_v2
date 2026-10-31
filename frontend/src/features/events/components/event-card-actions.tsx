@@ -7,6 +7,7 @@ import type { EventSummary, MyEventSummary } from '../api/event-dtos'
 import type { EventBrowseSession, EventViewerStatus } from '../api/event-viewer-api'
 import { usePersistentJoinEvent, usePersistentLeaveEvent } from '../api/use-persistent-event-actions'
 import { EventAuthPrompt } from './event-auth-prompt'
+import { useEventTime } from '../hooks/use-event-time'
 
 type EventCardActionsProps = {
   event: EventSummary | MyEventSummary
@@ -67,13 +68,10 @@ export function EventCardActions({
         return value?.value === event.id && value.session?.viewerId === session.viewerId
       },
     }) > 0
-  const closed = event.status === 'cancelled' || Date.parse(event.startsAt) <= Date.now()
+  const now = useEventTime(event.startsAt, event.endsAt)
+  const closed = event.status === 'cancelled' || Date.parse(event.startsAt) <= now
   const label =
-    event.status === 'cancelled'
-      ? 'Cancelled'
-      : Date.parse(event.endsAt) <= Date.now()
-        ? 'Finished'
-        : 'Closed'
+    event.status === 'cancelled' ? 'Cancelled' : Date.parse(event.endsAt) <= now ? 'Finished' : 'Closed'
   async function participate(leaving: boolean) {
     if (acting.current || busy) return
     acting.current = true
@@ -84,7 +82,6 @@ export function EventCardActions({
       if (leaving) await leave.mutateAsync(event.id)
       else await join.mutateAsync(event.id)
       await session.getAccessToken()
-      onFeedback(leaving ? 'You have left this event.' : 'You have joined this event.')
       if (mounted.current) setConfirmLeave(false)
     } catch {
       /* Mutation hooks expose only sanitized errors. */
@@ -117,9 +114,7 @@ export function EventCardActions({
             size="sm"
             variant="outline"
             disabled={busy}
-            onClick={() =>
-              event.visibility === 'private' ? setConfirmLeave(true) : void participate(true)
-            }
+            onClick={() => (event.visibility === 'private' ? setConfirmLeave(true) : void participate(true))}
           >
             {busy ? 'Updating...' : 'Leave event'}
           </Button>

@@ -1,5 +1,6 @@
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { EVENT_DETAILS_QUERY_KEY } from '@/lib/query-keys'
+import { notify, notifyFailure } from '@/lib/notifications'
 import type { EventActionSession } from './event-write-dtos'
 import { discussionApi, type DiscussionChange, type DiscussionKind } from './discussion-api'
 
@@ -33,6 +34,34 @@ export function useDiscussionChange(id: string, kind: DiscussionKind, session: E
     mutationFn: async (change: DiscussionChange) => {
       await client.cancelQueries({ queryKey: discussionKey(id, session.viewerId) })
       return discussionApi.change(id, kind, session, change)
+    },
+    onSuccess: (_result, change) => {
+      if (!current()) return
+      if (kind === 'reviews')
+        notify(
+          change.operation === 'create'
+            ? 'review.posted'
+            : change.operation === 'edit'
+              ? 'review.updated'
+              : change.operation === 'delete'
+                ? 'review.deleted'
+                : 'review.hidden',
+        )
+      else
+        notify(
+          change.operation === 'create'
+            ? change.parentId
+              ? 'reply.posted'
+              : 'comment.posted'
+            : change.operation === 'edit'
+              ? 'comment.updated'
+              : change.operation === 'delete'
+                ? 'comment.deleted'
+                : 'comment.hidden',
+        )
+    },
+    onError: (error) => {
+      if (current()) notifyFailure(error)
     },
     onSettled: async () => {
       if (current()) await client.invalidateQueries({ queryKey: discussionKey(id, session.viewerId) })

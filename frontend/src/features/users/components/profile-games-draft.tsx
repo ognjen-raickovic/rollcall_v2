@@ -52,7 +52,7 @@ export function ProfileGamesDraft({
           { games: entries(effectiveDraft), expected: entries(baseline) },
           {
             onSuccess: () => {
-              void navigate('/profile', { state: { profileSaved: true, gamesSaved: true } })
+              void navigate('/profile')
             },
           },
         )

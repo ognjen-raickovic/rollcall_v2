@@ -1,9 +1,11 @@
-import { useState, type ReactNode } from 'react'
+import { useRef, useState, type ReactNode } from 'react'
 import { Link } from 'react-router'
 import { Star } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import type { DiscussionContext as Context, DiscussionItem } from '../api/discussion-api'
 import { DiscussionEditor } from './discussion-editor'
+import { DiscussionReplyForm } from './discussion-reply-form'
+import { cn } from '@/lib/utils'
 
 export function DiscussionRow({
   item,
@@ -19,13 +21,24 @@ export function DiscussionRow({
   renderReplies: () => ReactNode
 }) {
   const [replies, setReplies] = useState(false)
+  const [replyOpen, setReplyOpen] = useState(false)
+  const replyButton = useRef<HTMLButtonElement>(null)
+  function closeReply() {
+    setReplyOpen(false)
+    requestAnimationFrame(() => replyButton.current?.focus({ preventScroll: true }))
+  }
   const placeholder = item.deleted || item.hidden
   return (
-    <li className="min-w-0 space-y-4 rounded-xl border bg-card p-4 md:p-6">
+    <li
+      className={cn(
+        'min-w-0 space-y-3 [overflow-wrap:anywhere]',
+        item.parentId ? 'border-b py-4 last:border-0' : 'rounded-xl border bg-card p-4 md:p-6',
+      )}
+    >
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm">
         {item.author ? (
           <Link
-            className="font-semibold hover:text-primary focus-visible:outline-2 focus-visible:outline-ring"
+            className="min-w-0 font-semibold [overflow-wrap:anywhere] hover:text-primary focus-visible:outline-2 focus-visible:outline-ring"
             to={`/users/${item.author.id}`}
           >
             {item.author.displayName}
@@ -67,11 +80,15 @@ export function DiscussionRow({
       </p>
       <div className="flex flex-wrap gap-2">
         {canReply && !placeholder && item.parentId === null && (
-          <DiscussionEditor
-            context={context}
-            label="Reply"
-            initial={{ operation: 'create', parentId: item.id }}
-          />
+          <Button
+            ref={replyButton}
+            size="sm"
+            variant="ghost"
+            aria-expanded={replyOpen}
+            onClick={() => setReplyOpen(!replyOpen)}
+          >
+            Reply
+          </Button>
         )}
         {item.canEdit && (
           <DiscussionEditor
@@ -93,7 +110,18 @@ export function DiscussionRow({
           </Button>
         )}
       </div>
-      {replies && <div className="border-l-2 border-primary/30 pl-3 md:pl-6">{renderReplies()}</div>}
+      {replyOpen && canReply && !placeholder && (
+        <DiscussionReplyForm
+          context={context}
+          parentId={item.id}
+          onCancel={closeReply}
+          onPosted={() => {
+            setReplies(true)
+            closeReply()
+          }}
+        />
+      )}
+      {replies && <div className="border-l-2 border-primary/30 pl-3 md:pl-4">{renderReplies()}</div>}
     </li>
   )
 }

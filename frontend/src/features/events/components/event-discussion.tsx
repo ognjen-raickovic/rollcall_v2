@@ -84,7 +84,7 @@ function DiscussionList({ context, parentId = null }: { context: Context; parent
       )}
       {items.length ? (
         <ul
-          className="space-y-4"
+          className={parentId ? 'space-y-0' : 'space-y-4'}
           aria-label={parentId ? 'Replies' : comments ? 'Event comments' : 'Event reviews'}
         >
           {items.map((item) => (
