@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { z } from 'zod'
 import { HttpError, httpRequest } from '@/lib/http-client'
+import { notify, notifyFailure } from '@/lib/notifications'
 import { EVENT_COVER_QUERY_KEY, EVENT_DETAILS_QUERY_KEY } from '@/lib/query-keys'
 import type { EventActionSession } from './event-write-dtos'
 
@@ -56,7 +57,7 @@ export function useInvitations(session: EventActionSession) {
         method,
         body,
         token,
-        viewerId:actor,
+        viewerId: actor,
         signal: controller.signal,
         resource: 'event',
       })
@@ -64,6 +65,7 @@ export function useInvitations(session: EventActionSession) {
       if (!active()) throw new Error('Your account changed. Try again.')
       return result
     } catch (err) {
+      if (active()) notifyFailure(err)
       if (active())
         setError(
           err instanceof HttpError && err.status === 400 && path === '/api/private-events/join'
@@ -89,9 +91,13 @@ export function useInvitations(session: EventActionSession) {
         undefined,
         action === 'reveal' ? 'GET' : 'POST',
       )
-      if (current.current.viewerId === actor && epoch.current === generation) setInvitation(result)
+      if (current.current.viewerId !== actor || epoch.current !== generation) return false
+      setInvitation(result)
+      if (action !== 'reveal') notify(action === 'rotate' ? 'invitation.rotated' : 'invitation.revoked')
+      return true
     } catch {
       /* Exposed safe error. */
+      return false
     }
   }
   async function join(code: string) {
@@ -104,6 +110,7 @@ export function useInvitations(session: EventActionSession) {
     client.removeQueries({ queryKey: EVENT_DETAILS_QUERY_KEY })
     client.removeQueries({ queryKey: EVENT_COVER_QUERY_KEY })
     void client.invalidateQueries({ queryKey: ['persistent-events'] })
+    notify('event.joined')
     return result.eventId
   }
   return { invitation, pending, error, manage, join, hide: () => setInvitation(null) }

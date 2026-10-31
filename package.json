@@ -4,6 +4,10 @@
   "packageManager": "pnpm@12.14.0",
   "engines": { "node": "22.x" },
   "scripts": {
+    "test:event-polish": "pnpm --filter frontend test:event-polish",
+    "test:discussions": "pnpm --filter frontend test:discussions",
+    "test:discussions:integration": "node backend/scripts/check-discussions-integration.mjs",
+    "db:test:discussion-concurrency": "node supabase/tests/check-discussion-concurrency.mjs",
     "test:discovery-ux": "pnpm --filter frontend test:discovery-ux",
     "test:profile-event-ux": "pnpm --filter frontend test:profile-event-ux",
     "test:responsive-navigation": "pnpm --filter frontend test:responsive-navigation",

@@ -1,5 +1,7 @@
 # RollCall database schema
 
+Forward migration 25 (20261031000100_event_discussions.sql) adds private RLS tables event_comments, event_reviews, discussion_attempts and discussion_audit. The NOLOGIN/NOBYPASS executor has safe reference reads and checked RPC access; actual event updates fail its RLS WITH CHECK. Content cascades on event deletion, authors use SET NULL, and audit snapshots survive. See [columns, ACLs, locks and lifecycle](event-discussions.md).
+
 Forward migration 21 (`20261027000500_profile_game_sets.sql`) adds the owner-only,
 SECURITY INVOKER `replace_my_game_experience(jsonb,jsonb)` RPC and a before-statement
 game-experience write lock. It validates bounded catalog sets, compares expected saved

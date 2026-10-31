@@ -1,3 +1,4 @@
+import { notify, notifyFailure } from '@/lib/notifications'
 import { useEffect, useRef } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ACCOUNT_STATUS_QUERY_KEY, ADMIN_QUERY_KEY } from '@/lib/query-keys'
@@ -38,6 +39,12 @@ export function useChangeSuspension(viewer: string) {
     controller = useRef<AbortController | null>(null)
   useEffect(() => () => controller.current?.abort(), [viewer])
   return useMutation({
+    onSuccess: () => {
+      if (client.getQueryData<{ id: string }>(['auth-account'])?.id === viewer) notify('account.updated')
+    },
+    onError: (error) => {
+      if (client.getQueryData<{ id: string }>(['auth-account'])?.id === viewer) notifyFailure(error)
+    },
     gcTime: 0,
     mutationFn: async (input: { target: string; suspend: boolean; reason: string }) => {
       controller.current?.abort()

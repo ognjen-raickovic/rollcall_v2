@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router'
 import { Button } from '@/components/ui/button'
 import { REPORT_REASON_LABELS } from '@/lib/report-reasons'
 import { useReportQueue } from '../api/use-moderation'
@@ -15,6 +16,13 @@ export function ModerationDashboard() {
       <p className="max-w-prose text-muted-foreground">
         Review event reports using the limited context provided. Reporter identities, protected addresses,
         room codes and private covers are not included.
+      </p>
+      <p className="max-w-prose text-sm text-muted-foreground">
+        Moderate comments and reviews from the tabs on an event you can access. Your role does not unlock
+        private events.{' '}
+        <Link to="/events" className="font-medium text-primary underline underline-offset-4">
+          Browse public events
+        </Link>
       </p>
       <div className="space-y-2">
         <label htmlFor="report-status" className="text-sm font-semibold">

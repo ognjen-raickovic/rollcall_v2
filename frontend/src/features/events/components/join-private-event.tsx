@@ -75,9 +75,7 @@ export function JoinPrivateEvent({ session }: { session: EventActionSession }) {
           onSubmit={(event) => {
             event.preventDefault()
             setLocalError('')
-            if (
-              !/^[23456789ABCDEFGHJKLMNPQRSTUVWXYZ]{16}$/.test(code.toUpperCase().replace(/[ -]/g, ''))
-            ) {
+            if (!/^[23456789ABCDEFGHJKLMNPQRSTUVWXYZ]{16}$/.test(code.toUpperCase().replace(/[ -]/g, ''))) {
               setLocalError('Enter a valid 16-character room code.')
               return
             }
@@ -87,9 +85,7 @@ export function JoinPrivateEvent({ session }: { session: EventActionSession }) {
                 await session.getAccessToken()
                 if (id && mounted.current) {
                   setCode('')
-                  await navigate(`/events/${id}`, {
-                    state: { eventNotice: 'You have joined the private event.' },
-                  })
+                  await navigate(`/events/${id}`)
                 }
               })
               .catch(() => {})

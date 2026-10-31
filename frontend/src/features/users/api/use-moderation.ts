@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { notify, notifyFailure } from '@/lib/notifications'
 import { ADMIN_QUERY_KEY, EVENT_DETAILS_QUERY_KEY, EVENT_COVER_QUERY_KEY } from '@/lib/query-keys'
 import { moderationApi, type ReportStatus, type ReportCursor } from './moderation-api'
 import { useAuth } from './use-auth'
@@ -33,6 +34,12 @@ export function useModerationDecision() {
     controller = useRef<AbortController | null>(null)
   useEffect(() => () => controller.current?.abort(), [viewer])
   return useMutation({
+    onSuccess: () => {
+      if (client.getQueryData<{ id: string }>(['auth-account'])?.id === viewer) notify('moderation.updated')
+    },
+    onError: (error) => {
+      if (client.getQueryData<{ id: string }>(['auth-account'])?.id === viewer) notifyFailure(error)
+    },
     gcTime: 0,
     mutationFn: async (input: { id: string; action: 'dismiss' | 'take-action'; note: string }) => {
       controller.current?.abort()

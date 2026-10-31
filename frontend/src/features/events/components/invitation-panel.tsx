@@ -1,15 +1,23 @@
 import { useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { notify, notifyFailure } from '@/lib/notifications'
 import type { EventActionSession } from '../api/event-write-dtos'
 import { useInvitations } from '../api/use-invitations'
 
 export function InvitationPanel({ id, session }: { id: string; session: EventActionSession }) {
   const control = useInvitations(session),
-    [confirm, setConfirm] = useState<'rotate' | 'revoke' | null>(null),
-    [copied, setCopied] = useState(false)
+    [confirm, setConfirm] = useState<'rotate' | 'revoke' | null>(null)
   const value = control.invitation
   const dialog = useRef<HTMLDialogElement>(null),
-    cancel = useRef<HTMLButtonElement>(null)
+    cancel = useRef<HTMLButtonElement>(null),
+    confirming = useRef(false),
+    mounted = useRef(true)
+  useEffect(() => {
+    mounted.current = true
+    return () => {
+      mounted.current = false
+    }
+  }, [])
   useEffect(() => {
     const node = dialog.current
     if (confirm) {
@@ -55,7 +63,6 @@ export function InvitationPanel({ id, session }: { id: string; session: EventAct
           variant="outline"
           disabled={control.pending}
           onClick={() => {
-            setCopied(false)
             if (value) control.hide()
             else void control.manage(id, 'reveal')
           }}
@@ -66,11 +73,13 @@ export function InvitationPanel({ id, session }: { id: string; session: EventAct
           <Button
             variant="outline"
             disabled={control.pending}
-            onClick={() => {
-              void navigator.clipboard
-                .writeText(value.code ?? '')
-                .then(() => setCopied(true))
-                .catch(() => setCopied(false))
+            onClick={async () => {
+              try {
+                await navigator.clipboard.writeText(value.code ?? '')
+                if (mounted.current) notify('invitation.copied')
+              } catch (error) {
+                if (mounted.current) notifyFailure(error)
+              }
             }}
           >
             Copy code
@@ -83,34 +92,38 @@ export function InvitationPanel({ id, session }: { id: string; session: EventAct
           Revoke code
         </Button>
       </div>
-      {copied && <p role="status">Code copied.</p>}
       {control.pending && <p role="status">Updating invitation...</p>}
       <dialog
         ref={dialog}
         aria-labelledby="invitation-confirm-title"
-        className="m-auto w-[calc(100%-2rem)] max-w-lg space-y-3 rounded-xl border bg-card p-6 text-foreground backdrop:bg-background/80"
+        className="fixed inset-0 m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-lg space-y-6 overflow-y-auto rounded-xl border bg-card p-6 text-foreground backdrop:bg-background/80"
         onCancel={(event) => {
           event.preventDefault()
-          setConfirm(null)
+          if (!confirming.current) setConfirm(null)
         }}
       >
         <h2 id="invitation-confirm-title" className="text-2xl font-bold">
           Confirm invitation change
         </h2>
         <p>The old code will stop accepting new players. Existing participants will stay.</p>
-        <div className="flex flex-wrap gap-3">
-          <Button ref={cancel} variant="outline" onClick={() => setConfirm(null)}>
-            Cancel
-          </Button>
+        <div className="grid grid-cols-2 gap-3">
           <Button
             disabled={control.pending}
-            onClick={() => {
-              if (confirm) void control.manage(id, confirm)
-              setConfirm(null)
-              setCopied(false)
+            className="h-auto min-h-11 whitespace-normal"
+            onClick={async () => {
+              if (!confirm || confirming.current) return
+              confirming.current = true
+              try {
+                if (await control.manage(id, confirm)) setConfirm(null)
+              } finally {
+                confirming.current = false
+              }
             }}
           >
             Confirm {confirm === 'rotate' ? 'regeneration' : 'revocation'}
+          </Button>
+          <Button ref={cancel} disabled={control.pending} variant="outline" onClick={() => setConfirm(null)}>
+            Cancel
           </Button>
         </div>
       </dialog>

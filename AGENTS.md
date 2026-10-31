@@ -13,6 +13,10 @@ Milestone 4D adds persistent, private-bucket event covers with checked upload/ac
 
 ## Shared rules
 
+Read `docs/event-discussions.md` before comment/review work. Preserve live active-account
+and event-lock checks, private visibility, durable attempt outcomes and immutable moderation
+audits. Discussion queries share protected event/viewer cleanup; numeric demos stay separate.
+
 Read `SPEC.md`, `CLAUDE.md`, `frontend/CLAUDE.md`, and `docs/entities.md` before domain work.
 Apply the path-specific rules in `.claude/rules/`. Before UI work, read `frontend/DESIGN.md`
 and `.claude/skills/design-system/SKILL.md`. These are shared instructions, not separate

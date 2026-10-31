@@ -1,5 +1,7 @@
 # RollCall backend roadmap
 
+Event discussions/reviews are implemented locally in migration 25, including API/UI integration, restricted RPCs and audited moderation. Recorded participation is the eligibility signal. Verified check-in, rating aggregates, notifications, moderation queues and automated retention remain future work. Hosted rollout/showcase data require separate approval. See [verification/rollout](event-discussions.md).
+
 This roadmap separates working code from design foundations and future product work.
 It does not authorize hosted project changes, deployment or implementing later milestones.
 

@@ -1,11 +1,7 @@
-import {
-  useMutation,
-  useQueryClient,
-  type QueryClient,
-  type UseMutationOptions,
-} from '@tanstack/react-query'
+import { useMutation, useQueryClient, type QueryClient, type UseMutationOptions } from '@tanstack/react-query'
 
 import { HttpError } from '@/lib/http-client'
+import { notify, notifyFailure } from '@/lib/notifications'
 import { EVENT_DETAILS_QUERY_KEY, EVENT_VIEWER_QUERY_KEY } from '@/lib/query-keys'
 import { eventDetailsSchema, isEventId } from './event-dtos'
 import type { EventDetails } from './event-dtos'
@@ -28,9 +24,7 @@ function changedAccount() {
 }
 
 function current(client: QueryClient, viewerId: string | null): viewerId is string {
-  return (
-    isEventId(viewerId) && client.getQueryData<{ id: string } | null>(['auth-account'])?.id === viewerId
-  )
+  return isEventId(viewerId) && client.getQueryData<{ id: string } | null>(['auth-account'])?.id === viewerId
 }
 
 function detailKey(id: string, viewerId: string) {
@@ -60,11 +54,7 @@ async function cacheHost(client: QueryClient, event: HostEventDetails, session: 
   invalidatePublic(client)
 }
 
-async function cacheAttendance(
-  client: QueryClient,
-  result: AttendanceResult,
-  session: EventActionSession,
-) {
+async function cacheAttendance(client: QueryClient, result: AttendanceResult, session: EventActionSession) {
   await invalidateEventCovers(client, result.eventId, () => current(client, session.viewerId))
   await client.cancelQueries({ queryKey: [...EVENT_DETAILS_QUERY_KEY, result.eventId] })
   await Promise.all([
@@ -173,10 +163,15 @@ function actionOptions<TValue, TResult>(
     onSuccess: async (result, { value, session }, owner) => {
       if (!owner || owner.viewerId !== session.viewerId || !current(client, owner.viewerId)) return
       await succeeded(result, value, session)
+      if (!current(client, session.viewerId)) return
+      if (operation === 'delete') notify('event.deleted')
+      if (operation === 'join') notify('event.joined')
+      if (operation === 'leave') notify('event.left')
     },
     onError: async (error, { value, session }) => {
-      if (!current(client, session.viewerId) || (error instanceof HttpError && error.status === 400))
-        return
+      if (current(client, session.viewerId) && operation !== 'create' && operation !== 'update')
+        notifyFailure(error)
+      if (!current(client, session.viewerId) || (error instanceof HttpError && error.status === 400)) return
       const id = eventId(value)
       if (id) await client.cancelQueries({ queryKey: [...EVENT_DETAILS_QUERY_KEY, id] })
       if (!current(client, session.viewerId)) return
